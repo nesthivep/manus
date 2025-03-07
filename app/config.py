@@ -21,7 +21,7 @@ class LLMSettings(BaseModel):
     api_key: str = Field(..., description="API key")
     max_tokens: int = Field(4096, description="Maximum number of tokens per request")
     temperature: float = Field(1.0, description="Sampling temperature")
-    chrome_instance_path: str = Field(1.0, description="Local Chrome installation path")
+    chrome_instance_path: str = Field(..., description="Local Chrome installation path")
     api_type: str = Field(..., description="AzureOpenai or Openai")
     api_version: str = Field(..., description="Azure Openai version if AzureOpenai")
 
