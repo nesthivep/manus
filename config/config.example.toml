@@ -5,6 +5,7 @@ base_url = "https://api.openai.com/v1"
 api_key = "sk-..."
 max_tokens = 4096
 temperature = 0.0
+chrome_instance_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
 
 # Optional configuration for specific LLM models
 [llm.vision]
