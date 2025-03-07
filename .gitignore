@@ -169,6 +169,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+config/config.toml
 
 # Logs
 logs/
