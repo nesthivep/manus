@@ -42,6 +42,17 @@ cd OpenManus
 pip install -r requirements.txt
 ```
 
+**TIPS：** 在中国大陆安装：
+```bash
+pip install -r requirements.txt -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+```
+也可选中其他镜像源：
+* 清华大学TUNA镜像源： `https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple`
+* 阿里云镜像源： `http://mirrors.aliyun.com/pypi/simple/`
+* 中国科学技术大学镜像源： `https://mirrors.ustc.edu.cn/pypi/simple/`
+* 华为云镜像源： `https://repo.huaweicloud.com/repository/pypi/simple/`
+* 腾讯云镜像源：`https://mirrors.cloud.tencent.com/pypi/simple/`
+
 ## 配置说明
 
 OpenManus 需要配置使用的 LLM API，请按以下步骤设置：
