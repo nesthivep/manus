@@ -1,3 +1,4 @@
+import asyncio
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Protocol
 
@@ -198,4 +199,4 @@ async def create_sandbox_client() -> LocalSandboxClient:
     return LocalSandboxClient()
 
 
-SANDBOX_CLIENT = create_sandbox_client()
+SANDBOX_CLIENT = asyncio.run(create_sandbox_client())
