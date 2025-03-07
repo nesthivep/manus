@@ -2,6 +2,8 @@
     <a href="README_zh.md">中文</a>&nbsp ｜ &nbspEnglish&nbsp
 </p>
 
+[![PyPI](https://img.shields.io/pypi/v/openmanus)](https://pypi.org/project/openmanus/)
+
 <p align="left">
     <a href="https://discord.gg/6dn7Sa3a"><img src="https://dcbadge.vercel.app/api/server/DYn29wFk9z?style=flat" alt="Discord Follow"></a>
 </p>
