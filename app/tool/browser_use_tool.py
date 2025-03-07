@@ -101,8 +101,8 @@ class BrowserUseTool(BaseTool):
     async def _ensure_browser_initialized(self) -> BrowserContext:
         """Ensure browser and context are initialized."""
         if self.browser is None:
-            llm_config = config.llm
-            chrome_instance_path = llm_config.get('chrome_instance_path', llm_config["default"])
+            llm_config = config.llm['default']
+            chrome_instance_path = llm_config.chrome_instance_path
             self.browser = BrowserUseBrowser(BrowserConfig(headless=False, chrome_instance_path=chrome_instance_path))
         if self.context is None:
             self.context = await self.browser.new_context()
