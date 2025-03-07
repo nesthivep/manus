@@ -7,8 +7,27 @@ max_tokens = 4096
 temperature = 0.0
 chrome_instance_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
 
+# [llm] #AZURE OPENAI:
+# api_type= 'azure'
+# model = "YOUR_MODEL_NAME" #"gpt-4o-mini"
+# base_url = "{YOUR_AZURE_ENDPOINT.rstrip('/')}/openai/deployments/{AZURE_DEPOLYMENT_ID}"  
+# api_key = "AZURE API KEY"
+# max_tokens = 8096
+# temperature = 0.0
+# api_version="AZURE API VERSION" #"2024-08-01-preview"
+
 # Optional configuration for specific LLM models
 [llm.vision]
 model = "claude-3-5-sonnet"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."
+
+# Sandbox configuration
+[sandbox]
+use_sandbox = false
+image = "python:3.10-slim"
+work_dir = "/workspace"
+memory_limit = "1g"  # 512m
+cpu_limit = 2.0
+timeout = 300
+network_enabled = false
