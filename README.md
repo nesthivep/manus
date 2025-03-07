@@ -94,6 +94,6 @@ Or contact @mannaandpoem via 📧email: mannaandpoem@gmail.com
 
 ## Acknowledgement
 
-Thanks to [anthropic-computer-use](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo) and [broswer-use](https://github.com/browser-use/browser-use) for providing basic support for this project!
+Thanks to [anthropic-computer-use](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo) and [browser-use](https://github.com/browser-use/browser-use) for providing basic support for this project!
 
 OpenManus is built by contributors from MetaGPT. Huge thanks to this agent community!
