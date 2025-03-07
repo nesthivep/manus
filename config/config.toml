@@ -1,0 +1,13 @@
+# Global LLM configuration
+[llm]
+model = "qwen2.5-coder:14b-instruct-q5_K_S"
+base_url = "http://localhost:11434/v1"
+api_key = "ollama"  # 本地 Ollama 不需要 API Key
+max_tokens = 4096
+temperature = 0.0
+
+# Optional configuration for specific LLM models
+[llm.vision]
+model = "qwen2.5-coder:14b-instruct-q5_K_S"
+base_url = "http://localhost:11434/v1"
+api_key = "ollama"  # 本地 Ollama 不需要 API Key
