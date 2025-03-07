@@ -21,6 +21,8 @@ Enjoy your own agent with OpenManus!
 
 ## Installation
 
+### Install from source code:
+
 1. Create a new conda environment:
 
 ```bash
@@ -39,6 +41,12 @@ cd OpenManus
 
 ```bash
 pip install -r requirements.txt
+```
+
+### Or install from pypi:
+
+```bash
+pip install openmanus
 ```
 
 ## Configuration
