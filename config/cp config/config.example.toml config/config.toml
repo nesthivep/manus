@@ -1,0 +1,13 @@
+Yangedison 全局 LLM 配置
+[llm]
+model = "gpt-4o"
+base_url = "https://api.openai.com/v1"
+api_key = "sk-..." 
+max_tokens = 4096
+temperature = 0.0
+
+Yangedison 可选特定 LLM 模型配置
+[llm.vision]
+model = "gpt-4o"
+base_url = "https://api.openai.com/v1"
+api_key = "sk-..."
