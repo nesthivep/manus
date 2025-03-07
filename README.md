@@ -69,17 +69,17 @@ api_key = "sk-..."  # Replace with your actual API key
 ```toml
 # Global LLM configuration
 [llm]
-model = "gpt-4o"
-base_url = "https://api.openai.com/v1"
-api_key = "sk-..."  # Replace with your actual API key
+model = "qwen2.5-coder:14b-instruct-q5_K_S"
+base_url = "http://localhost:11434/v1"
+api_key = "ollama"  # 本地 Ollama 不需要 API Key
 max_tokens = 4096
 temperature = 0.0
 
 # Optional configuration for specific LLM models
 [llm.vision]
-model = "gpt-4o"
-base_url = "https://api.openai.com/v1"
-api_key = "sk-..."  # Replace with your actual API key
+model = "qwen2.5-coder:14b-instruct-q5_K_S"
+base_url = "http://localhost:11434/v1"
+api_key = "ollama"  # 本地 Ollama 不需要 API Key
 ```
 
 ## Quick Start
