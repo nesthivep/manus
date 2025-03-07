@@ -19,6 +19,8 @@ class LLMSettings(BaseModel):
     model: str = Field(..., description="Model name")
     base_url: str = Field(..., description="API base URL")
     api_key: str = Field(..., description="API key")
+    api_type: str = Field(..., description="API type")
+    api_version: str = Field(..., description="API version")
     max_tokens: int = Field(4096, description="Maximum number of tokens per request")
     temperature: float = Field(1.0, description="Sampling temperature")
 
@@ -74,6 +76,8 @@ class Config:
             "model": base_llm.get("model"),
             "base_url": base_llm.get("base_url"),
             "api_key": base_llm.get("api_key"),
+            "api_type": base_llm.get("api_type", "openai"),
+            "api_version": base_llm.get("api_version"),
             "max_tokens": base_llm.get("max_tokens", 4096),
             "temperature": base_llm.get("temperature", 1.0),
         }
