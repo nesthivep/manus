@@ -2,6 +2,10 @@
     中文&nbsp ｜ &nbsp<a href="README.md">English</a>&nbsp
 </p>
 
+<p align="left">
+    <a href="https://discord.gg/6dn7Sa3a"><img src="https://dcbadge.vercel.app/api/server/DYn29wFk9z?style=flat" alt="Discord Follow"></a>
+</p>
+
 # OpenManus 🙋  
 
 Manus 非常棒，但 OpenManus 无需邀请码即可实现任何创意 🛫！
@@ -97,8 +101,8 @@ python run_flow.py
 加入我们的交流群，与其他开发者分享经验！
 
 <div align="center" style="display: flex; gap: 20px;">
-    <img src="assets/community_group_3.jpg" alt="OpenManus 交流群3" width="300" />
-    <img src="assets/community_group_4.jpg" alt="OpenManus 交流群4" width="300" />
+    <img src="assets/community_group_9.jpg" alt="OpenManus 交流群9" width="300" />
+    <img src="assets/community_group_10.jpg" alt="OpenManus 交流群10" width="300" />
 </div>
 
 ## 致谢
