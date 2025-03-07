@@ -77,7 +77,7 @@ class Config:
             "base_url": base_llm.get("base_url"),
             "api_key": base_llm.get("api_key"),
             "api_type": base_llm.get("api_type", "openai"),
-            "api_version": base_llm.get("api_version"),
+            "api_version": base_llm.get("api_version", "2024-10-21"),
             "max_tokens": base_llm.get("max_tokens", 4096),
             "temperature": base_llm.get("temperature", 1.0),
         }
