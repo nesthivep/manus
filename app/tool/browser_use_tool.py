@@ -8,6 +8,8 @@ from browser_use.browser.context import BrowserContext
 from browser_use.dom.service import DomService
 from pydantic import Field, field_validator
 from pydantic_core.core_schema import ValidationInfo
+from pyquery import PyQuery as pq
+from loguru import logger
 
 from app.tool.base import BaseTool, ToolResult
 
@@ -106,6 +108,14 @@ class BrowserUseTool(BaseTool):
             self.dom_service = DomService(await self.context.get_current_page())
         return self.context
 
+    def extract_page_text(self, html: str) -> str:
+        doc = pq(html)
+        doc.remove(
+            "script, style, meta, link, noscript, iframe, svg, canvas, audio, video, map, object, embed, applet")
+        clean_text = doc.text()
+        logger.debug(f"Extracted text: {clean_text}")
+        return clean_text
+
     async def execute(
         self,
         action: str,
@@ -177,7 +187,9 @@ class BrowserUseTool(BaseTool):
 
                 elif action == "get_html":
                     html = await context.get_page_html()
-                    truncated = html[:2000] + "..." if len(html) > 2000 else html
+                    extracted_text = self.extract_page_text(html)
+                    truncated = extracted_text[:2000] + \
+                        "..." if len(extracted_text) > 2000 else html
                     return ToolResult(output=truncated)
 
                 elif action == "execute_js":
