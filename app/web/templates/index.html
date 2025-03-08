@@ -16,9 +16,24 @@
         <main>
             <div class="workspace">
                 <div class="log-container">
-                    <h2>日志</h2>
-                    <div id="log-messages" class="log-messages"></div>
+                    <h2>处理进度</h2>
+                    <!-- 进度条将在JS中动态插入 -->
+                    
+                    <div class="thinking-header">
+                        <h3>AI思考过程</h3>
+                    </div>
+                    <div id="thinking-steps" class="thinking-steps"></div>
+                    
+                    <!-- 添加通信记录容器，确保初始渲染时存在 -->
+                    <div id="communication-steps" class="communication-steps">
+                        <div class="communications-header">
+                            <h3>AI通信记录</h3>
+                            <p class="communications-info">点击每条记录可查看详细内容</p>
+                        </div>
+                        <!-- 通信内容将在这里动态添加 -->
+                    </div>
                 </div>
+                
                 <div class="chat-container">
                     <h2>对话</h2>
                     <div id="chat-messages" class="chat-messages"></div>
@@ -27,8 +42,8 @@
                         <textarea id="user-input" placeholder="输入您的问题或指令..." rows="3"></textarea>
                         <div class="button-area">
                             <button id="send-btn" class="primary-btn">发送</button>
-                            <button id="clear-btn" class="secondary-btn">清除对话</button>
-                            <button id="stop-btn" class="secondary-btn">停止</button>
+                            <button id="stop-btn" class="stop-btn">停止</button>
+                            <button id="clear-btn" class="secondary-btn">清除</button>
                         </div>
                     </div>
                 </div>
