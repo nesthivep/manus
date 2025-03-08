@@ -1,12 +1,11 @@
-<p align="left">
-    <a href="README_zh.md">中文</a>&nbsp ｜ &nbspEnglish&nbsp
-</p>
+English | [简体中文](README_zh.md)
 
 <p align="left">
     <a href="https://discord.gg/6dn7Sa3a"><img src="https://dcbadge.vercel.app/api/server/DYn29wFk9z?style=flat" alt="Discord Follow"></a>
 </p>
 
 # OpenManus 🙋
+
 Manus is incredible, but OpenManus can achieve any ideas without an Invite Code 🛫!
 
 Our team members [@mannaandpoem](https://github.com/mannaandpoem) [@XiangJinyu](https://github.com/XiangJinyu) [@MoshiQAQ](https://github.com/MoshiQAQ) [@didiforgithub](https://github.com/didiforgithub) from [@MetaGPT](https://github.com/geekan/MetaGPT) built it within 3 hours!
@@ -70,6 +69,7 @@ api_key = "sk-..."  # Replace with your actual API key
 ```
 
 ## Quick Start
+
 One line for run OpenManus:
 
 ```bash
@@ -85,18 +85,25 @@ python run_flow.py
 ```
 
 ## How to contribute
+
 We welcome any friendly suggestions and helpful contributions! Just create issues or submit pull requests.
 
 Or contact @mannaandpoem via 📧email: mannaandpoem@gmail.com
 
 ## Roadmap
-- [ ] Better Planning
-- [ ] Live Demos
-- [ ] Replay
-- [ ] RL Fine-tuned Models
-- [ ] Comprehensive Benchmarks
+
+After comprehensively gathering feedback from community members, we have decided to adopt a 3-4 day iteration cycle to gradually implement the highly anticipated features.
+
+- [ ] Enhance Planning capabilities, optimize task breakdown and execution logic
+- [ ] Introduce standardized evaluation metrics (based on GAIA and TAU-Bench) for continuous performance assessment and optimization
+- [ ] Expand model adaptation and optimize low-cost application scenarios
+- [ ] Implement containerized deployment to simplify installation and usage workflows
+- [ ] Enrich example libraries with more practical cases, including analysis of both successful and failed examples
+- [ ] Frontend/backend development to improve user experience
+- [ ] RAG enhancement: Implement external knowledge graph retrieval and fusion mechanisms
 
 ## Community Group
+
 Join our networking group on Feishu and share your experience with other developers!
 
 <div align="center" style="display: flex; gap: 20px;">
@@ -109,6 +116,7 @@ Join our networking group on Feishu and share your experience with other develop
 
 ## Acknowledgement
 
-Thanks to [anthropic-computer-use](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo) and [broswer-use](https://github.com/browser-use/browser-use) for providing basic support for this project!
+Thanks to [anthropic-computer-use](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo)
+and [browser-use](https://github.com/browser-use/browser-use) for providing basic support for this project!
 
 OpenManus is built by contributors from MetaGPT. Huge thanks to this agent community!
