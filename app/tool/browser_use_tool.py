@@ -9,8 +9,7 @@ from browser_use.dom.service import DomService
 from pydantic import Field, field_validator
 from pydantic_core.core_schema import ValidationInfo
 from pyquery import PyQuery as pq
-from loguru import logger
-
+from app.logger import logger
 from app.tool.base import BaseTool, ToolResult
 
 
