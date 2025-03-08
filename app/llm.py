@@ -1,11 +1,11 @@
 from typing import Dict, List, Literal, Optional, Union
 from openai import (
     APIError,
+    AsyncAzureOpenAI,
     AsyncOpenAI,
     AuthenticationError,
     OpenAIError,
     RateLimitError,
-    AsyncAzureOpenAI,
 )
 from openai.types.chat import ChatCompletionMessage  # Correct import path
 from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type, wait_fixed
