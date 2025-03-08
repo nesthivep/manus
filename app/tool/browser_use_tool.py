@@ -111,9 +111,9 @@ class BrowserUseTool(BaseTool):
         doc = pq(html)
         doc.remove(
             "script, style, meta, link, noscript, iframe, svg, canvas, audio, video, map, object, embed, applet")
-        clean_text = doc.text()
-        logger.debug(f"Extracted text: {clean_text}")
-        return clean_text
+        extracted_text = doc.text()
+        logger.debug(f"Extracted text: {extracted_text}")
+        return extracted_text
 
     async def execute(
         self,
