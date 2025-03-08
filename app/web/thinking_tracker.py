@@ -58,13 +58,22 @@ class ThinkingTracker:
                 if session_id in cls._session_progress:
                     progress = cls._session_progress[session_id]
                     progress["current_step"] = message
-                    progress["completed_steps"] += 1
+
+                    # Attempt to extract step number and total steps from the message
+                    import re
+                    match = re.search(r"Executing step (\d+)/(\d+)", message)
+                    if match:
+                        current_step_num = int(match.group(1))
+                        total_steps = int(match.group(2))
+                        progress["total_steps"] = total_steps
+                        progress["completed_steps"] = current_step_num -1  # Mark previous as complete
+                    
                     if progress["total_steps"] > 0:
                         progress["percentage"] = min(
-                            int(100 * progress["completed_steps"] / progress["total_steps"]), 
-                            99  # 最多到99%，完成时才到100%
+                            int(100 * progress["completed_steps"] / progress["total_steps"]),
+                            99
                         )
-    
+
     @classmethod
     def add_communication(cls, session_id: str, direction: str, content: str) -> None:
         """添加一个通信记录

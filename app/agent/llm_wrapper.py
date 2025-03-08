@@ -4,6 +4,7 @@ LLM回调包装器，为现有LLM添加回调功能
 import asyncio
 import inspect
 import functools
+import os
 from typing import Dict, List, Any, Callable, Optional
 
 class LLMCallbackWrapper:
@@ -45,6 +46,11 @@ class LLMCallbackWrapper:
                             response_data = {"request": request_data, "response": result}
                             self._execute_callbacks("after_request", response_data)
                             
+                            # 保存文件到当前工作目录（如果是在工作区内）
+                            current_dir = os.getcwd()
+                            if "workspace" in current_dir:
+                                self._save_conversation_to_file(args, kwargs, result)
+                            
                             return result
                         except Exception as e:
                             # 错误回调
@@ -78,6 +84,40 @@ class LLMCallbackWrapper:
                     
                     # 替换为包装后的方法
                     setattr(self, name, wrapped)
+    
+    def _save_conversation_to_file(self, args, kwargs, result):
+        """保存对话到文件（如果设置了）"""
+        try:
+            # 检查是否有保存对话的环境变量
+            if os.environ.get("SAVE_LLM_CONVERSATION", "0") == "1":
+                prompt = kwargs.get('prompt', '')
+                if not prompt and args:
+                    prompt = args[0]
+                
+                if not prompt:
+                    return
+                
+                # 创建对话记录文件
+                with open("llm_conversation.txt", "a", encoding="utf-8") as f:
+                    f.write("\n--- LLM REQUEST ---\n")
+                    f.write(str(prompt)[:2000])  # 限制长度
+                    f.write("\n\n--- LLM RESPONSE ---\n")
+                    
+                    # 获取响应内容
+                    response_content = ""
+                    if isinstance(result, str):
+                        response_content = result
+                    elif isinstance(result, dict) and 'content' in result:
+                        response_content = result['content']
+                    elif hasattr(result, 'content'):
+                        response_content = result.content
+                    else:
+                        response_content = str(result)
+                    
+                    f.write(response_content[:2000])  # 限制长度
+                    f.write("\n\n--------------------\n")
+        except Exception as e:
+            print(f"保存对话到文件时出错: {str(e)}")
     
     def register_callback(self, event_type: str, callback: Callable):
         """注册回调函数

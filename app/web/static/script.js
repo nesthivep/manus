@@ -24,6 +24,25 @@ document.addEventListener('DOMContentLoaded', function() {
         logMessages.appendChild(thinkingStepsContainer);
     }
     
+    // 文件查看器相关元素
+    const fileViewer = document.getElementById('file-viewer');
+    const fileViewerTitle = document.getElementById('file-viewer-title');
+    const fileContent = document.getElementById('file-content');
+    const closeFileViewer = document.getElementById('close-file-viewer');
+    const filesList = document.getElementById('files-list');
+    
+    // 隐藏文件查看器（初始状态）
+    if (fileViewer) {
+        fileViewer.style.display = 'none';
+    }
+    
+    // 关闭文件查看器
+    if (closeFileViewer) {
+        closeFileViewer.addEventListener('click', function() {
+            fileViewer.style.display = 'none';
+        });
+    }
+    
     // 发送消息按钮点击事件
     sendButton.addEventListener('click', sendMessage);
     
@@ -48,6 +67,22 @@ document.addEventListener('DOMContentLoaded', function() {
         
         statusIndicator.textContent = '';
         statusIndicator.className = 'status-indicator';
+        
+        // 清空文件列表
+        if (filesList) {
+            filesList.innerHTML = '';
+        }
+        
+        // 隐藏文件查看器
+        if (fileViewer) {
+            fileViewer.style.display = 'none';
+        }
+
+        // 清空终端输出
+        const terminalContent = document.getElementById('terminal-content');
+        if (terminalContent) {
+            terminalContent.innerHTML = '';
+        }
     });
     
     // 停止按钮点击事件
@@ -138,53 +173,61 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 通过WebSocket连接接收实时更新
     function connectWebSocket(sessionId) {
-        // 关闭之前的WebSocket连接（如果有）
-        if (currentWebSocket) {
-            currentWebSocket.close();
-        }
-        
         try {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws/${sessionId}`;
-            
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const wsUrl = `${wsProtocol}://${window.location.host}/ws/${sessionId}`;
             const ws = new WebSocket(wsUrl);
             currentWebSocket = ws;
             
+            // 定义全局变量以跟踪系统日志消息
+            window.lastSystemLogMessage = null;
+            window.lastSystemLogTimestamp = 0;
+            
             ws.onopen = function() {
                 console.log('WebSocket连接已建立');
+                statusIndicator.textContent = '已连接到服务器...';
             };
             
             ws.onmessage = function(event) {
-                try {
-                    const data = JSON.parse(event.data);
+                const data = JSON.parse(event.data);
+                
+                // 单独处理聊天日志和系统日志
+                if (data.chat_logs && data.chat_logs.length > 0) {
+                    console.log('收到聊天日志消息:', data.chat_logs.length);
+                    // 将日志显示为聊天消息
+                    addSystemLogsToChat(data.chat_logs);
+                }
+                else if (data.system_logs && data.system_logs.length > 0) {
+                    console.log('收到系统日志消息:', data.system_logs.length);
+                    // 更新系统日志面板
+                    updateSystemLogs(data.system_logs);
                     
-                    // 处理思考步骤更新
-                    if (data.thinking_steps && data.thinking_steps.length > 0) {
-                        updateThinkingSteps(data.thinking_steps);
-                    }
-                    
-                    if (data.status === 'completed' && data.result) {
-                        addMessage(data.result, 'ai');
-                        statusIndicator.textContent = '';
-                        sendButton.disabled = false;
-                        stopButton.disabled = true;
-                        processingRequest = false;
-                        ws.close();
-                    } else if (data.status === 'error') {
-                        statusIndicator.textContent = '处理请求时发生错误';
-                        statusIndicator.className = 'status-indicator error';
-                        sendButton.disabled = false;
-                        stopButton.disabled = true;
-                        processingRequest = false;
-                        ws.close();
-                    }
-                    
-                    // 更新日志
-                    if (data.log && data.log.length > 0) {
-                        updateLog(data.log);
-                    }
-                } catch (error) {
-                    console.error('处理WebSocket消息错误:', error);
+                    // 同时将系统日志添加到对话窗口
+                    addSystemLogsToChat(data.system_logs);
+                }
+                
+                // 更新思考步骤
+                if (data.thinking_steps && data.thinking_steps.length > 0) {
+                    updateThinkingSteps(data.thinking_steps);
+                }
+                
+                // 更新终端输出
+                if (data.terminal_output && data.terminal_output.length > 0) {
+                    updateTerminalOutput(data.terminal_output);
+                }
+                
+                // 更新请求状态
+                if (data.status && data.status !== 'processing') {
+                    processingRequest = false;
+                    statusIndicator.textContent = data.status === 'completed' ? '' : `状态: ${data.status}`;
+                    statusIndicator.className = `status-indicator ${data.status}`;
+                    sendButton.disabled = false;
+                    stopButton.disabled = true;
+                }
+                
+                // 显示结果，如果有的话
+                if (data.result && !chatContainsResult(data.result)) {
+                    addMessage(data.result, 'ai');
                 }
             };
             
@@ -264,6 +307,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 如果还在处理中，继续轮询
                 attempts++;
                 setTimeout(poll, 3000);
+                
+                // 轮询终端输出
+                try {
+                    const terminalResponse = await fetch(`/api/terminal/${sessionId}`);
+                    if (terminalResponse.ok) {
+                        const terminalData = await terminalResponse.json();
+                        if (terminalData.terminal_output && terminalData.terminal_output.length > 0) {
+                            updateTerminalOutput(terminalData.terminal_output);
+                        }
+                    }
+                } catch (terminalError) {
+                    console.error('获取终端输出错误:', terminalError);
+                }
                 
             } catch (error) {
                 console.error('轮询错误:', error);
@@ -380,141 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 添加更新思考步骤的函数
-    function updateThinkingSteps(steps) {
-        if (!Array.isArray(steps) || steps.length === 0) return;
-        
-        steps.forEach(step => {
-            // 检查是否已经显示了这个步骤
-            const existingStep = document.querySelector(`.thinking-step[data-timestamp="${step.timestamp}"]`);
-            if (existingStep) return;
-            
-            // 创建新的思考步骤元素
-            const stepElement = document.createElement('div');
-            stepElement.className = `thinking-step ${step.type}`;
-            stepElement.dataset.timestamp = step.timestamp;
-            
-            const stepContent = document.createElement('div');
-            stepContent.className = 'thinking-step-content';
-            
-            // 根据步骤类型不同显示不同样式
-            if (step.type === 'communication') {
-                // 通信类型消息特殊处理
-                stepContent.innerHTML = `<span class="communication-direction">${step.message}:</span>`;
-                
-                const detailsElement = document.createElement('div');
-                detailsElement.className = 'communication-details';
-                detailsElement.textContent = step.details || '';
-                stepContent.appendChild(detailsElement);
-                
-            } else {
-                // 普通思考步骤
-                stepContent.textContent = step.message;
-                
-                // 如果有详细信息，显示展开/折叠控件
-                if (step.details) {
-                    const detailsToggle = document.createElement('div');
-                    detailsToggle.className = 'details-toggle';
-                    detailsToggle.textContent = '显示详情 ▼';
-                    detailsToggle.onclick = function() {
-                        const detailsElement = this.nextElementSibling;
-                        if (detailsElement.style.display === 'none') {
-                            detailsElement.style.display = 'block';
-                            this.textContent = '隐藏详情 ▲';
-                        } else {
-                            detailsElement.style.display = 'none';
-                            this.textContent = '显示详情 ▼';
-                        }
-                    };
-                    
-                    const detailsElement = document.createElement('div');
-                    detailsElement.className = 'step-details';
-                    detailsElement.textContent = step.details;
-                    detailsElement.style.display = 'none';
-                    
-                    stepContent.appendChild(detailsToggle);
-                    stepContent.appendChild(detailsElement);
-                }
-            }
-            
-            stepElement.appendChild(stepContent);
-            
-            // 根据类型添加到适当的容器
-            if (step.type === 'communication') {
-                // 如果不存在通信容器，创建一个
-                let communicationContainer = document.getElementById('communication-steps');
-                if (!communicationContainer) {
-                    communicationContainer = document.createElement('div');
-                    communicationContainer.id = 'communication-steps';
-                    communicationContainer.className = 'communication-steps';
-                    
-                    // 添加标题
-                    const title = document.createElement('h3');
-                    title.textContent = 'AI通信记录';
-                    communicationContainer.appendChild(title);
-                    
-                    // 添加到页面
-                    const logContainer = document.querySelector('.log-container');
-                    if (logContainer) {
-                        logContainer.appendChild(communicationContainer);
-                    }
-                }
-                communicationContainer.appendChild(stepElement);
-            } else {
-                thinkingStepsContainer.appendChild(stepElement);
-            }
-            
-            // 添加简单的淡入效果
-            setTimeout(() => {
-                stepElement.style.opacity = 1;
-            }, 10);
-        });
-        
-        // 滚动到底部
-        thinkingStepsContainer.scrollTop = thinkingStepsContainer.scrollHeight;
-        
-        // 如果有通信容器也滚动到底部
-        const communicationContainer = document.getElementById('communication-steps');
-        if (communicationContainer) {
-            communicationContainer.scrollTop = communicationContainer.scrollHeight;
-        }
-    }
-
-    // 添加更新进度条的函数
-    function updateProgressBar(percentage, currentStep) {
-        let progressBar = document.getElementById('progress-bar');
-        let progressText = document.getElementById('progress-text');
-        
-        if (!progressBar || !progressText) {
-            // 如果进度条不存在，创建一个
-            const progressContainer = document.createElement('div');
-            progressContainer.className = 'progress-container';
-            
-            progressBar = document.createElement('div');
-            progressBar.id = 'progress-bar';
-            progressBar.className = 'progress-bar';
-            
-            progressText = document.createElement('div');
-            progressText.id = 'progress-text';
-            progressText.className = 'progress-text';
-            
-            progressContainer.appendChild(progressBar);
-            progressContainer.appendChild(progressText);
-            
-            // 添加到页面
-            const logContainer = document.querySelector('.log-container');
-            if (logContainer) {
-                logContainer.insertBefore(progressContainer, logContainer.firstChild);
-            }
-        }
-        
-        // 设置进度条
-        progressBar.style.width = `${percentage}%`;
-        
-        // 设置进度文本
-        progressText.textContent = `${percentage}% - ${currentStep}`;
-    }
-
-    // 修改updateThinkingSteps函数，增强通信内容显示
     function updateThinkingSteps(steps) {
         if (!Array.isArray(steps) || steps.length === 0) return;
         
@@ -669,5 +590,349 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 保留换行并添加语法高亮
         return htmlEscaped.replace(/\n/g, '<br>');
+    }
+
+    // 新增：获取生成的文件列表
+    async function fetchGeneratedFiles() {
+        try {
+            const response = await fetch('/api/files');
+            if (!response.ok) {
+                throw new Error('获取文件列表失败');
+            }
+            
+            const data = await response.json();
+            
+            // 检查API是否返回工作区结构
+            if (data.workspaces) {
+                updateWorkspaceList(data.workspaces);
+            } else if (data.files) {
+                // 兼容旧格式
+                updateFilesList(data.files);
+            }
+        } catch (error) {
+            console.error('获取文件列表错误:', error);
+        }
+    }
+    
+    // 新增：显示工作区文件列表
+    function updateWorkspaceList(workspaces) {
+        if (!filesList) return;
+        
+        // 清空现有列表
+        filesList.innerHTML = '';
+        
+        if (!workspaces || workspaces.length === 0) {
+            filesList.innerHTML = '<div class="no-files">暂无工作区文件</div>';
+            return;
+        }
+        
+        // 创建工作区列表
+        const workspaceList = document.createElement('div');
+        workspaceList.className = 'workspace-list';
+        
+        workspaces.forEach(workspace => {
+            const workspaceItem = document.createElement('div');
+            workspaceItem.className = 'workspace-item';
+            
+            // 工作区标题
+            const workspaceHeader = document.createElement('div');
+            workspaceHeader.className = 'workspace-header';
+            
+            const timestamp = new Date(workspace.modified * 1000);
+            const formattedDate = timestamp.toLocaleDateString() + ' ' + timestamp.toLocaleTimeString();
+            
+            workspaceHeader.innerHTML = `
+                <div>${workspace.name}</div>
+                <div class="workspace-date">${formattedDate}</div>
+            `;
+            
+            // 工作区内容（文件列表）
+            const workspaceContent = document.createElement('div');
+            workspaceContent.className = 'workspace-content';
+            
+            // 添加每个文件
+            if (workspace.files && workspace.files.length > 0) {
+                workspace.files.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    
+                    // 确定文件图标
+                    let fileIcon = '📄';
+                    if (file.type === 'md') fileIcon = '📝';
+                    else if (file.type === 'html') fileIcon = '🌐';
+                    else if (file.type === 'css') fileIcon = '🎨';
+                    else if (file.type === 'js') fileIcon = '⚙️';
+                    else if (file.type === 'py') fileIcon = '🐍';
+                    else if (file.type === 'json') fileIcon = '📋';
+                    
+                    // 格式化修改时间
+                    const modifiedDate = new Date(file.modified * 1000).toLocaleString();
+                    
+                    fileItem.innerHTML = `
+                        <div class="file-icon">${fileIcon}</div>
+                        <div class="file-details">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-meta">${getReadableFileSize(file.size)} · ${modifiedDate}</div>
+                        </div>
+                    `;
+                    
+                    // 点击文件查看内容
+                    fileItem.addEventListener('click', () => viewFile(file.path));
+                    
+                    workspaceContent.appendChild(fileItem);
+                });
+            } else {
+                workspaceContent.innerHTML = '<div class="no-files">工作区内无文件</div>';
+            }
+            
+            // 切换工作区内容的展开/折叠
+            workspaceHeader.addEventListener('click', () => {
+                workspaceContent.classList.toggle('expanded');
+            });
+            
+            workspaceItem.appendChild(workspaceHeader);
+            workspaceItem.appendChild(workspaceContent);
+            workspaceList.appendChild(workspaceItem);
+        });
+        
+        filesList.appendChild(workspaceList);
+        
+        // 默认展开第一个工作区
+        const firstWorkspace = workspaceList.querySelector('.workspace-content');
+        if (firstWorkspace) {
+            firstWorkspace.classList.add('expanded');
+        }
+    }
+    
+    // 新增：显示文件列表
+    function updateFilesList(files) {
+        if (!filesList) return;
+        
+        // 清空现有列表
+        filesList.innerHTML = '';
+        
+        if (!files || files.length === 0) {
+            filesList.innerHTML = '<div class="no-files">暂无生成的文件</div>';
+            return;
+        }
+        
+        // 创建文件列表
+        files.forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            
+            // 确定文件图标
+            let fileIcon = '📄';
+            if (file.type === 'md') fileIcon = '📝';
+            else if (file.type === 'html') fileIcon = '🌐';
+            else if (file.type === 'css') fileIcon = '🎨';
+            else if (file.type === 'js') fileIcon = '⚙️';
+            
+            // 格式化修改时间
+            const modifiedDate = new Date(file.modified * 1000).toLocaleString();
+            
+            fileItem.innerHTML = `
+                <div class="file-icon">${fileIcon}</div>
+                <div class="file-details">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-meta">${getReadableFileSize(file.size)} · ${modifiedDate}</div>
+                </div>
+            `;
+            
+            // 点击文件查看内容
+            fileItem.addEventListener('click', () => viewFile(file.path));
+            
+            filesList.appendChild(fileItem);
+        });
+    }
+    
+    // 新增：获取并显示文件内容
+    async function viewFile(filePath) {
+        try {
+            const response = await fetch(`/api/files/${filePath}`);
+            if (!response.ok) {
+                throw new Error('获取文件内容失败');
+            }
+            
+            const data = await response.json();
+            
+            // 显示文件内容
+            if (fileViewer && fileViewerTitle && fileContent) {
+                fileViewerTitle.textContent = data.name;
+                fileContent.textContent = data.content; // 简单显示内容，可以扩展为语法高亮等
+                fileViewer.style.display = 'block';
+                
+                // 如果是代码文件，添加语法高亮类
+                fileContent.className = 'file-content';
+                if (['js', 'html', 'css'].includes(data.type)) {
+                    fileContent.classList.add(`language-${data.type}`);
+                }
+            }
+        } catch (error) {
+            console.error('获取文件内容错误:', error);
+            alert('获取文件内容失败: ' + error.message);
+        }
+    }
+    
+    // 工具函数：将字节大小格式化为人类可读格式
+    function getReadableFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + sizes[i];
+    }
+
+    // 初始加载文件列表
+    fetchGeneratedFiles();
+
+    // 终端输出相关元素
+    const terminalOutput = document.getElementById('terminal-output');
+    const terminalContent = document.getElementById('terminal-content');
+    const toggleTerminal = document.getElementById('toggle-terminal');
+    const clearTerminal = document.getElementById('clear-terminal');
+    
+    // 默认隐藏终端内容
+    if (terminalContent) {
+        terminalContent.style.display = 'none';
+    }
+    
+    // 切换终端显示状态
+    if (toggleTerminal) {
+        toggleTerminal.addEventListener('click', function() {
+            if (terminalContent.style.display === 'none') {
+                terminalContent.style.display = 'block';
+                toggleTerminal.textContent = '折叠';
+            } else {
+                terminalContent.style.display = 'none';
+                toggleTerminal.textContent = '展开';
+            }
+        });
+    }
+    
+    // 清空终端内容
+    if (clearTerminal) {
+        clearTerminal.addEventListener('click', function() {
+            if (terminalContent) {
+                terminalContent.innerHTML = '';
+            }
+        });
+    }
+
+    // 更新终端输出区域
+    function updateTerminalOutput(outputs) {
+        if (!Array.isArray(outputs) || outputs.length === 0 || !terminalContent) return;
+        
+        outputs.forEach(output => {
+            const lineElement = document.createElement('div');
+            lineElement.className = `terminal-line ${output.type}`;
+            lineElement.textContent = output.content;
+            
+            terminalContent.appendChild(lineElement);
+        });
+        
+        // 滚动到底部
+        terminalContent.scrollTop = terminalContent.scrollHeight;
+        
+        // 如果有新内容，显示终端和设置提示徽章
+        if (terminalOutput.style.display === 'none') {
+            const badge = document.createElement('span');
+            badge.className = 'terminal-badge';
+            badge.textContent = '新';
+            
+            const header = terminalOutput.querySelector('.terminal-header h3');
+            if (header && !header.querySelector('.terminal-badge')) {
+                header.appendChild(badge);
+            }
+        }
+    }
+
+    // 将系统日志更新到系统日志面板
+    function updateSystemLogs(logs) {
+        const systemLogsContainer = document.getElementById('systemLogsContainer');
+        if (!systemLogsContainer) return;
+        
+        // 清空"等待加载"消息
+        if (systemLogsContainer.querySelector('p')?.textContent === '等待日志加载...') {
+            systemLogsContainer.innerHTML = '';
+        }
+        
+        // 添加新日志
+        logs.forEach(log => {
+            const logLine = document.createElement('p');
+            logLine.className = 'log-line';
+            logLine.textContent = log;
+            systemLogsContainer.appendChild(logLine);
+        });
+        
+        // 滚动到底部
+        systemLogsContainer.scrollTop = systemLogsContainer.scrollHeight;
+    }
+
+    // 将系统日志作为聊天消息添加到对话窗口
+    function addSystemLogsToChat(logs) {
+        console.log('添加系统日志到聊天窗口:', logs.length);
+        
+        const chatMessages = document.getElementById('chat-messages');
+        if (!chatMessages) {
+            console.error('未找到聊天消息容器元素');
+            return;
+        }
+        
+        const now = Date.now();
+        
+        // 如果距离上一条系统日志消息不超过5秒，则合并显示
+        if (window.lastSystemLogMessage && 
+            window.lastSystemLogMessage.parentNode === chatMessages && 
+            now - window.lastSystemLogTimestamp < 5000) {
+            
+            // 获取已有的日志内容元素
+            const logContent = window.lastSystemLogMessage.querySelector('.system-log-content');
+            if (logContent) {
+                console.log('合并到现有消息');
+                // 追加新的日志内容
+                logContent.textContent += '\n' + logs.join('\n');
+                
+                // 更新时间戳
+                window.lastSystemLogTimestamp = now;
+                
+                // 滚动到底部
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                return;
+            }
+        }
+        
+        console.log('创建新的系统日志消息');
+        // 创建一个新的OpenManus回复消息
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message system-message';
+        
+        // 创建消息头部
+        const messageHeader = document.createElement('div');
+        messageHeader.className = 'message-header';
+        messageHeader.innerHTML = '<span class="avatar system">🤖</span><span class="sender">OpenManus</span>';
+        
+        // 创建消息内容
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content log-message';
+        
+        // 添加日志内容
+        const logContent = document.createElement('pre');
+        logContent.className = 'system-log-content';
+        logContent.textContent = logs.join('\n');
+        
+        // 组装消息
+        messageContent.appendChild(logContent);
+        messageDiv.appendChild(messageHeader);
+        messageDiv.appendChild(messageContent);
+        
+        // 添加到对话窗口
+        chatMessages.appendChild(messageDiv);
+        
+        // 更新最后的系统日志消息引用和时间戳
+        window.lastSystemLogMessage = messageDiv;
+        window.lastSystemLogTimestamp = now;
+        
+        // 滚动到底部
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 });
