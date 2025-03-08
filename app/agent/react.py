@@ -5,7 +5,8 @@ from pydantic import Field
 
 from app.agent.base import BaseAgent
 from app.llm import LLM
-from app.schema import AgentState, Memory
+from app.schema import Memory
+from app.agent.components.state_manager import AgentState
 
 
 class ReActAgent(BaseAgent, ABC):
@@ -17,7 +18,7 @@ class ReActAgent(BaseAgent, ABC):
 
     llm: Optional[LLM] = Field(default_factory=LLM)
     memory: Memory = Field(default_factory=Memory)
-    state: AgentState = AgentState.IDLE
+    # 移除直接定义的state属性，使用BaseAgent中的state_manager
 
     max_steps: int = 10
     current_step: int = 0

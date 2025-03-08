@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
-from contextlib import asynccontextmanager
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
 from app.llm import LLM
 from app.logger import logger
-from app.schema import AgentState, Memory, Message
+from app.schema import Message
+from .components.state_manager import StateManager, AgentState
+from .components.memory_manager import MemoryManager
 
 
 class BaseAgent(BaseModel, ABC):
@@ -30,16 +31,14 @@ class BaseAgent(BaseModel, ABC):
 
     # Dependencies
     llm: LLM = Field(default_factory=LLM, description="Language model instance")
-    memory: Memory = Field(default_factory=Memory, description="Agent's memory store")
-    state: AgentState = Field(
-        default=AgentState.IDLE, description="Current agent state"
-    )
+    memory: MemoryManager = Field(default_factory=MemoryManager, description="Agent's memory store")
+    state_manager: StateManager = Field(default_factory=StateManager, description="Agent's state manager")
 
     # Execution control
     max_steps: int = Field(default=10, description="Maximum steps before termination")
     current_step: int = Field(default=0, description="Current step in execution")
 
-    duplicate_threshold: int = 2
+
 
     class Config:
         arbitrary_types_allowed = True
@@ -50,35 +49,21 @@ class BaseAgent(BaseModel, ABC):
         """Initialize agent with default settings if not provided."""
         if self.llm is None or not isinstance(self.llm, LLM):
             self.llm = LLM(config_name=self.name.lower())
-        if not isinstance(self.memory, Memory):
-            self.memory = Memory()
+        if not isinstance(self.memory, MemoryManager):
+            self.memory = MemoryManager()
+        if not isinstance(self.state_manager, StateManager):
+            self.state_manager = StateManager()
         return self
 
-    @asynccontextmanager
-    async def state_context(self, new_state: AgentState):
-        """Context manager for safe agent state transitions.
+    @property
+    def state(self) -> AgentState:
+        """Get the current agent state."""
+        return self.state_manager.state
 
-        Args:
-            new_state: The state to transition to during the context.
-
-        Yields:
-            None: Allows execution within the new state.
-
-        Raises:
-            ValueError: If the new_state is invalid.
-        """
-        if not isinstance(new_state, AgentState):
-            raise ValueError(f"Invalid state: {new_state}")
-
-        previous_state = self.state
-        self.state = new_state
-        try:
-            yield
-        except Exception as e:
-            self.state = AgentState.ERROR  # Transition to ERROR on failure
-            raise e
-        finally:
-            self.state = previous_state  # Revert to previous state
+    @state.setter
+    def state(self, new_state: AgentState):
+        """Set the agent state."""
+        self.state_manager.state = new_state
 
     def update_memory(
         self,
@@ -129,7 +114,7 @@ class BaseAgent(BaseModel, ABC):
             self.update_memory("user", request)
 
         results: List[str] = []
-        async with self.state_context(AgentState.RUNNING):
+        async with self.state_manager.state_context(AgentState.RUNNING):
             while (
                 self.current_step < self.max_steps and self.state != AgentState.FINISHED
             ):
@@ -162,24 +147,6 @@ class BaseAgent(BaseModel, ABC):
         self.next_step_prompt = f"{stuck_prompt}\n{self.next_step_prompt}"
         logger.warning(f"Agent detected stuck state. Added prompt: {stuck_prompt}")
 
-    def is_stuck(self) -> bool:
-        """Check if the agent is stuck in a loop by detecting duplicate content"""
-        if len(self.memory.messages) < 2:
-            return False
-
-        last_message = self.memory.messages[-1]
-        if not last_message.content:
-            return False
-
-        # Count identical content occurrences
-        duplicate_count = sum(
-            1
-            for msg in reversed(self.memory.messages[:-1])
-            if msg.role == "assistant" and msg.content == last_message.content
-        )
-
-        return duplicate_count >= self.duplicate_threshold
-
     @property
     def messages(self) -> List[Message]:
         """Retrieve a list of messages from the agent's memory."""
@@ -189,3 +156,7 @@ class BaseAgent(BaseModel, ABC):
     def messages(self, value: List[Message]):
         """Set the list of messages in the agent's memory."""
         self.memory.messages = value
+
+    def is_stuck(self) -> bool:
+        """Check if the agent is stuck in a loop by detecting duplicate content."""
+        return self.memory.is_stuck()

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenManus - 智能代理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #4f46e5;
+            --dark-bg: #0f172a;
+            --text-primary: #f8fafc;
+        }
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #6366f1, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .hero-section {
+            background: radial-gradient(circle at center, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+        }
+    </style>
+</head>
+<body>
+    <header class="fixed w-full z-50 bg-opacity-90 bg-gray-900 backdrop-filter backdrop-blur-lg">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="text-2xl font-bold gradient-text">OpenManus</div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#features" class="text-gray-300 hover:text-white transition">特性</a>
+                    <a href="#architecture" class="text-gray-300 hover:text-white transition">架构</a>
+                    <a href="#demo" class="text-gray-300 hover:text-white transition">演示</a>
+                    <a href="#applications" class="text-gray-300 hover:text-white transition">应用场景</a>
+                </div>
+                <a href="https://github.com/mannaandpoem/OpenManus" target="_blank" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition">GitHub</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero-section min-h-screen flex items-center justify-center pt-20">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-5xl md:text-7xl font-bold mb-8 animate__animated animate__fadeIn">
+                    <span class="gradient-text">OpenManus</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-300 mb-12 animate__animated animate__fadeIn animate__delay-1s">
+                    新一代智能代理系统，为您打造无限可能
+                </p>
+                <div class="flex justify-center space-x-6 animate__animated animate__fadeIn animate__delay-2s">
+                    <a href="#demo" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition">立即体验</a>
+                    <a href="#features" class="px-8 py-3 border border-indigo-600 hover:bg-indigo-600 rounded-lg transition">了解更多</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="py-20 bg-gray-900">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-16 gradient-text">核心特性</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="feature-card p-8 rounded-xl">
+                        <div class="text-indigo-500 text-4xl mb-4">🤖</div>
+                        <h3 class="text-xl font-bold mb-4">多工具协同</h3>
+                        <p class="text-gray-400">集成多种工具和API，实现复杂任务的智能处理和自动化执行</p>
+                    </div>
+                    <div class="feature-card p-8 rounded-xl">
+                        <div class="text-indigo-500 text-4xl mb-4">🧠</div>
+                        <h3 class="text-xl font-bold mb-4">智能决策</h3>
+                        <p class="text-gray-400">基于先进的LLM模型，能够理解上下文并做出智能决策</p>
+                    </div>
+                    <div class="feature-card p-8 rounded-xl">
+                        <div class="text-indigo-500 text-4xl mb-4">🔄</div>
+                        <h3 class="text-xl font-bold mb-4">自适应学习</h3>
+                        <p class="text-gray-400">持续学习和优化，不断提升任务处理能力和效率</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="py-20">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-16 gradient-text">系统架构</h2>
+                <div class="relative h-96 bg-gray-800 rounded-xl overflow-hidden">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">🏗️</div>
+                            <p class="text-xl text-gray-400">模块化架构设计</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="demo" class="py-20 bg-gray-900">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-16 gradient-text">功能演示</h2>
+                <div class="max-w-4xl mx-auto bg-gray-800 rounded-xl p-8">
+                    <div class="aspect-w-16 aspect-h-9">
+                        <div class="flex items-center justify-center h-full">
+                            <div class="text-center">
+                                <div class="text-6xl mb-4">🎥</div>
+                                <p class="text-xl text-gray-400">交互式演示</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="applications" class="py-20">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-16 gradient-text">应用场景</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="feature-card p-8 rounded-xl">
+                        <h3 class="text-xl font-bold mb-4">智能助手</h3>
+                        <p class="text-gray-400">提供个性化的任务协助和信息处理服务</p>
+                    </div>
+                    <div class="feature-card p-8 rounded-xl">
+                        <h3 class="text-xl font-bold mb-4">自动化工作流</h3>
+                        <p class="text-gray-400">简化复杂的业务流程，提高工作效率</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-900 py-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-gray-400">© 2024 OpenManus. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate__animated', 'animate__fadeInUp');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.feature-card').forEach((el) => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

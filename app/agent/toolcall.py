@@ -6,7 +6,8 @@ from pydantic import Field
 from app.agent.react import ReActAgent
 from app.logger import logger
 from app.prompt.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
-from app.schema import AgentState, Message, ToolCall
+from app.schema import Message, ToolCall
+from app.agent.components.state_manager import AgentState
 from app.tool import CreateChatCompletion, Terminate, ToolCollection
 
 

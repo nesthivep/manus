@@ -1,22 +1,28 @@
-# Global LLM configuration
+# Global LLM configuration (默认使用 DeepSeek)
 [llm]
-model = "claude-3-5-sonnet"
-base_url = "https://api.openai.com/v1"
-api_key = "sk-..."
+model = "deepseek-chat"
+base_url = "https://api.deepseek.com/v1"
+api_key = ""  # 用你的新 DeepSeek API Key 替换这里
 max_tokens = 4096
-temperature = 0.0
+temperature = 0.7
+api_type = "Openai"  # DeepSeek 使用 OpenAI 兼容 API
+api_version = "2023-07-01"
 
-# [llm] #AZURE OPENAI:
-# api_type= 'azure'
-# model = "YOUR_MODEL_NAME" #"gpt-4o-mini"
-# base_url = "{YOUR_AZURE_ENDPOINT.rstrip('/')}/openai/deployments/{AZURE_DEPOLYMENT_ID}"
-# api_key = "AZURE API KEY"
-# max_tokens = 8096
-# temperature = 0.0
-# api_version="AZURE API VERSION" #"2024-08-01-preview"
 
-# Optional configuration for specific LLM models
-[llm.vision]
-model = "claude-3-5-sonnet"
+# 备用 OpenAI GPT-4o 配置
+[llm.openai]
+model = "gpt-4o"
 base_url = "https://api.openai.com/v1"
-api_key = "sk-..."
+api_key = ""  # 替换为你的 OpenAI API Key
+max_tokens = 4096
+temperature = 0.7
+api_type = "Openai"
+api_version = "2023-07-01"
+
+# 视觉模型（使用 GPT-4o）
+[llm.vision]
+model = "gpt-4o"
+base_url = "https://api.openai.com/v1"
+api_key = ""  # 替换为你的 OpenAI API Key
+api_type = "Openai"
+api_version = "2023-07-01"

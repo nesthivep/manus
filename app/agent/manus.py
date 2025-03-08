@@ -32,3 +32,13 @@ class Manus(ToolCallAgent):
             PythonExecute(), GoogleSearch(), BrowserUseTool(), FileSaver(), Terminate()
         )
     )
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._initialize_state_context()
+
+    def _initialize_state_context(self):
+        """Initialize state context and related attributes."""
+        if not hasattr(self, 'state_manager'):
+            self.state_manager = StateManager()
+        self.state_context = self.state_manager.state_context
