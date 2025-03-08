@@ -36,6 +36,9 @@ async def interactive_mode(mode: str = "agent"):
             if prompt.lower() == "exit":
                 logger.info("Goodbye!")
                 break
+            if prompt.strip().isspace():
+                logger.warning("Skipping empty prompt.")
+                continue
                 
             logger.info("Processing your request...")
             result = await (run_agent(agent, prompt) if mode == "agent" else run_flow(agent, prompt))
