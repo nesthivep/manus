@@ -21,6 +21,7 @@ content extraction, and tab management. Supported actions include:
 - 'input_text': Input text into an element
 - 'screenshot': Capture a screenshot
 - 'get_html': Get page HTML content
+- 'get_text': Get page text content
 - 'execute_js': Execute JavaScript code
 - 'scroll': Scroll the page
 - 'switch_tab': Switch to a specific tab
@@ -44,6 +45,7 @@ class BrowserUseTool(BaseTool):
                     "input_text",
                     "screenshot",
                     "get_html",
+                    "get_text",
                     "execute_js",
                     "scroll",
                     "switch_tab",
@@ -186,9 +188,15 @@ class BrowserUseTool(BaseTool):
 
                 elif action == "get_html":
                     html = await context.get_page_html()
+                    truncated = html[:2000] + \
+                        "..." if len(html) > 2000 else html
+                    return ToolResult(output=truncated)
+
+                elif action == "get_text":
+                    html = await context.get_page_html()
                     extracted_text = self.extract_page_text(html)
                     truncated = extracted_text[:2000] + \
-                        "..." if len(extracted_text) > 2000 else html
+                        "..." if len(extracted_text) > 2000 else extracted_text
                     return ToolResult(output=truncated)
 
                 elif action == "execute_js":
