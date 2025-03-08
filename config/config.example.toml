@@ -23,8 +23,8 @@ api_key = "sk-..."
 
 
 [web_search]
-# TODO 改造成统一的搜索入口，兼容博查、夸克、bing等，此处暂时提高博查
-open_web_search = false  # 控制是否启用联网搜索工具。设置为True时，允许使用联网搜索功能，但是否实际调用将根据LLM的需求决定。
-api_url = "https://api.bochaai.com/v1/web-search"   # 搜索 API 地址，默认从环境变量 WEB_SEARCH_API_URL 获取
-api_key = ""   # 搜索 API Key，默认从环境变量 WEB_SEARCH_API_KEY 获取
-num_results = 10  # 默认返回 10 条搜索结果，可从环境变量 WEB_SEARCH_NUM_RESULTS 读取
+# TODO: Modify to create a unified search entry that supports Bocha, Quark, Bing, etc. Currently, Bocha is supported.
+open_web_search = false  # Controls whether the web search tool is enabled. When set to True, web search functionality is allowed, but whether it is actually called depends on the LLM's requirements.
+api_url = "https://api.bochaai.com/v1/web-search"   # Search API URL
+api_key = ""   # Search API Key
+num_results = 5  # Default to return 5 search results
