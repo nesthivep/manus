@@ -72,11 +72,19 @@ api_key = "sk-..."  # Replace with your actual API key
 ## Quick Start
 One line for run OpenManus:
 
+命令行模式:
 ```bash
 python main.py
 ```
 
-Then input your idea via terminal!
+Web界面模式:
+```bash
+python main.py --web
+# 或直接使用
+python web_run.py
+```
+
+Then input your idea via terminal or web browser!
 
 For unstable version, you also can run:
 

@@ -1,0 +1,79 @@
+import uvicorn
+import os
+import sys
+import argparse
+from pathlib import Path
+
+# 检查WebSocket依赖
+def check_websocket_dependencies():
+    try:
+        import websockets
+        return True
+    except ImportError:
+        try:
+            import wsproto
+            return True
+        except ImportError:
+            print("\n⚠️ 警告: 缺少WebSocket支持库!")
+            print("请安装WebSocket依赖以启用实时通讯功能:")
+            print("    pip install 'uvicorn[standard]'")
+            print("或者:")
+            print("    pip install websockets\n")
+            choice = input("是否继续启动应用?(y/n): ")
+            return choice.lower() == 'y'
+
+# 确保目录结构存在
+def ensure_directories():
+    # 创建templates目录
+    templates_dir = Path("app/web/templates")
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 创建static目录
+    static_dir = Path("app/web/static")
+    static_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 确保__init__.py文件存在
+    init_file = Path("app/web/__init__.py")
+    if not init_file.exists():
+        init_file.touch()
+
+if __name__ == "__main__":
+    # 添加命令行参数
+    parser = argparse.ArgumentParser(description="OpenManus Web应用服务器")
+    parser.add_argument(
+        "--no-browser", 
+        action="store_true", 
+        help="启动时不自动打开浏览器"
+    )
+    parser.add_argument(
+        "--port", 
+        type=int, 
+        default=8000,
+        help="服务器监听端口号 (默认: 8000)"
+    )
+    
+    args = parser.parse_args()
+    
+    ensure_directories()
+    
+    if not check_websocket_dependencies():
+        print("退出应用。请安装必要的依赖后重试。")
+        sys.exit(1)
+    
+    # 设置环境变量以控制是否自动打开浏览器
+    if args.no_browser:
+        os.environ["AUTO_OPEN_BROWSER"] = "0"
+    else:
+        os.environ["AUTO_OPEN_BROWSER"] = "1"
+    
+    port = args.port
+    
+    print(f"🚀 OpenManus Web 应用正在启动...")
+    print(f"访问 http://localhost:{port} 开始使用")
+    
+    uvicorn.run(
+        "app.web.app:app", 
+        host="0.0.0.0", 
+        port=port, 
+        reload=True
+    )

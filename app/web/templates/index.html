@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenManus Web</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>OpenManus 🙋</h1>
+            <p class="subtitle">AI智能助手 - 网页版</p>
+        </header>
+        
+        <main>
+            <div class="workspace">
+                <div class="log-container">
+                    <h2>日志</h2>
+                    <div id="log-messages" class="log-messages"></div>
+                </div>
+                <div class="chat-container">
+                    <h2>对话</h2>
+                    <div id="chat-messages" class="chat-messages"></div>
+                    
+                    <div class="input-area">
+                        <textarea id="user-input" placeholder="输入您的问题或指令..." rows="3"></textarea>
+                        <div class="button-area">
+                            <button id="send-btn" class="primary-btn">发送</button>
+                            <button id="clear-btn" class="secondary-btn">清除对话</button>
+                            <button id="stop-btn" class="secondary-btn">停止</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="status-indicator" class="status-indicator"></div>
+        </main>
+        
+        <footer>
+            <p>Powered by OpenManus - <a href="https://github.com/mannaandpoem/OpenManus" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', path='/script.js') }}"></script>
+</body>
+</html>
