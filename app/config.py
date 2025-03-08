@@ -1,7 +1,7 @@
 import threading
 import tomllib
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -23,6 +23,7 @@ class LLMSettings(BaseModel):
     temperature: float = Field(1.0, description="Sampling temperature")
     api_type: str = Field(..., description="AzureOpenai or Openai")
     api_version: str = Field(..., description="Azure Openai version if AzureOpenai")
+    chrome_instance_path: Optional[str]  = Field(None, description="Local Chrome installation path")
 
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
@@ -79,7 +80,7 @@ class Config:
             "temperature": base_llm.get("temperature", 1.0),
             "api_type": base_llm.get("api_type", ""),
             "api_version": base_llm.get("api_version", ""),
-
+            "chrome_instance_path": base_llm.get("chrome_instance_path", None),
         }
 
         config_dict = {
