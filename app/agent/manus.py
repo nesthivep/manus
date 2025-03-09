@@ -38,6 +38,7 @@ class Manus(ToolCallAgent):
     def __init__(self):
         super().__init__()
         # Flag to control whether WebSearch is included in the available tools
+        tools = [PythonExecute(), GoogleSearch(), BrowserUseTool(), FileSaver(), Terminate()]
         if config.web_search.open_web_search:
-            # Conditionally include WebSearch in the available tools
-            self.available_tools.tools += (WebSearch(),)
+            tools.append(WebSearch())
+        self.available_tools = ToolCollection(*tools)
