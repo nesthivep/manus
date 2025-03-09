@@ -29,7 +29,7 @@ class WebSearchSettings(BaseModel):
     open_web_search:bool = Field(False, description="Is open web search")
     api_url: str = Field(..., description="Web search API URL")
     api_key: str = Field(..., description="Web search API Key")
-    num_results: int = Field(10, description="Default number of search results")
+    num_results: int = Field(5, description="Default number of search results")
 
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
