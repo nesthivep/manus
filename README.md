@@ -42,6 +42,12 @@ cd OpenManus
 pip install -r requirements.txt
 ```
 
+4. Install the required components:
+
+```bash
+playwright install
+```
+
 ## Configuration
 
 OpenManus requires configuration for the LLM APIs it uses. Follow these steps to set up your configuration:

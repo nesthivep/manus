@@ -60,6 +60,9 @@ class ToolCallAgent(ReActAgent):
             )
 
         try:
+            logger.info(
+                f"🧰 tool_choices: {self.tool_choices}, tool_calls: {self.tool_calls}"
+            )
             # Handle different tool_choices modes
             if self.tool_choices == "none":
                 if response.tool_calls:
@@ -86,6 +89,7 @@ class ToolCallAgent(ReActAgent):
 
             # For 'auto' mode, continue with content if no commands but content exists
             if self.tool_choices == "auto" and not self.tool_calls:
+                self.state = AgentState.FINISHED
                 return bool(response.content)
 
             return bool(self.tool_calls)
