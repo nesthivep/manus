@@ -180,7 +180,7 @@ class BrowserUseTool(BaseTool):
 
                 elif action == "get_html":
                     html = await context.get_page_html()
-                    truncated = html[:20000] + "..." if len(html) > 20000 else html
+                    truncated = html[:2000] + "..." if len(html) > 2000 else html
                     return ToolResult(output=truncated)
 
                 elif action == "get_text":

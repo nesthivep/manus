@@ -6,13 +6,6 @@
 # max_tokens = 4096
 # temperature = 0.0
 
-[llm]
-model = "gemini-2.0-flash"
-base_url = "https://generativelanguage.googleapis.com/v1beta"
-api_key = "AIzaSyCWWuTe1Wr351h-8HkOx04tnbSARq4m--w"
-max_tokens = 8192
-temperature = 0.0
-
 # [llm] #AZURE OPENAI:
 # api_type= 'azure'
 # model = "YOUR_MODEL_NAME" #"gpt-4o-mini"
