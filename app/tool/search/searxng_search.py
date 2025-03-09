@@ -35,7 +35,7 @@ class SearxNGSearch(BaseSearch):
             async with session.get(url) as response:
                 if response.status == 200:
                     data = await response.json()
-                    logger.debug(f"Received raw data: {json.dumps(data, ensure_ascii=False, indent=2)}")
+                    # logger.debug(f"Received raw data: {json.dumps(data, ensure_ascii=False, indent=2)}")
                     
                     results = [
                         result['url']
