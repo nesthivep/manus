@@ -39,6 +39,11 @@ cd OpenManus
 ```bash
 pip install -r requirements.txt
 ```
+4. Install the required components:
+
+```bash
+playwright install
+```
 
 ## Configuration
 

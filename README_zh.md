@@ -40,6 +40,12 @@ cd OpenManus
 pip install -r requirements.txt
 ```
 
+4. 安装运行需要的组件：
+
+```bash
+playwright install
+```
+
 ## 配置说明
 
 OpenManus 需要配置使用的 LLM API，请按以下步骤设置：
