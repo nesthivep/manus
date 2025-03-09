@@ -5,14 +5,21 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Any
-from app.logger import logger
 
 from fastapi import FastAPI, File, Form, UploadFile, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+from loguru import logger as _logger
 
 from app.agent.manus import Manus
 from app.config import PROJECT_ROOT
-from app.logger import define_log_level, logger
+from app.logger import (
+    define_log_level, 
+    logger, 
+    register_websocket_manager, 
+    unregister_websocket_manager, 
+    websocket_sink,
+    _print_level
+)
 from app.prompt.templates import standard_prompt_template, file_upload_prompt_template
 
 
@@ -58,6 +65,16 @@ class ConnectionManager:
 # Create the FastAPI application
 app = FastAPI()
 manager = ConnectionManager()
+
+# Register the connection manager with the logger
+register_websocket_manager("websocket_server", manager)
+
+@app.on_event("startup")
+async def startup_event():
+    """Add the websocket sink when the FastAPI app starts."""
+    # Now we have a running event loop
+    _logger.add(websocket_sink, level=_print_level, enqueue=True)
+    logger.info("WebSocket logging sink registered")
 
 
 class WebSocketLogger:
@@ -189,4 +206,13 @@ async def upload_files(client_id: str, files: List[UploadFile] = File(...),
 def start_server(host: str = "0.0.0.0", port: int = 8000):
     """Start the FastAPI server with uvicorn."""
     import uvicorn
-    uvicorn.run(app, host=host, port=port)
+    
+    # Setup
+    logger.info(f"Starting WebSocket server on {host}:{port}")
+    
+    # We'll add the websocket sink in app startup event instead
+    try:
+        uvicorn.run(app, host=host, port=port)
+    finally:
+        # Cleanup when server stops
+        unregister_websocket_manager("websocket_server")
