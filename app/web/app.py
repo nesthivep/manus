@@ -140,6 +140,11 @@ class SessionRequest(BaseModel):
 async def get_home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+@app.get("/new", response_class=HTMLResponse)
+async def get_new_interface(request: Request):
+    """新版界面入口"""
+    return templates.TemplateResponse("new_index.html", {"request": request})
+
 @app.post("/api/chat")
 async def create_chat_session(session_req: SessionRequest, background_tasks: BackgroundTasks):
     session_id = str(uuid.uuid4())
