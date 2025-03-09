@@ -22,7 +22,16 @@ base_url = "https://api.openai.com/v1"
 api_key = "sk-..."
 
 
-#[llm] google gemini
+#[llm] # gemini
+#model = "gemini-1.5-flash"
+#base_url = "https://generativelanguage.googleapis.com/v1"
+#api_key = "sk-..."
+#max_tokens = 4096
+#temperature = 0.0
+#
+#
+## Optional configuration for specific LLM models
+#[llm.vision]
 #model = "gemini-1.5-flash"
 #base_url = "https://generativelanguage.googleapis.com/v1"
 #api_key = "sk-..."
