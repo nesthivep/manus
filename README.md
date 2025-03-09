@@ -9,11 +9,9 @@
 # OpenManus 🙋
 Manus is incredible, but OpenManus can achieve any ideas without an Invite Code 🛫!
 
-Our team members [@mannaandpoem](https://github.com/mannaandpoem) [@XiangJinyu](https://github.com/XiangJinyu) [@MoshiQAQ](https://github.com/MoshiQAQ) [@didiforgithub](https://github.com/didiforgithub) from [@MetaGPT](https://github.com/geekan/MetaGPT) built it within 3 hours!
+**New Feature:** The brand new Web application interface, passionately crafted by **Yunqi AI**, is now available! Interact with OpenManus more intuitively and conveniently, bringing your ideas to life instantly!
 
-It's a simple implementation, so we welcome any suggestions, contributions, and feedback!
-
-**New Feature:** We've now introduced a brand new Web application interface that allows you to interact with OpenManus more intuitively and conveniently!
+Thanks to the MetaGPT team for providing the basic framework for OpenManus.
 
 Enjoy your own agent with OpenManus!
 
@@ -81,7 +79,7 @@ python main.py
 ```
 
 ### Web Interface Mode
-Experience the new interactive web interface:
+Experience the new interactive web interface developed by **Yunqi AI**:
 
 ```bash
 python main.py --web
@@ -125,4 +123,4 @@ Join our networking group on Feishu and share your experience with other develop
 
 Thanks to [anthropic-computer-use](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo) and [broswer-use](https://github.com/browser-use/browser-use) for providing basic support for this project!
 
-OpenManus is built by contributors from MetaGPT. Huge thanks to this agent community!
+OpenManus is built by **Yunqi AI** based on the framework from MetaGPT community. Huge thanks to this agent community!

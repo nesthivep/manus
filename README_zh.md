@@ -10,11 +10,9 @@
 
 Manus 非常棒，但 OpenManus 无需邀请码即可实现任何创意 🛫！
 
-我们来自 [@MetaGPT](https://github.com/geekan/MetaGPT) 的团队成员 [@mannaandpoem](https://github.com/mannaandpoem) [@XiangJinyu](https://github.com/XiangJinyu) [@MoshiQAQ](https://github.com/MoshiQAQ) [@didiforgithub](https://github.com/didiforgithub) 在 3 小时内完成了开发！
+**新功能：** 由 **云栖AI** 倾力打造的全新Web应用界面现已推出！更直观、便捷地与OpenManus进行交互，让您的创意即刻实现！
 
-这是一个简洁的实现方案，欢迎任何建议、贡献和反馈！
-
-**新功能：** 我们现在推出了全新的Web应用界面，让您可以更直观、便捷地与OpenManus进行交互！
+感谢 MetaGPT 团队提供的 OpenManus 基础框架。
 
 用 OpenManus 开启你的智能体之旅吧！
 
@@ -82,7 +80,7 @@ python main.py
 ```
 
 ### Web 界面模式
-体验全新的Web交互界面：
+体验由 **云栖AI** 开发的全新Web交互界面：
 
 ```bash
 python main.py --web
@@ -126,4 +124,4 @@ python run_flow.py
 
 特别感谢 [anthropic-computer-use](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo) 和 [broswer-use](https://github.com/browser-use/browser-use) 为本项目提供的基础支持！
 
-OpenManus 由 MetaGPT 社区的贡献者共同构建，感谢这个充满活力的智能体开发者社区！
+OpenManus 由 **云栖AI** 基于 MetaGPT 社区的框架共同构建，感谢这个充满活力的智能体开发者社区！
