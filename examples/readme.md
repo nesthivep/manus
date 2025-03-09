@@ -12,3 +12,5 @@ I need a 7-day Japan itinerary for April 15-23 from Seattle, with a $2500-5000 b
 ![alt text](./pictures/japan-travel-plan-1.png)
 
 ![alt text](./pictures/japan-travel-plan-2.png)
+
+
