@@ -78,31 +78,56 @@ uv pip install -r requirements.txt
 
 ## Configuration
 
-OpenManus requires configuration for the LLM APIs it uses. Follow these steps to set up your configuration:
+### Configuration Update
+OpenManus now supports more flexible configuration for Agents and Tools, all managed centrally in the `config.toml` file.
 
-1. Create a `config.toml` file in the `config` directory (you can copy from the example):
-
+#### 1. Copy the Configuration Template
+First, copy the example configuration file:
 ```bash
 cp config/config.example.toml config/config.toml
 ```
 
-2. Edit `config/config.toml` to add your API keys and customize settings:
-
+#### 2. Configure LLM
+The `llm` section in `config/config.toml` defines the parameters for the language model, such as:
 ```toml
-# Global LLM configuration
 [llm]
 model = "gpt-4o"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."  # Replace with your actual API key
 max_tokens = 4096
 temperature = 0.0
-
-# Optional configuration for specific LLM models
-[llm.vision]
-model = "gpt-4o"
-base_url = "https://api.openai.com/v1"
-api_key = "sk-..."  # Replace with your actual API key
 ```
+
+#### 3. Configure Agents
+The `agent` section allows customization of each agent’s tools, system prompts, and execution limits. For example:
+```toml
+[agent.agents.Manus]
+available_tools = ["python_execute", "baidu_search", "browser_use_tool", "file_saver", "terminate"]
+system_prompt = "You are OpenManus, an all-capable AI assistant..."
+next_step_prompt = """You can interact with the computer using PythonExecute..."""
+```
+In this configuration:
+- `available_tools` specifies which tools the agent can use.
+- `system_prompt` defines the agent’s default system prompt.
+- `next_step_prompt` provides guidance on how the agent should execute the next steps.
+
+#### 4. Configure Tools
+All tools are now managed under the `tool` section. For example:
+```toml
+[tool.tools.baidu_search]
+name="baidu_search"
+
+[tool.tools.brave_search]
+name="brave_search"
+config = { api_key = "your brave search api key" }
+
+[tool.tools.file_saver]
+name="file_saver"
+config = { save_path = "workspace/output" }
+```
+Where:
+- `name` defines the tool’s name.
+- `config` allows specifying additional tool settings, such as `file_saver` having a configurable `save_path`.
 
 ## Quick Start
 
