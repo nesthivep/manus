@@ -28,9 +28,6 @@ class Manus(ToolCallAgent):
     system_prompt: str = SYSTEM_PROMPT
     next_step_prompt: str = NEXT_STEP_PROMPT
 
-    # Flag to control whether WebSearch is included in the available tools
-    use_web_search = config.web_search.open_web_search # Add a flag to control inclusion of WebSearch
-
     # Add general-purpose tools to the tool collection
     available_tools: ToolCollection = Field(
         default_factory=lambda: ToolCollection(
@@ -40,6 +37,7 @@ class Manus(ToolCallAgent):
 
     def __init__(self):
         super().__init__()
-        if self.use_web_search:
+        # Flag to control whether WebSearch is included in the available tools
+        if config.web_search.open_web_search:
             # Conditionally include WebSearch in the available tools
             self.available_tools.tools += (WebSearch(),)
