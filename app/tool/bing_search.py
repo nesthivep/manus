@@ -1,6 +1,7 @@
 import asyncio
 from typing import List
 import requests
+from app.logger import logger
 from bs4 import BeautifulSoup
 from app.tool.base import BaseTool
 
@@ -86,8 +87,21 @@ The tool returns a list of URLs that match the search query.
 
     def _parse_html(self, url: str, rank_start: int = 0, first: int = 1) -> tuple:
         """
-        Parse Bing search result HTML synchronously.
-        Returns a tuple of (list of results, next_url).
+        Parse Bing search result HTML synchronously to extract search results and the next page URL.
+
+        Args:
+            url (str): The URL of the Bing search results page to parse.
+            rank_start (int, optional): The starting rank for numbering the search results. Defaults to 0.
+            first (int, optional): Unused parameter (possibly legacy). Defaults to 1.
+        Returns:
+            tuple: A tuple containing:
+                - list: A list of dictionaries with keys 'title', 'abstract', 'url', and 'rank' for each result.
+                - str or None: The URL of the next results page, or None if there is no next page.
+        Example:
+            This function is called by `execute` in the following way:
+            ```python
+            results, next_url = self._parse_html(url, rank_start=0)
+            ```
         """
         try:
             res = self.session.get(url=url)
@@ -128,7 +142,7 @@ The tool returns a list of URLs that match the search query.
             next_url = BING_HOST_URL + next_btn["href"]
             return list_data, next_url
         except Exception as e:
-            print(f"Error parsing HTML: {e}")
+            logger.warning(f"Error parsing HTML: {e}")
             return [], None
 
     async def execute(self, query: str, num_results: int = 10) -> List[str]:
@@ -147,13 +161,3 @@ The tool returns a list of URLs that match the search query.
             None, lambda: self._search_sync(query, num_results=num_results)
         )
         return links
-
-
-# if __name__ == "__main__":
-#     async def test():
-#         tool = BingSearch()
-#         results = await tool.execute(query="python", num_results=3)
-#         for i, url in enumerate(results, 1):
-#             print(f"{i}. {url}")
-#
-#     asyncio.run(test())
