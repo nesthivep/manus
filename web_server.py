@@ -1,187 +1,149 @@
 import asyncio
-import os
 import sys
-import io
+import os
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
 from pathlib import Path
-import threading
-import queue
-import time
+from loguru import logger as loguru_logger
 
 from app.agent.manus import Manus
 from app.flow.base import FlowType
 from app.flow.flow_factory import FlowFactory
-from app.logger import logger
+from app.logger import logger, define_log_level
 
-# 创建一个自定义日志处理器类，用于捕获日志并发送到WebSocket
-class WebSocketLogHandler:
-    def __init__(self, websocket):
-        self.websocket = websocket
-        self.queue = queue.Queue()
-        self.running = False
-        self.thread = None
+# 活跃的 WebSocket 连接集合
+active_websockets = set()
+
+# WebSocket 日志 sink
+async def websocket_sink(message):
+    record = message.record
+    log_entry = f"{record['time'].strftime('%Y-%m-%d %H:%M:%S')} | {record['level'].name} | {record['message']}"
     
-    async def send_log(self, message):
-        if self.websocket and message:
-            try:
-                await self.websocket.send_text(f"LOG: {message}")
-            except Exception as e:
-                print(f"WebSocket发送日志失败: {str(e)}")
-    
-    def start(self):
-        self.running = True
-        self.thread = threading.Thread(target=self._capture_logs)
-        self.thread.daemon = True
-        self.thread.start()
-    
-    def stop(self):
-        self.running = False
-        if self.thread:
-            self.thread.join(timeout=1)
-    
-    def _capture_logs(self):
-        # 重定向stdout和stderr
-        original_stdout = sys.stdout
-        original_stderr = sys.stderr
-        
-        # 使用一个管道来捕获输出
-        pipe_out, pipe_in = os.pipe()
-        
-        # 创建新的stdout和stderr
-        stdout_fd = os.dup(sys.stdout.fileno())
-        stderr_fd = os.dup(sys.stderr.fileno())
-        
-        # 重定向到管道
-        os.dup2(pipe_in, sys.stdout.fileno())
-        os.dup2(pipe_in, sys.stderr.fileno())
-        
-        # 异步读取和发送日志
-        def read_pipe():
-            pipe_reader = os.fdopen(pipe_out, 'r')
-            while self.running:
-                try:
-                    line = pipe_reader.readline()
-                    if line:
-                        self.queue.put(line.rstrip())
-                    else:
-                        time.sleep(0.1)
-                except Exception as e:
-                    print(f"读取日志失败: {str(e)}")
-        
-        # 启动读取线程
-        read_thread = threading.Thread(target=read_pipe)
-        read_thread.daemon = True
-        read_thread.start()
-        
+    websockets_to_remove = set()
+    for ws in active_websockets:
         try:
-            # 不断将日志从队列发送到WebSocket
-            while self.running:
-                try:
-                    # 非阻塞获取日志
-                    while not self.queue.empty():
-                        log = self.queue.get_nowait()
-                        asyncio.run(self.send_log(log))
-                    time.sleep(0.1)
-                except Exception as e:
-                    print(f"处理日志队列失败: {str(e)}")
-        finally:
-            # 恢复原始stdout和stderr
-            os.dup2(stdout_fd, sys.stdout.fileno())
-            os.dup2(stderr_fd, sys.stderr.fileno())
-            os.close(stdout_fd)
-            os.close(stderr_fd)
-            os.close(pipe_in)
-            
-            # 停止读取线程
-            self.running = False
-            read_thread.join(timeout=1)
+            await ws.send_text(f"LOG: {log_entry}")
+        except Exception:
+            websockets_to_remove.add(ws)
+    
+    for ws in websockets_to_remove:
+        active_websockets.remove(ws)
 
+# 线程安全的 sink 适配器
+class WebSocketSink:
+    def __init__(self):
+        self.loop = None
+    
+    def __call__(self, message):
+        if self.loop is None:
+            try:
+                self.loop = asyncio.get_running_loop()
+            except RuntimeError:
+                self.loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(self.loop)
+        
+        asyncio.run_coroutine_threadsafe(websocket_sink(message), self.loop)
+        return message["message"]
+
+# 创建 FastAPI 应用
 app = FastAPI(title="OpenManus Web UI")
 
-# 创建templates
+# 创建 templates 和 static 目录
 current_dir = Path(__file__).resolve().parent
 templates_dir = current_dir / "templates"
+static_dir = current_dir / "static"
 
 # 确保目录存在
 templates_dir.mkdir(exist_ok=True)
+static_dir.mkdir(exist_ok=True)
 
 # 设置模板和静态文件
 templates = Jinja2Templates(directory=str(templates_dir))
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
+# 配置日志系统
+@app.on_event("startup")
+async def startup_event():
+    # 配置 loguru 使用 WebSocket sink
+    loguru_logger.remove()
+    loguru_logger.add(sys.stdout, level="INFO")
+    
+    ws_sink = WebSocketSink()
+    loguru_logger.add(ws_sink, level="INFO")
+    
+    # 配置 app logger
+    logger.remove()
+    logger.add(sys.stdout, level="INFO")
+    logger.add(ws_sink, level="INFO")
+    
+    logger.info("Web服务器已启动，等待连接...")
 
 @app.get("/", response_class=HTMLResponse)
 async def get_home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     
-    # 创建日志处理器并启动
-    log_handler = WebSocketLogHandler(websocket)
-    log_handler.start()
+    # 将 WebSocket 添加到活跃连接集合
+    active_websockets.add(websocket)
+    
+    # 发送欢迎消息
+    await websocket.send_text("LOG: WebSocket连接已建立，系统准备就绪")
+    logger.info("新的WebSocket连接已建立")
     
     try:
-        # 创建Manus代理
+        # 创建 Manus 代理
         agent = Manus()
         
+        # 集成 main.py 的功能循环
         while True:
-            # 接收用户输入
-            prompt = await websocket.receive_text()
-            
-            if prompt.lower() in ["exit", "quit"]:
-                await websocket.send_text("会话已结束")
-                break
-                
-            if not prompt.strip():
-                await websocket.send_text("请输入有效的提示")
-                continue
-                
-            # 发送处理消息
-            await websocket.send_text("正在处理您的请求...")
-            
             try:
-                # 执行代理
-                await websocket.send_text("LOG: 开始处理请求...")
-                result = await agent.run(prompt)
-                # 发送结果
-                await websocket.send_text(f"RESULT: {str(result)}")
+                # 接收用户输入
+                prompt = await websocket.receive_text()
+                
+                if prompt.lower() in ["exit", "quit"]:
+                    await websocket.send_text("会话已结束")
+                    logger.info("用户主动结束会话")
+                    break
+                    
+                if not prompt.strip():
+                    await websocket.send_text("请输入有效的提示")
+                    continue
+                
+                # 发送处理消息
+                await websocket.send_text("正在处理您的请求...")
+                logger.info(f"接收到用户请求: {prompt[:50]}...")
+                
+                try:
+                    # 执行代理 - 所有 logger.info 都会被转发到 WebSocket
+                    result = await agent.run(prompt)
+                    
+                    # 发送结果
+                    logger.info("请求处理完成")
+                    await websocket.send_text(f"RESULT: {str(result)}")
+                    
+                except Exception as e:
+                    error_msg = f"处理请求时出错: {str(e)}"
+                    logger.error(error_msg)
+                    await websocket.send_text(f"ERROR: {error_msg}")
+            
             except Exception as e:
-                logger.error(f"处理请求时出错: {str(e)}")
-                await websocket.send_text(f"ERROR: 处理请求时出错: {str(e)}")
+                logger.error(f"WebSocket通信错误: {str(e)}")
+                await websocket.send_text(f"ERROR: 通信错误: {str(e)}")
     
     except WebSocketDisconnect:
         logger.info("WebSocket连接已关闭")
     except Exception as e:
         logger.error(f"WebSocket处理时出错: {str(e)}")
     finally:
-        # 停止日志处理器
-        log_handler.stop()
-
-
-@app.post("/api/prompt")
-async def process_prompt(request: Request):
-    """处理API请求，用于非WebSocket方式调用"""
-    data = await request.json()
-    prompt = data.get("prompt", "")
-    
-    if not prompt.strip():
-        return {"status": "error", "message": "请输入有效的提示"}
-    
-    try:
-        # 创建并运行代理
-        agent = Manus()
-        result = await agent.run(prompt)
-        return {"status": "success", "result": str(result)}
-    except Exception as e:
-        logger.error(f"处理API请求时出错: {str(e)}")
-        return {"status": "error", "message": f"处理请求时出错: {str(e)}"}
-
+        # 移除 WebSocket
+        if websocket in active_websockets:
+            active_websockets.remove(websocket)
 
 if __name__ == "__main__":
     uvicorn.run("web_server:app", host="0.0.0.0", port=8000, reload=True)
