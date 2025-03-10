@@ -71,7 +71,8 @@ class _BashSession:
         assert self._process.stdout
         assert self._process.stderr
 
-        # send command to the process
+        # send command to the process, adding a sentinel to the end of the command
+        # so that we can detect when the process has finished
         self._process.stdin.write(
             command.encode() + f"; echo '{self._sentinel}'\n".encode()
         )
