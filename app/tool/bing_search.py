@@ -65,8 +65,19 @@ The tool returns a list of URLs that match the search query.
 
     def _search_sync(self, query: str, num_results: int = 10) -> List[str]:
         """
-        Synchronous Bing search implementation.
-        Returns a list of URLs.
+        Synchronous Bing search implementation to retrieve a list of URLs matching a query.
+        
+        Args:
+            query (str): The search query to submit to Bing. Must not be empty.
+            num_results (int, optional): The maximum number of URLs to return. Defaults to 10.
+
+        Returns:
+            List[str]: A list of URLs from the search results, capped at `num_results`. 
+                       Returns an empty list if the query is empty or no results are found.
+
+        Notes:
+            - Pagination is handled by incrementing the `first` parameter and following `next_url` links.
+            - If fewer results than `num_results` are available, all found URLs are returned.
         """
         if not query:
             return []
