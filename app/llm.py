@@ -1,4 +1,7 @@
 from typing import Dict, List, Literal, Optional, Union
+import json
+import httpx
+import asyncio
 
 from openai import (
     APIError,
@@ -13,6 +16,152 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 from app.config import LLMSettings, config
 from app.logger import logger  # Assuming a logger is set up in your app
 from app.schema import Message
+
+
+class HuggingFaceChatCompletions:
+    """Mimics the chat.completions functionality of OpenAI but for Hugging Face."""
+    
+    def __init__(self, api_key, base_url):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+    
+    async def create(self, model, messages, temperature=0, max_tokens=None, tools=None, tool_choice=None, timeout=None, **kwargs):
+        """Convert OpenAI-style request to Hugging Face format and handle the response."""
+        # Convert messages to Hugging Face format
+        prompt = self._convert_messages_to_prompt(messages)
+        
+        # Ensure temperature is positive for Hugging Face
+        hf_temperature = max(0.01, temperature) if temperature is not None else 0.01
+        
+        # Prepare the payload
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "temperature": hf_temperature,
+                "max_new_tokens": max_tokens or 1024,
+                "return_full_text": False
+            }
+        }
+        
+        # Add tool/function calling parameters if provided
+        if tools:
+            payload["parameters"]["tools"] = tools
+            if tool_choice:
+                payload["parameters"]["tool_choice"] = tool_choice
+        
+        # Make the API request
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    self.base_url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=timeout or 30
+                )
+                
+                if response.status_code != 200:
+                    logger.error(f"API error: Error code: {response.status_code} - {response.text}")
+                    # Create a custom error that mimics OpenAI's APIError
+                    error = APIError(f"Error code: {response.status_code} - {response.text}", response=response, body=response.text, request=httpx.Request("POST", self.base_url))
+                    raise error
+                
+                # Process and convert the response to match OpenAI's format
+                return self._convert_response_to_openai_format(response.json(), tools is not None)
+                
+            except httpx.RequestError as e:
+                logger.error(f"Request error: {str(e)}")
+                # Create a custom error that mimics OpenAI's APIError
+                error = APIError(f"Request error: {str(e)}", response=None, body=str(e), request=httpx.Request("POST", self.base_url))
+                raise error
+    
+    def _convert_messages_to_prompt(self, messages):
+        """Convert OpenAI-style messages to a text prompt for Hugging Face."""
+        prompt = ""
+        for message in messages:
+            role = message.get("role", "").lower()
+            content = message.get("content", "")
+            
+            if role == "system":
+                prompt += f"<s>[INST] <<SYS>> {content} <</SYS>>\n"
+            elif role == "user":
+                if prompt:
+                    prompt += f"{content} [/INST]"
+                else:
+                    prompt += f"<s>[INST] {content} [/INST]"
+            elif role == "assistant":
+                prompt += f" {content} </s><s>[INST]"
+        
+        # Ensure the prompt ends correctly
+        if not prompt.endswith("[/INST]"):
+            prompt += " [/INST]"
+            
+        return prompt
+    
+    def _convert_response_to_openai_format(self, hf_response, has_tools=False):
+        """Convert Hugging Face response to OpenAI format."""
+        # Extract the generated text
+        generated_text = hf_response[0]["generated_text"] if isinstance(hf_response, list) else hf_response.get("generated_text", "")
+        
+        # Create an OpenAI-like response structure
+        openai_response = type('OpenAIResponse', (), {})()
+        openai_response.choices = [type('Choice', (), {})()]
+        openai_response.choices[0].message = type('Message', (), {})()
+        openai_response.choices[0].message.content = generated_text
+        openai_response.choices[0].message.tool_calls = []  # Initialize empty tool_calls list
+        
+        # Handle tool calls if tools were provided
+        if has_tools and "function_call" in generated_text.lower():
+            try:
+                # Attempt to extract function call information
+                # This is a simplistic approach and might need refinement
+                if "{" in generated_text and "}" in generated_text:
+                    start_idx = generated_text.find("{")
+                    end_idx = generated_text.rfind("}") + 1
+                    function_call_json = generated_text[start_idx:end_idx]
+                    
+                    function_call = json.loads(function_call_json)
+                    
+                    # Create a tool call object
+                    tool_call = type('ToolCall', (), {})()
+                    tool_call.function = type('Function', (), {})()
+                    tool_call.function.name = function_call.get("name", "")
+                    tool_call.function.arguments = json.dumps(function_call.get("arguments", {}))
+                    
+                    # Add the tool call to the message
+                    openai_response.choices[0].message.tool_calls.append(tool_call)
+                    openai_response.choices[0].message.content = None
+            except Exception as e:
+                logger.warning(f"Failed to parse function call: {e}")
+        
+        return openai_response
+
+
+class HuggingFaceCompletions:
+    """A wrapper class to mimic OpenAI's completions structure."""
+    
+    def __init__(self, chat_completions):
+        self.create = chat_completions.create
+
+
+class HuggingFaceChat:
+    """A wrapper class to mimic OpenAI's chat structure."""
+    
+    def __init__(self, chat_completions):
+        self.completions = HuggingFaceCompletions(chat_completions)
+
+
+class HuggingFaceClient:
+    """A custom client for Hugging Face's Inference API that mimics the OpenAI interface."""
+    
+    def __init__(self, api_key, base_url):
+        self.api_key = api_key
+        self.base_url = base_url
+        chat_completions = HuggingFaceChatCompletions(api_key, base_url)
+        self.chat = HuggingFaceChat(chat_completions)
 
 
 class LLM:
@@ -40,12 +189,15 @@ class LLM:
             self.api_key = llm_config.api_key
             self.api_version = llm_config.api_version
             self.base_url = llm_config.base_url
+            
             if self.api_type == "azure":
                 self.client = AsyncAzureOpenAI(
                     base_url=self.base_url,
                     api_key=self.api_key,
                     api_version=self.api_version,
                 )
+            elif self.api_type == "hf":
+                self.client = HuggingFaceClient(api_key=self.api_key, base_url=self.base_url)
             else:
                 self.client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
 

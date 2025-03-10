@@ -1,6 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import Literal, get_args
+from typing import Dict, List, Literal, Optional, Union, get_args
 
 from app.exceptions import ToolError
 from app.tool import BaseTool
@@ -35,7 +35,7 @@ Notes for using the `str_replace` command:
 """
 
 
-def maybe_truncate(content: str, truncate_after: int | None = MAX_RESPONSE_LEN):
+def maybe_truncate(content: str, truncate_after: Optional[int] = MAX_RESPONSE_LEN):
     """Truncate content and append a notice if content exceeds the specified length."""
     return (
         content
@@ -93,11 +93,11 @@ class StrReplaceEditor(BaseTool):
         *,
         command: Command,
         path: str,
-        file_text: str | None = None,
-        view_range: list[int] | None = None,
-        old_str: str | None = None,
-        new_str: str | None = None,
-        insert_line: int | None = None,
+        file_text: Optional[str] = None,
+        view_range: Optional[List[int]] = None,
+        old_str: Optional[str] = None,
+        new_str: Optional[str] = None,
+        insert_line: Optional[int] = None,
         **kwargs,
     ) -> str:
         _path = Path(path)
@@ -158,7 +158,7 @@ class StrReplaceEditor(BaseTool):
                     f"The path {path} is a directory and only the `view` command can be used on directories"
                 )
 
-    async def view(self, path: Path, view_range: list[int] | None = None):
+    async def view(self, path: Path, view_range: Optional[List[int]] = None):
         """Implement the view command"""
         if path.is_dir():
             if view_range:
@@ -205,7 +205,7 @@ class StrReplaceEditor(BaseTool):
             output=self._make_output(file_content, str(path), init_line=init_line)
         )
 
-    def str_replace(self, path: Path, old_str: str, new_str: str | None):
+    def str_replace(self, path: Path, old_str: str, new_str: Optional[str]):
         """Implement the str_replace command, which replaces old_str with new_str in the file content"""
         # Read the file content
         file_content = self.read_file(path).expandtabs()

@@ -1,13 +1,17 @@
 """Utility to run shell commands asynchronously with a timeout."""
 
 import asyncio
+import os
+import re
+import subprocess
+from typing import Dict, List, Optional, Tuple, Union
 
 
 TRUNCATED_MESSAGE: str = "<response clipped><NOTE>To save on context only part of this file has been shown to you. You should retry this tool after you have searched inside the file with `grep -n` in order to find the line numbers of what you are looking for.</NOTE>"
 MAX_RESPONSE_LEN: int = 16000
 
 
-def maybe_truncate(content: str, truncate_after: int | None = MAX_RESPONSE_LEN):
+def maybe_truncate(content: str, truncate_after: Optional[int] = MAX_RESPONSE_LEN):
     """Truncate content and append a notice if content exceeds the specified length."""
     return (
         content
@@ -18,8 +22,8 @@ def maybe_truncate(content: str, truncate_after: int | None = MAX_RESPONSE_LEN):
 
 async def run(
     cmd: str,
-    timeout: float | None = 120.0,  # seconds
-    truncate_after: int | None = MAX_RESPONSE_LEN,
+    timeout: Optional[float] = 120.0,  # seconds
+    truncate_after: Optional[int] = MAX_RESPONSE_LEN,
 ):
     """Run a shell command asynchronously with a timeout."""
     process = await asyncio.create_subprocess_shell(
