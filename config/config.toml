@@ -1,9 +1,9 @@
 # Global LLM configuration
 [llm]
-model = "claude-3-5-sonnet"
-base_url = "https://api.openai.com/v1"
-api_key = "sk-..."
-max_tokens = 4096
+model = "deepseek-chat"
+base_url = "https://api.deepseek.com"
+api_key = "sk-28e2c6a091654442a7c35b030bb59373"
+max_tokens = 8096
 temperature = 0.0
 
 # [llm] #AZURE OPENAI:
@@ -17,6 +17,6 @@ temperature = 0.0
 
 # Optional configuration for specific LLM models
 [llm.vision]
-model = "claude-3-5-sonnet"
-base_url = "https://api.openai.com/v1"
-api_key = "sk-..."
+model = "deepseek-chat"
+base_url = "https://api.deepseek.com"
+api_key = "sk-28e2c6a091654442a7c35b030bb59373"
