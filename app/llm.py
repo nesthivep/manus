@@ -31,8 +31,8 @@ class HuggingFaceChatCompletions:
     
     async def create(self, model, messages, temperature=0, max_tokens=None, tools=None, tool_choice=None, timeout=None, **kwargs):
         """Convert OpenAI-style request to Hugging Face format and handle the response."""
-        # Convert messages to Hugging Face format
-        prompt = self._convert_messages_to_prompt(messages)
+        # Convert messages to Hugging Face format, including tool descriptions if provided
+        prompt = self._convert_messages_to_prompt(messages, tools)
         
         # Ensure temperature is positive for Hugging Face
         hf_temperature = max(0.01, temperature) if temperature is not None else 0.01
@@ -46,12 +46,6 @@ class HuggingFaceChatCompletions:
                 "return_full_text": False
             }
         }
-        
-        # Add tool/function calling parameters if provided
-        if tools:
-            payload["parameters"]["tools"] = tools
-            if tool_choice:
-                payload["parameters"]["tool_choice"] = tool_choice
         
         # Make the API request
         async with httpx.AsyncClient() as client:
@@ -78,25 +72,61 @@ class HuggingFaceChatCompletions:
                 error = APIError(f"Request error: {str(e)}", response=None, body=str(e), request=httpx.Request("POST", self.base_url))
                 raise error
     
-    def _convert_messages_to_prompt(self, messages):
+    def _convert_messages_to_prompt(self, messages, tools=None):
         """Convert OpenAI-style messages to a text prompt for Hugging Face."""
         prompt = ""
+        
+        # Add tool descriptions to the beginning of the prompt if tools are provided
+        if tools:
+            prompt += "You have access to the following functions. Use them if required:\n\n"
+            for tool in tools:
+                if tool.get("type") == "function":
+                    function = tool.get("function", {})
+                    prompt += f"Function: {function.get('name')}\n"
+                    prompt += f"Description: {function.get('description')}\n"
+                    
+                    # Add parameters
+                    parameters = function.get("parameters", {})
+                    if parameters:
+                        prompt += "Parameters:\n"
+                        properties = parameters.get("properties", {})
+                        for param_name, param_details in properties.items():
+                            param_type = param_details.get("type", "")
+                            param_desc = param_details.get("description", "")
+                            prompt += f"  - {param_name} ({param_type}): {param_desc}\n"
+                        
+                        # Add required parameters
+                        required = parameters.get("required", [])
+                        if required:
+                            prompt += f"Required parameters: {', '.join(required)}\n"
+                    
+                    prompt += "\n"
+            
+            # Add explicit instructions for tool response format
+            prompt += "\nWhen you need to use a function, respond in the following JSON format:\n"
+            prompt += '{"function_call": {"name": "function_name", "arguments": {"arg1": "value1", "arg2": "value2"}}}\n\n'
+        
+        # Convert conversation messages to prompt format
+        system_content = ""
         for message in messages:
             role = message.get("role", "").lower()
             content = message.get("content", "")
             
             if role == "system":
-                prompt += f"<s>[INST] <<SYS>> {content} <</SYS>>\n"
+                system_content = content
             elif role == "user":
                 if prompt:
-                    prompt += f"{content} [/INST]"
-                else:
                     prompt += f"<s>[INST] {content} [/INST]"
+                else:
+                    if system_content:
+                        prompt += f"<s>[INST] <<SYS>> {system_content} <</SYS>>\n{content} [/INST]"
+                    else:
+                        prompt += f"<s>[INST] {content} [/INST]"
             elif role == "assistant":
-                prompt += f" {content} </s><s>[INST]"
+                prompt += f" {content} </s>"
         
         # Ensure the prompt ends correctly
-        if not prompt.endswith("[/INST]"):
+        if not prompt.endswith("[/INST]") and not prompt.endswith("</s>"):
             prompt += " [/INST]"
             
         return prompt
@@ -114,28 +144,73 @@ class HuggingFaceChatCompletions:
         openai_response.choices[0].message.tool_calls = []  # Initialize empty tool_calls list
         
         # Handle tool calls if tools were provided
-        if has_tools and "function_call" in generated_text.lower():
+        if has_tools:
             try:
-                # Attempt to extract function call information
-                # This is a simplistic approach and might need refinement
-                if "{" in generated_text and "}" in generated_text:
-                    start_idx = generated_text.find("{")
-                    end_idx = generated_text.rfind("}") + 1
-                    function_call_json = generated_text[start_idx:end_idx]
+                # Look for JSON pattern in the response text that matches function calls
+                import re
+                
+                # Try to find a JSON object that would represent a function call
+                json_pattern = r'(\{.*"function_call"\s*:.*\})'
+                matches = re.findall(json_pattern, generated_text, re.DOTALL)
+                
+                if matches:
+                    for match in matches:
+                        try:
+                            # Try to parse the JSON
+                            function_data = json.loads(match)
+                            function_call = function_data.get("function_call", {})
+                            
+                            # Create a tool call object
+                            tool_call = type('ToolCall', (), {})()
+                            tool_call.id = f"call_{len(openai_response.choices[0].message.tool_calls)}"
+                            tool_call.type = "function"
+                            tool_call.function = type('Function', (), {})()
+                            tool_call.function.name = function_call.get("name", "")
+                            
+                            # Handle arguments - could be a string or a dictionary
+                            arguments = function_call.get("arguments", {})
+                            if isinstance(arguments, dict):
+                                tool_call.function.arguments = json.dumps(arguments)
+                            else:
+                                tool_call.function.arguments = str(arguments)
+                            
+                            # Add the tool call to the message
+                            openai_response.choices[0].message.tool_calls.append(tool_call)
+                            
+                            # If we found function calls, set content to None as per OpenAI's behavior
+                            openai_response.choices[0].message.content = None
+                        except json.JSONDecodeError:
+                            logger.warning(f"Failed to parse function call JSON: {match}")
+                
+                # If we couldn't find a standard JSON format, try a more lenient approach to extract function calls
+                if not openai_response.choices[0].message.tool_calls:
+                    # Try to find patterns like 'function_name({"param": "value"})'
+                    function_pattern = r'(\w+)\s*\(\s*(\{.*?\})\s*\)'
+                    matches = re.findall(function_pattern, generated_text, re.DOTALL)
                     
-                    function_call = json.loads(function_call_json)
-                    
-                    # Create a tool call object
-                    tool_call = type('ToolCall', (), {})()
-                    tool_call.function = type('Function', (), {})()
-                    tool_call.function.name = function_call.get("name", "")
-                    tool_call.function.arguments = json.dumps(function_call.get("arguments", {}))
-                    
-                    # Add the tool call to the message
-                    openai_response.choices[0].message.tool_calls.append(tool_call)
-                    openai_response.choices[0].message.content = None
+                    if matches:
+                        for idx, (function_name, args_str) in enumerate(matches):
+                            try:
+                                # Try to parse the arguments as JSON
+                                arguments = json.loads(args_str)
+                                
+                                # Create a tool call object
+                                tool_call = type('ToolCall', (), {})()
+                                tool_call.id = f"call_{idx}"
+                                tool_call.type = "function"
+                                tool_call.function = type('Function', (), {})()
+                                tool_call.function.name = function_name
+                                tool_call.function.arguments = json.dumps(arguments)
+                                
+                                # Add the tool call to the message
+                                openai_response.choices[0].message.tool_calls.append(tool_call)
+                                
+                                # If we found function calls, set content to None as per OpenAI's behavior
+                                openai_response.choices[0].message.content = None
+                            except json.JSONDecodeError:
+                                logger.warning(f"Failed to parse function arguments: {args_str}")
             except Exception as e:
-                logger.warning(f"Failed to parse function call: {e}")
+                logger.warning(f"Failed to parse function calls: {e}")
         
         return openai_response
 
