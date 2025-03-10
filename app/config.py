@@ -25,6 +25,15 @@ class LLMSettings(BaseModel):
     api_version: str = Field(..., description="Azure Openai version if AzureOpenai")
 
 
+class BrowserSettings(BaseModel):
+    headless: bool = Field(True, description="Run the browser in headless mode")
+    # To connect to your real Chrome, where you are logged in with all your accounts
+    # e.g. 'Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    chrome_instance_path: str | None = Field(
+        ..., description="Path to the Chrome instance"
+    )
+
+
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
 
@@ -97,6 +106,10 @@ class Config:
     @property
     def llm(self) -> Dict[str, LLMSettings]:
         return self._config.llm
+
+    @property
+    def browser(self) -> Dict[str, str]:
+        return self._config.browser
 
 
 config = Config()

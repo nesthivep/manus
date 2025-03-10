@@ -9,6 +9,7 @@ from browser_use.dom.service import DomService
 from pydantic import Field, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
+from app.config import config
 from app.tool.base import BaseTool, ToolResult
 
 
@@ -102,8 +103,14 @@ class BrowserUseTool(BaseTool):
 
     async def _ensure_browser_initialized(self) -> BrowserContext:
         """Ensure browser and context are initialized."""
+        browser_config = config.browser
         if self.browser is None:
-            self.browser = BrowserUseBrowser(BrowserConfig(headless=False))
+            self.browser = BrowserUseBrowser(
+                BrowserConfig(
+                    headless=browser_config.headless,
+                    chrome_instance_path=browser_config.chrome_instance_path,
+                ),
+            )
         if self.context is None:
             self.context = await self.browser.new_context()
             self.dom_service = DomService(await self.context.get_current_page())

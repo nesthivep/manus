@@ -20,3 +20,10 @@ temperature = 0.0
 model = "gpt-4o"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."
+
+[browser]
+# The browser to use for opening the documentation
+headless = false
+# To connect to your real Chrome browser, so it will be logged in and have access to your accounts
+# chrome_instance_path='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' # macOS path
+# chrome_instance_path='/usr/bin/google-chrome' # Linux path
