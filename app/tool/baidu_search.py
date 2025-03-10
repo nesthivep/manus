@@ -1,8 +1,7 @@
 import asyncio
 from typing import List
 from baidusearch.baidusearch import search
-# from app.tool.base import BaseTool
-from base import BaseTool
+from app.tool.base import BaseTool
 
 class BaiduSearch(BaseTool):
     name: str = "baidu_search"
@@ -37,7 +36,6 @@ The tool returns a list of URLs that match the search query.
         Returns:
             List[str]: A list of URLs matching the search query.
         """
-        print('baidu search query:', query)
         # Run the search in a thread pool to prevent blocking
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(
@@ -48,10 +46,4 @@ The tool returns a list of URLs that match the search query.
             url = item['url']
             if url.startswith('http'):
                 links.append(url)
-        # print('baidu search query links:', links)
         return links
-
-if __name__ == '__main__':
-    links = asyncio.run(BaiduSearch().execute("Manux", 5))
-    print('baidu search query links:', links)
-
