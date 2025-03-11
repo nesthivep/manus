@@ -75,6 +75,7 @@ class LLM:
                 litellm.api_key = self.api_key
                 if self.base_url:
                     litellm.api_base = self.base_url
+            litellm.drop_params = True
 
             # Initialize cost tracker
             self.cost_tracker = Cost()
