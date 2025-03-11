@@ -21,6 +21,8 @@ class LLMSettings(BaseModel):
     api_key: str = Field(..., description="API key")
     max_tokens: int = Field(4096, description="Maximum number of tokens per request")
     temperature: float = Field(1.0, description="Sampling temperature")
+    api_type: str = Field(..., description="AzureOpenai or Openai")
+    api_version: str = Field(..., description="Azure Openai version if AzureOpenai")
 
 
 class AppConfig(BaseModel):
@@ -76,6 +78,8 @@ class Config:
             "api_key": base_llm.get("api_key"),
             "max_tokens": base_llm.get("max_tokens", 4096),
             "temperature": base_llm.get("temperature", 1.0),
+            "api_type": base_llm.get("api_type", ""),
+            "api_version": base_llm.get("api_version", ""),
         }
 
         config_dict = {

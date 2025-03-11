@@ -2,6 +2,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 from openai import (
     APIError,
+    AsyncAzureOpenAI,
     AsyncOpenAI,
     AuthenticationError,
     OpenAIError,
@@ -35,9 +36,18 @@ class LLM:
             self.model = llm_config.model
             self.max_tokens = llm_config.max_tokens
             self.temperature = llm_config.temperature
-            self.client = AsyncOpenAI(
-                api_key=llm_config.api_key, base_url=llm_config.base_url
-            )
+            self.api_type = llm_config.api_type
+            self.api_key = llm_config.api_key
+            self.api_version = llm_config.api_version
+            self.base_url = llm_config.base_url
+            if self.api_type == "azure":
+                self.client = AsyncAzureOpenAI(
+                    base_url=self.base_url,
+                    api_key=self.api_key,
+                    api_version=self.api_version,
+                )
+            else:
+                self.client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
 
     @staticmethod
     def format_messages(messages: List[Union[dict, Message]]) -> List[dict]:
