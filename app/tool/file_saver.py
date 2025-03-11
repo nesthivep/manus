@@ -47,6 +47,10 @@ The tool accepts content and a file path, and saves the content to that location
         try:
             # Ensure the directory exists
             directory = os.path.dirname(file_path)
+            if not directory:
+                directory = "output"
+                file_path = os.path.join(directory, file_path)
+
             if directory and not os.path.exists(directory):
                 os.makedirs(directory)
 
