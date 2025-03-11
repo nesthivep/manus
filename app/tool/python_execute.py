@@ -39,7 +39,7 @@ class PythonExecute(BaseTool):
 
         def run_code():
             try:
-                safe_globals = {"__builtins__": dict(__builtins__)}
+                safe_globals = {"__builtins__": {name: getattr(__builtins__, name) for name in dir(__builtins__)}}
 
                 import sys
                 from io import StringIO
