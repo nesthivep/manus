@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, model_validator
 from app.llm import LLM
 from app.logger import logger
 from app.schema import AgentState, Memory, Message
+from app.honeyhive_tracer import pydantic_compatible_atrace
 
 
 class BaseAgent(BaseModel, ABC):
@@ -110,6 +111,7 @@ class BaseAgent(BaseModel, ABC):
         msg = msg_factory(content, **kwargs) if role == "tool" else msg_factory(content)
         self.memory.add_message(msg)
 
+    @pydantic_compatible_atrace
     async def run(self, request: Optional[str] = None) -> str:
         """Execute the agent's main loop asynchronously.
 

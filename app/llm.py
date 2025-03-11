@@ -13,6 +13,8 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 from app.config import LLMSettings, config
 from app.logger import logger  # Assuming a logger is set up in your app
 from app.schema import Message
+# Import HoneyHive tracing
+from app.honeyhive_tracer import pydantic_compatible_atrace
 
 
 class LLM:
@@ -101,6 +103,7 @@ class LLM:
         wait=wait_random_exponential(min=1, max=60),
         stop=stop_after_attempt(6),
     )
+    @pydantic_compatible_atrace
     async def ask(
         self,
         messages: List[Union[dict, Message]],
@@ -181,6 +184,7 @@ class LLM:
         wait=wait_random_exponential(min=1, max=60),
         stop=stop_after_attempt(6),
     )
+    @pydantic_compatible_atrace
     async def ask_tool(
         self,
         messages: List[Union[dict, Message]],

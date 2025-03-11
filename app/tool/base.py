@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
+from app.honeyhive_tracer import pydantic_compatible_atrace
 
 
 class BaseTool(ABC, BaseModel):
@@ -12,6 +13,7 @@ class BaseTool(ABC, BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    @pydantic_compatible_atrace
     async def __call__(self, **kwargs) -> Any:
         """Execute the tool with given parameters."""
         return await self.execute(**kwargs)
@@ -30,6 +32,14 @@ class BaseTool(ABC, BaseModel):
                 "parameters": self.parameters,
             },
         }
+
+    def parse_arguments(self, arguments_str: str) -> Dict[str, Any]:
+        """Parse arguments string into a dictionary."""
+        import json
+        try:
+            return json.loads(arguments_str)
+        except Exception as e:
+            return {"error": f"Failed to parse arguments: {str(e)}"}
 
 
 class ToolResult(BaseModel):

@@ -6,6 +6,7 @@ from pydantic import Field
 from app.agent.base import BaseAgent
 from app.llm import LLM
 from app.schema import AgentState, Memory
+from app.honeyhive_tracer import pydantic_compatible_atrace
 
 
 class ReActAgent(BaseAgent, ABC):
@@ -30,6 +31,7 @@ class ReActAgent(BaseAgent, ABC):
     async def act(self) -> str:
         """Execute decided actions"""
 
+    @pydantic_compatible_atrace
     async def step(self) -> str:
         """Execute a single step: think and act."""
         should_act = await self.think()
