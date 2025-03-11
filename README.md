@@ -261,4 +261,3 @@ OpenManus is built by contributors from MetaGPT. Huge thanks to this agent commu
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/mannaandpoem/OpenManus}},
 }
-```
