@@ -133,33 +133,35 @@ class LLM:
             else:
                 messages = self.format_messages(messages)
 
+            params = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": temperature or self.temperature
+            }
+            if self.model.startswith("o1") or self.model.startswith("o3"):
+                params["max_completion_tokens"] = self.max_tokens
+            else:
+                params["max_tokens"] = self.max_tokens
+
             if not stream:
                 # Non-streaming request
-                response = await self.client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    max_tokens=self.max_tokens,
-                    temperature=temperature or self.temperature,
-                    stream=False,
-                )
+                params["stream"] = False
+                response = await self.client.chat.completions.create(**params)
+
                 if not response.choices or not response.choices[0].message.content:
                     raise ValueError("Empty or invalid response from LLM")
                 return response.choices[0].message.content
 
             # Streaming request
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                max_tokens=self.max_tokens,
-                temperature=temperature or self.temperature,
-                stream=True,
-            )
+            params["stream"] = True
+            response = await self.client.chat.completions.create(**params)
 
             collected_messages = []
             async for chunk in response:
-                chunk_message = chunk.choices[0].delta.content or ""
-                collected_messages.append(chunk_message)
-                print(chunk_message, end="", flush=True)
+                if chunk.choices:
+                    chunk_message = chunk.choices[0].delta.content or ""
+                    collected_messages.append(chunk_message)
+                    print(chunk_message, end="", flush=True)
 
             print()  # Newline after streaming
             full_response = "".join(collected_messages).strip()
@@ -230,16 +232,28 @@ class LLM:
                         raise ValueError("Each tool must be a dict with 'type' field")
 
             # Set up the completion request
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=temperature or self.temperature,
-                max_tokens=self.max_tokens,
-                tools=tools,
-                tool_choice=tool_choice,
-                timeout=timeout,
-                **kwargs,
-            )
+            if self.model.startswith("o1") or self.model.startswith("o3"):
+                response = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=temperature or self.temperature,
+                    max_completion_tokens=self.max_tokens,
+                    tools=tools,
+                    tool_choice=tool_choice,
+                    timeout=timeout,
+                    **kwargs,
+                )
+            else:
+                response = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=temperature or self.temperature,
+                    max_tokens=self.max_tokens,
+                    tools=tools,
+                    tool_choice=tool_choice,
+                    timeout=timeout,
+                    **kwargs,
+                )
 
             # Check if response is valid
             if not response.choices or not response.choices[0].message:
