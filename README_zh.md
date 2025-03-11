@@ -1,10 +1,13 @@
 [English](README.md) | 中文
 
-[![GitHub stars](https://img.shields.io/github/stars/mannaandpoem/OpenManus?style=social)](https://github.com/mannaandpoem/OpenManus) &ensp;
+[![GitHub stars](https://img.shields.io/github/stars/mannaandpoem/OpenManus?style=social)](https://github.com/mannaandpoem/OpenManus/stargazers)
+&ensp;
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) &ensp;
 [![Discord Follow](https://dcbadge.vercel.app/api/server/DYn29wFk9z?style=flat)](https://discord.gg/DYn29wFk9z)
 
 # 👋 OpenManus
+
+[官方网站](https://openmanus.github.io/)
 
 Manus 非常棒，但 OpenManus 无需邀请码即可实现任何创意 🛫！
 
@@ -126,17 +129,6 @@ python run_flow.py
 我们欢迎任何友好的建议和有价值的贡献！可以直接创建 issue 或提交 pull request。
 
 或通过 📧 邮件联系 @mannaandpoem：mannaandpoem@gmail.com
-
-## 发展路线
-
-在全面收集了社区成员的反馈后，我们决定采用 3-4 天为周期的迭代模式，逐步实现大家期待的功能。
-
-- [ ] 增强 Planning 能力，优化任务分解和执行逻辑
-- [ ] 引入标准化评测，基于 GAIA 和 TAU-Bench，持续评估并优化性能
-- [ ] 拓展模型适配，优化低成本应用场景
-- [ ] 实现容器化部署，简化安装和使用流程
-- [ ] 丰富示例库，增加更多实用案例，包含成功和失败示例的分析
-- [ ] 前后端开发，提供用户体验
 
 ## 交流群
 
