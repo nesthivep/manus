@@ -77,6 +77,13 @@ source .venv/bin/activate  # On Unix/macOS
 uv pip install -r requirements.txt
 ```
 
+
+### Browser Automation Tool (Optional)
+```bash
+playwright install
+```
+
+
 ## Configuration
 
 OpenManus requires configuration for the LLM APIs it uses. Follow these steps to set up your configuration:
