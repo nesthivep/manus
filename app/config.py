@@ -25,8 +25,18 @@ class LLMSettings(BaseModel):
     api_version: str = Field(..., description="Azure Openai version if AzureOpenai")
 
 
+class BrowserSettings(BaseModel):
+    headless: bool = Field(..., description="Run the browser in headless mode")
+    # To connect to your real Chrome, where you are logged in with all your accounts
+    # e.g. 'Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    chrome_instance_path: str | None = Field(
+        ..., description="Path to the Chrome instance"
+    )
+
+
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
+    browser: BrowserSettings
 
 
 class Config:
@@ -72,7 +82,7 @@ class Config:
             k: v for k, v in raw_config.get("llm", {}).items() if isinstance(v, dict)
         }
 
-        default_settings = {
+        default_llm_settings = {
             "model": base_llm.get("model"),
             "base_url": base_llm.get("base_url"),
             "api_key": base_llm.get("api_key"),
@@ -82,14 +92,23 @@ class Config:
             "api_version": base_llm.get("api_version", ""),
         }
 
+        raw_browser_settings = raw_config.get("browser", {})
+        browser_settings = {
+            "headless": raw_browser_settings.get("headless", False),
+            "chrome_instance_path": raw_browser_settings.get(
+                "chrome_instance_path", None
+            ),
+        }
+
         config_dict = {
             "llm": {
-                "default": default_settings,
+                "default": default_llm_settings,
                 **{
-                    name: {**default_settings, **override_config}
+                    name: {**default_llm_settings, **override_config}
                     for name, override_config in llm_overrides.items()
                 },
-            }
+            },
+            "browser": browser_settings,
         }
 
         self._config = AppConfig(**config_dict)
@@ -97,6 +116,10 @@ class Config:
     @property
     def llm(self) -> Dict[str, LLMSettings]:
         return self._config.llm
+
+    @property
+    def browser(self) -> Dict[str, str]:
+        return self._config.browser
 
 
 config = Config()
