@@ -100,3 +100,10 @@ class Config:
 
 
 config = Config()
+
+# Use google,baidu or bing
+SEARCH_ENGINE = "baidu"
+
+# if Used bing ,need flower config
+BING_SUBSCRIPTION_KEY = "Enter your Bing subscription key: "
+BING_SEARCH_URL = "https://api.bing.microsoft.com/v7.0/search"
