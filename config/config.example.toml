@@ -5,6 +5,8 @@ base_url = "https://api.openai.com/v1"
 api_key = "sk-..."
 max_tokens = 4096
 temperature = 0.0
+# Optional dictionary (TOML inline table) for extra parameters pass to the Openai compatible endpoint
+# extra_body = { thinking = { type= "enabled", budget_tokens= 2000 } }
 
 # [llm] #AZURE OPENAI:
 # api_type= 'azure'
