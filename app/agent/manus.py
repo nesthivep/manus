@@ -13,7 +13,7 @@ class Manus(ToolCallAgent):
     """
     A versatile general-purpose agent that uses planning to solve various tasks.
 
-    This agent extends PlanningAgent with a comprehensive set of tools and capabilities,
+    This agent extends ToolCallAgent with a comprehensive set of tools and capabilities,
     including Python execution, web browsing, file operations, and information retrieval
     to handle a wide range of user requests.
     """
