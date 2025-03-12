@@ -262,6 +262,7 @@ class LLM:
                 logger.error("Rate limit exceeded. Consider increasing retry attempts.")
             elif isinstance(oe, APIError):
                 logger.error(f"API error: {oe}")
+            raise
         except Exception as e:
             logger.error(f"Unexpected error in ask_tool: {e}")
             raise
