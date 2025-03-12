@@ -28,17 +28,20 @@ The tool returns a list of URLs that match the search query.
         "required": ["query"],
     }
 
-    async def execute(self, query: str, num_results: int = 10) -> List[str]:
+    async def execute(self, query: str, num_results: int | str = 10) -> List[str]:
         """
         Execute a Google search and return a list of URLs.
 
         Args:
             query (str): The search query to submit to Google.
-            num_results (int, optional): The number of search results to return. Default is 10.
+            num_results (int | str, optional): The number of search results to return. Default is 10.
 
         Returns:
             List[str]: A list of URLs matching the search query.
         """
+        # Ensure num_results is an integer
+        num_results = int(num_results) if isinstance(num_results, str) else num_results
+        
         # Run the search in a thread pool to prevent blocking
         loop = asyncio.get_event_loop()
         links = await loop.run_in_executor(

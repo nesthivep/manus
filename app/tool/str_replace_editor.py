@@ -241,7 +241,7 @@ class StrReplaceEditor(BaseTool):
         # Create a snippet of the edited section
         replacement_line = file_content.split(old_str)[0].count("\n")
         start_line = max(0, replacement_line - SNIPPET_LINES)
-        end_line = replacement_line + SNIPPET_LINES + new_str.count("\n")
+        end_line = replacement_line + SNIPPET_LINES + (new_str or "").count("\n")
         snippet = "\n".join(new_file_content.split("\n")[start_line : end_line + 1])
 
         # Prepare the success message
