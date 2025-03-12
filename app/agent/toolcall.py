@@ -8,6 +8,7 @@ from app.logger import logger
 from app.prompt.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
 from app.schema import AgentState, Message, ToolCall
 from app.tool import CreateChatCompletion, Terminate, ToolCollection
+from app.honeyhive_tracer import pydantic_compatible_atrace
 
 
 TOOL_CALL_REQUIRED = "Tool calls required but none provided"
@@ -32,8 +33,14 @@ class ToolCallAgent(ReActAgent):
 
     max_steps: int = 30
 
+    @pydantic_compatible_atrace
     async def think(self) -> bool:
-        """Process current state and decide next actions using tools"""
+        """
+        Generate the next action using the LLM.
+
+        Returns:
+            bool: True if the agent should act, False otherwise.
+        """
         if self.next_step_prompt:
             user_msg = Message.user_message(self.next_step_prompt)
             self.messages += [user_msg]
@@ -98,8 +105,14 @@ class ToolCallAgent(ReActAgent):
             )
             return False
 
+    @pydantic_compatible_atrace
     async def act(self) -> str:
-        """Execute tool calls and handle their results"""
+        """
+        Execute the tool calls generated during thinking.
+
+        Returns:
+            str: A summary of the actions taken.
+        """
         if not self.tool_calls:
             if self.tool_choices == "required":
                 raise ValueError(TOOL_CALL_REQUIRED)
@@ -121,10 +134,23 @@ class ToolCallAgent(ReActAgent):
             self.memory.add_message(tool_msg)
             results.append(result)
 
-        return "\n\n".join(results)
+        # Clear the tool calls for the next step
+        self.tool_calls = []
 
+        # Return a summary of the actions
+        return "\n\n".join(results) if results else "No actions taken"
+
+    @pydantic_compatible_atrace
     async def execute_tool(self, command: ToolCall) -> str:
-        """Execute a single tool call with robust error handling"""
+        """
+        Execute a tool call and return the result.
+
+        Args:
+            command: The tool call to execute.
+
+        Returns:
+            str: The result of the tool execution.
+        """
         if not command or not command.function or not command.function.name:
             return "Error: Invalid command format"
 
@@ -163,20 +189,40 @@ class ToolCallAgent(ReActAgent):
             return f"Error: {error_msg}"
 
     async def _handle_special_tool(self, name: str, result: Any, **kwargs):
-        """Handle special tool execution and state changes"""
+        """
+        Handle special tools that affect the agent's execution.
+
+        Args:
+            name: The name of the tool.
+            result: The result of the tool execution.
+            **kwargs: Additional arguments.
+        """
         if not self._is_special_tool(name):
             return
 
-        if self._should_finish_execution(name=name, result=result, **kwargs):
+        if self._should_finish_execution(**kwargs):
             # Set agent state to finished
             logger.info(f"🏁 Special tool '{name}' has completed the task!")
             self.state = AgentState.FINISHED
 
     @staticmethod
     def _should_finish_execution(**kwargs) -> bool:
-        """Determine if tool execution should finish the agent"""
+        """
+        Determine if the agent should finish execution.
+
+        Returns:
+            bool: True if the agent should finish execution, False otherwise.
+        """
         return True
 
     def _is_special_tool(self, name: str) -> bool:
-        """Check if tool name is in special tools list"""
+        """
+        Check if a tool is a special tool.
+
+        Args:
+            name: The name of the tool.
+
+        Returns:
+            bool: True if the tool is a special tool, False otherwise.
+        """
         return name.lower() in [n.lower() for n in self.special_tool_names]

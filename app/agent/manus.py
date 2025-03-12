@@ -7,6 +7,8 @@ from app.tool.browser_use_tool import BrowserUseTool
 from app.tool.file_saver import FileSaver
 from app.tool.google_search import GoogleSearch
 from app.tool.python_execute import PythonExecute
+# Import HoneyHive tracing if needed for custom methods
+from app.honeyhive_tracer import pydantic_compatible_atrace
 
 
 class Manus(ToolCallAgent):
