@@ -8,6 +8,7 @@ from app.logger import logger
 from app.prompt.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
 from app.schema import AgentState, Message, ToolCall
 from app.tool import CreateChatCompletion, Terminate, ToolCollection
+from app.llm import get_tool_calls
 
 
 TOOL_CALL_REQUIRED = "Tool calls required but none provided"
@@ -47,37 +48,42 @@ class ToolCallAgent(ReActAgent):
             tools=self.available_tools.to_params(),
             tool_choice=self.tool_choices,
         )
-        self.tool_calls = response.tool_calls
+        
+        # Use helper function to extract tool calls safely
+        extracted_tool_calls = get_tool_calls(response)
+        self.tool_calls = extracted_tool_calls
 
         # Log response info
-        logger.info(f"✨ {self.name}'s thoughts: {response.content}")
+        logger.info(f"✨ {self.name}'s thoughts: {response.content if hasattr(response, 'content') else ''}")
         logger.info(
-            f"🛠️ {self.name} selected {len(response.tool_calls) if response.tool_calls else 0} tools to use"
+            f"🛠️ {self.name} selected {len(extracted_tool_calls)} tools to use"
         )
-        if response.tool_calls:
+        if extracted_tool_calls:
             logger.info(
-                f"🧰 Tools being prepared: {[call.function.name for call in response.tool_calls]}"
+                f"🧰 Tools being prepared: {[call.function.name for call in extracted_tool_calls]}"
             )
 
         try:
             # Handle different tool_choices modes
             if self.tool_choices == "none":
-                if response.tool_calls:
+                if extracted_tool_calls:
                     logger.warning(
                         f"🤔 Hmm, {self.name} tried to use tools when they weren't available!"
                     )
-                if response.content:
-                    self.memory.add_message(Message.assistant_message(response.content))
+                response_content = response.content if hasattr(response, 'content') else ''
+                if response_content:
+                    self.memory.add_message(Message.assistant_message(response_content))
                     return True
                 return False
 
             # Create and add assistant message
+            response_content = response.content if hasattr(response, 'content') else ''
             assistant_msg = (
                 Message.from_tool_calls(
-                    content=response.content, tool_calls=self.tool_calls
+                    content=response_content, tool_calls=self.tool_calls
                 )
                 if self.tool_calls
-                else Message.assistant_message(response.content)
+                else Message.assistant_message(response_content)
             )
             self.memory.add_message(assistant_msg)
 
@@ -86,7 +92,8 @@ class ToolCallAgent(ReActAgent):
 
             # For 'auto' mode, continue with content if no commands but content exists
             if self.tool_choices == "auto" and not self.tool_calls:
-                return bool(response.content)
+                response_content = response.content if hasattr(response, 'content') else ''
+                return bool(response_content)
 
             return bool(self.tool_calls)
         except Exception as e:
@@ -115,9 +122,39 @@ class ToolCallAgent(ReActAgent):
             )
 
             # Add tool response to memory
-            tool_msg = Message.tool_message(
-                content=result, tool_call_id=command.id, name=command.function.name
-            )
+            try:
+                # Try to convert the result to a proper JSON structure if it's not already
+                if isinstance(result, str):
+                    # Check if it's already JSON
+                    try:
+                        # Just test if it's valid JSON, but don't modify the string
+                        json.loads(result)
+                        json_result = result  # It's already valid JSON
+                    except json.JSONDecodeError:
+                        # Not JSON, convert to a JSON-compatible format
+                        # Remove any special characters that might interfere with JSON
+                        result_cleaned = result.replace('\\', '\\\\').replace('"', '\\"')
+                        json_result = json.dumps({"result": result_cleaned})
+                        logger.info(f"🧩 Converted string result to JSON for tool response")
+                else:
+                    # If it's a dict or list, convert to JSON string
+                    json_result = json.dumps(result)
+                    logger.info(f"🧩 Converted non-string result to JSON string for tool response")
+                
+                tool_msg = Message.tool_message(
+                    content=json_result, 
+                    tool_call_id=command.id, 
+                    name=command.function.name
+                )
+            except Exception as e:
+                # In case of any error in JSON conversion, use the original result as a string
+                logger.warning(f"⚠️ Error converting tool result to JSON: {e}")
+                tool_msg = Message.tool_message(
+                    content=str(result),
+                    tool_call_id=command.id,
+                    name=command.function.name
+                )
+            
             self.memory.add_message(tool_msg)
             results.append(result)
 
@@ -134,7 +171,20 @@ class ToolCallAgent(ReActAgent):
 
         try:
             # Parse arguments
-            args = json.loads(command.function.arguments or "{}")
+            try:
+                # First try to parse as JSON
+                if command.function.arguments and command.function.arguments.strip():
+                    args = json.loads(command.function.arguments)
+                else:
+                    args = {}
+            except json.JSONDecodeError:
+                # If not valid JSON, use as string
+                logger.warning(f"🚨 Tool '{name}' received non-JSON arguments: {command.function.arguments[:50]}...")
+                # Try to convert to a dict if possible
+                if isinstance(command.function.arguments, str):
+                    args = {"raw_input": command.function.arguments}
+                else:
+                    args = {"raw_input": str(command.function.arguments)}
 
             # Execute the tool
             logger.info(f"🔧 Activating tool: '{name}'...")
@@ -151,12 +201,6 @@ class ToolCallAgent(ReActAgent):
             await self._handle_special_tool(name=name, result=result)
 
             return observation
-        except json.JSONDecodeError:
-            error_msg = f"Error parsing arguments for {name}: Invalid JSON format"
-            logger.error(
-                f"📝 Oops! The arguments for '{name}' don't make sense - invalid JSON, arguments:{command.function.arguments}"
-            )
-            return f"Error: {error_msg}"
         except Exception as e:
             error_msg = f"⚠️ Tool '{name}' encountered a problem: {str(e)}"
             logger.error(error_msg)

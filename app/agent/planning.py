@@ -8,6 +8,7 @@ from app.logger import logger
 from app.prompt.planning import NEXT_STEP_PROMPT, PLANNING_SYSTEM_PROMPT
 from app.schema import Message, ToolCall
 from app.tool import PlanningTool, Terminate, ToolCollection
+from app.llm import get_tool_calls  # Import the get_tool_calls helper function
 
 
 class PlanningAgent(ToolCallAgent):
@@ -214,14 +215,20 @@ class PlanningAgent(ToolCallAgent):
             tools=self.available_tools.to_params(),
             tool_choice="required",
         )
+        
+        # Extract tool calls safely using the helper function
+        extracted_tool_calls = get_tool_calls(response)
+        # Get content safely with a fallback to empty string
+        response_content = response.content if hasattr(response, 'content') else ''
+        
         assistant_msg = Message.from_tool_calls(
-            content=response.content, tool_calls=response.tool_calls
+            content=response_content, tool_calls=extracted_tool_calls
         )
 
         self.memory.add_message(assistant_msg)
 
         plan_created = False
-        for tool_call in response.tool_calls:
+        for tool_call in extracted_tool_calls:
             if tool_call.function.name == "planning":
                 result = await self.execute_tool(tool_call)
                 logger.info(
