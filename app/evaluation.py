@@ -17,24 +17,40 @@ try:
     from honeyhive import evaluator, evaluate, trace, atrace, HoneyHiveTracer
     HoneyHive_AVAILABLE = True
     
+    # Import the config
+    from app.config import config
+    
     # Initialize the HoneyHive tracer directly in evaluation module
     def init_honeyhive():
         """Initialize the HoneyHive tracer for OpenManus."""
         try:
-            # Try to get API key from environment variable
+            # Try to get API key from environment variable first
             api_key = os.environ.get("HH_API_KEY")
             
+            # If not in environment, try to get from config
+            if not api_key and config.honeyhive:
+                api_key = config.honeyhive.api_key
+            
             if not api_key:
-                logger.error("HH_API_KEY not found in environment variables. HoneyHive experiments will not work.")
+                logger.error("HH_API_KEY not found in environment variables or config. HoneyHive experiments will not work.")
                 return False
             
-            HoneyHiveTracer.init(
-                api_key=api_key,
-                project='openmanus-trace',
-                source='development',
-                session_name='OpenManus Session', 
-                server_url = "https://api.staging.honeyhive.ai"
-            )
+            # Initialize with parameters from config if available
+            if config.honeyhive:
+                HoneyHiveTracer.init(
+                    api_key=api_key,
+                    project=config.honeyhive.project,
+                    source=config.honeyhive.source,
+                    session_name=config.honeyhive.session_name
+                )
+            else:
+                # Fallback to default values
+                HoneyHiveTracer.init(
+                    api_key=api_key,
+                    project='openmanus-trace',
+                    source='development',
+                    session_name='OpenManus Session'
+                )
             logger.info("HoneyHive tracer initialized successfully!")
             return True
         except Exception as e:
@@ -113,7 +129,12 @@ except ImportError:
 
 # Initialize OpenAI client for evaluations
 try:
-    openai_client = OpenAI(api_key="your openai api key")
+    # Use the OpenAI API key from config if available
+    api_key = "your openai api key"
+    if 'config' in locals() and hasattr(config, 'llm') and 'default' in config.llm:
+        api_key = config.llm['default'].api_key
+    
+    openai_client = OpenAI(api_key=api_key)
 except Exception as e:
     logger.error(f"Failed to initialize OpenAI client: {e}")
     openai_client = None
@@ -644,13 +665,20 @@ def create_honeyhive_experiment(query, trace_info=None):
                 # Re-initialize HoneyHive in the new process
                 init_honeyhive()
                 
+                # Get HoneyHive parameters from config if available
+                hh_api_key = None
+                hh_project = "openmanus-trace"
+                
+                if config.honeyhive:
+                    hh_api_key = config.honeyhive.api_key
+                    hh_project = config.honeyhive.project
+                
                 # Run the experiment
                 evaluate(
                     function=function_to_evaluate,
                     dataset=dataset,
-                    hh_api_key="your honeyhive api key", 
-                    hh_project="openmanus-trace",
-                    server_url = "https://api.staging.honeyhive.ai",
+                    hh_api_key=hh_api_key, 
+                    hh_project=hh_project,
                     evaluators=[
                         tool_selection_evaluator,
                         tool_execution_evaluator,

@@ -103,7 +103,34 @@ temperature = 0.0
 model = "gpt-4o"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."  # Replace with your actual API key
+
+# HoneyHive configuration (optional, for evaluation)
+[honeyhive]
+api_key = "your_honeyhive_api_key"  # Replace with your HoneyHive API key
+project = "openmanus-trace"
+source = "development"
+session_name = "OpenManus Session"
 ```
+
+### HoneyHive Evaluation Setup 
+
+OpenManus includes an integrated evaluation system powered by HoneyHive that automatically evaluates each agent run. To enable this feature:
+
+1. Make sure you have the HoneyHive SDK installed:
+   ```bash
+   pip install honeyhive
+   ```
+
+2. Configure HoneyHive in your `config.toml` file as shown above.
+
+3. Alternatively, you can set your HoneyHive API key as an environment variable:
+   ```bash
+   export HH_API_KEY=your_honeyhive_api_key
+   ```
+
+You can get your API key from the HoneyHive dashboard after creating an account at [honeyhive.ai](https://honeyhive.ai).
+
+For more details on the evaluation system, see [EVALUATION.md](EVALUATION.md) and [HONEYHIVE_EXPERIMENTS.md](HONEYHIVE_EXPERIMENTS.md).
 
 ## Quick Start
 

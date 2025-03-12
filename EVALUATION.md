@@ -21,7 +21,24 @@ Each query is also automatically tracked as a HoneyHive experiment, allowing for
    pip install -r requirements.txt
    ```
 
-2. Ensure that the HoneyHive API key is configured in `app/honeyhive_tracer.py`
+2. Configure HoneyHive in one of the following ways:
+
+   a. Using the configuration file (recommended):
+   ```toml
+   # In config/config.toml
+   [honeyhive]
+   api_key = "your_honeyhive_api_key"
+   project = "openmanus-trace"
+   source = "development"
+   session_name = "OpenManus Session"
+   ```
+
+   b. Using environment variables:
+   ```bash
+   export HH_API_KEY=your_honeyhive_api_key
+   ```
+
+You can get your API key from the HoneyHive dashboard after creating an account at [honeyhive.ai](https://honeyhive.ai).
 
 ## How It Works
 

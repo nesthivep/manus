@@ -1,7 +1,7 @@
 import threading
 import tomllib
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -25,8 +25,16 @@ class LLMSettings(BaseModel):
     api_version: str = Field(..., description="Azure Openai version if AzureOpenai")
 
 
+class HoneyHiveSettings(BaseModel):
+    api_key: str = Field(..., description="HoneyHive API key")
+    project: str = Field("openmanus-trace", description="HoneyHive project name")
+    source: str = Field("development", description="Source environment")
+    session_name: str = Field("OpenManus Session", description="Session name")
+
+
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
+    honeyhive: Optional[HoneyHiveSettings] = None
 
 
 class Config:
@@ -67,6 +75,8 @@ class Config:
 
     def _load_initial_config(self):
         raw_config = self._load_config()
+        
+        # Load LLM settings
         base_llm = raw_config.get("llm", {})
         llm_overrides = {
             k: v for k, v in raw_config.get("llm", {}).items() if isinstance(v, dict)
@@ -82,6 +92,11 @@ class Config:
             "api_version": base_llm.get("api_version", ""),
         }
 
+        # Load HoneyHive settings if available
+        honeyhive_settings = None
+        if "honeyhive" in raw_config:
+            honeyhive_settings = HoneyHiveSettings(**raw_config["honeyhive"])
+
         config_dict = {
             "llm": {
                 "default": default_settings,
@@ -89,7 +104,8 @@ class Config:
                     name: {**default_settings, **override_config}
                     for name, override_config in llm_overrides.items()
                 },
-            }
+            },
+            "honeyhive": honeyhive_settings
         }
 
         self._config = AppConfig(**config_dict)
@@ -97,6 +113,10 @@ class Config:
     @property
     def llm(self) -> Dict[str, LLMSettings]:
         return self._config.llm
+        
+    @property
+    def honeyhive(self) -> Optional[HoneyHiveSettings]:
+        return self._config.honeyhive
 
 
 config = Config()

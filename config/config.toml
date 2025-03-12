@@ -11,3 +11,10 @@ temperature = 0.0
 model = "gpt-4o-mini"
 base_url = "https://api.openai.com/v1"
 api_key = "your openai api key"
+
+# HoneyHive configuration
+[honeyhive]
+api_key = "your honeyhive api key"
+project = "openmanus-trace"
+source = "development"
+session_name = "OpenManus Session"

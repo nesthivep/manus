@@ -20,3 +20,10 @@ temperature = 0.0
 model = "claude-3-5-sonnet"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."
+
+# HoneyHive configuration
+[honeyhive]
+api_key = "your_honeyhive_api_key"
+project = "openmanus-trace"
+source = "development"
+session_name = "OpenManus Session"
