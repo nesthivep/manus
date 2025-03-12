@@ -5,9 +5,9 @@ from app.logger import logger
 
 
 async def main():
-    agent = Manus()
     while True:
         try:
+            agent = Manus()
             prompt = input("Enter your prompt (or 'exit'/'quit' to quit): ")
             prompt_lower = prompt.lower()
             if prompt_lower in ["exit", "quit"]:
