@@ -7,7 +7,7 @@ English | [中文](README_zh.md) | [한국어](README_ko.md)
 
 # 👋 OpenManus
 
-Manus is incredible, but OpenManus can achieve any idea without an _Invite Code_ 🛫!
+Manus is incredible, but OpenManus can achieve any idea without an *Invite Code* 🛫!
 
 Our team members [@Xinbin Liang](https://github.com/mannaandpoem) and [@Jinyu Xiang](https://github.com/XiangJinyu) (core authors), along with [@Zhaoyang Yu](https://github.com/MoshiQAQ), [@Jiayi Zhang](https://github.com/didiforgithub), and [@Sirui Hong](https://github.com/stellaHSR), we are from [@MetaGPT](https://github.com/geekan/MetaGPT). The prototype is launched within 3 hours and we are keeping building!
 
