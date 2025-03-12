@@ -15,6 +15,12 @@ temperature = 0.0
 # temperature = 0.0
 # api_version="AZURE API VERSION" #"2024-08-01-preview"
 
+# [llm] #AWS BEDROCK:
+# api_type = "bedrock"
+# model = "arn:aws:bedrock:us-east-2::inference-profile/us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+# max_tokens = 4096
+# temperature = 0.7
+# aws_region_name = "us-east-2"  # Your AWS region for Bedrock
 # Optional configuration for specific LLM models
 [llm.vision]
 model = "claude-3-5-sonnet"
