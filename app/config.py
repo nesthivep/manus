@@ -25,17 +25,17 @@ class LLMSettings(BaseModel):
 
 class BrowserSettings(BaseModel):
     headless: bool = Field(
-        ...,
+        False,
         description="Runs the browser without a visible UI. Note that some websites may detect headless mode.",
     )
     disable_security: bool = Field(
-        ..., description="Disables browser security features. "
+        True, description="Disables browser security features. "
     )
     extra_chromium_args: list = Field(
-        ..., description="Additional arguments are passed to the browser at launch."
+        [], description="Additional arguments are passed to the browser at launch."
     )
     proxy: dict = Field(
-        ...,
+        {},
         description="Standard Playwright proxy settings for using external proxy services.",
     )
 
