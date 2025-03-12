@@ -110,7 +110,7 @@ api_key = "sk-..."  # Replace with your actual API key
 If you want to use the Firecrawl web scraping tool, you'll need to set up your Firecrawl API key:
 
 1. Get your API key from [Firecrawl](https://firecrawl.dev)
-2. Add it to your environment variables:
+2. Add it to your environment variables/config.toml
 
 ```bash
 export FIRECRAWL_API_KEY="fc-YOUR_API_KEY"

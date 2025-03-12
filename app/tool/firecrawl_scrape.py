@@ -56,7 +56,7 @@ The tool returns the scraped content in the requested format (markdown, HTML, et
     async def execute(
         self,
         url: str,
-        formats: List[str] = None,
+        formats: List[str] = ["markdown"],
         wait_for: int = 0,
         only_main_content: bool = True,
         mobile: bool = False,
@@ -76,9 +76,6 @@ The tool returns the scraped content in the requested format (markdown, HTML, et
         Returns:
             Dict[str, Any]: The scraped content in the requested formats.
         """
-        if formats is None:
-            formats = ["markdown"]
-
         # Get API key from config if not provided
         if api_key is None:
             # Try to get from config.toml directly
