@@ -201,29 +201,33 @@ class MCPClient:
         if not HAS_MCP_SDK:
             return
         
-        try:
-            # Close each server client individually first
-            for server_name, server in self.servers.items():
-                if server.client:
-                    try:
-                        # Try to close the client gracefully
-                        if hasattr(server.client, 'close'):
+        # Close each server client individually first
+        for server_name, server in self.servers.items():
+            if server.client:
+                try:
+                    # Try to close the client gracefully
+                    if hasattr(server.client, 'close'):
+                        try:
                             await server.client.close()
-                        server.client = None
-                    except Exception as e:
-                        logger.error(f"Error closing MCP server {server_name}: {e}")
-            
-            # Then close the exit stack
-            try:
-                await self.exit_stack.aclose()
-            except RuntimeError as e:
-                if "Attempted to exit cancel scope in a different task" in str(e):
-                    logger.warning("Ignoring cancel scope error during shutdown")
-                else:
-                    raise
+                        except Exception as e:
+                            logger.warning(f"Error during client.close() for {server_name}: {e}")
+                    server.client = None
+                except Exception as e:
+                    logger.error(f"Error closing MCP server {server_name}: {e}")
+        
+        # Then close the exit stack
+        try:
+            await self.exit_stack.aclose()
+        except RuntimeError as e:
+            if "Attempted to exit cancel scope in a different task" in str(e):
+                logger.warning("Ignoring cancel scope error during shutdown")
+            else:
+                logger.error(f"Error during exit_stack.aclose(): {e}")
         except Exception as e:
             logger.error(f"Error stopping MCP servers: {e}")
         
+        # Create a new exit stack for future use
+        self.exit_stack = AsyncExitStack()
         self.initialized = False
     
     async def fetch_server_tools(self, server_name: str) -> List[MCPToolSchema]:
