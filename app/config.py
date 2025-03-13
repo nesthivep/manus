@@ -53,11 +53,21 @@ class BrowserSettings(BaseModel):
     )
 
 
+class DatabaseSettings(BaseModel):
+    host: str = Field(..., description="Database host")
+    port: int = Field(..., description="Database port")
+    user: str = Field(..., description="Database user")
+    password: str = Field(..., description="Database password")
+    database: str = Field(..., description="Database name")
+    charset: str = Field("utf8mb4", description="Database charset")
+
+
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
     browser_config: Optional[BrowserSettings] = Field(
         None, description="Browser configuration"
     )
+    database: DatabaseSettings = Field(..., description="Database configuration")
 
     class Config:
         arbitrary_types_allowed = True
@@ -149,6 +159,10 @@ class Config:
             if valid_browser_params:
                 browser_settings = BrowserSettings(**valid_browser_params)
 
+        # handle database config
+        database_config = raw_config.get("database", {})
+        database_settings = DatabaseSettings(**database_config)
+
         config_dict = {
             "llm": {
                 "default": default_settings,
@@ -158,6 +172,7 @@ class Config:
                 },
             },
             "browser_config": browser_settings,
+            "database": database_settings,
         }
 
         self._config = AppConfig(**config_dict)
@@ -169,6 +184,36 @@ class Config:
     @property
     def browser_config(self) -> Optional[BrowserSettings]:
         return self._config.browser_config
+
+    @property
+    def database(self) -> Dict[str, DatabaseSettings]:
+        """获取所有数据库配置"""
+        database_configs = {}
+        raw_config = self._load_config()
+        
+        # 处理默认数据库配置
+        default_db = raw_config.get("database", {})
+        if default_db:
+            database_configs["default"] = DatabaseSettings(**default_db)
+        
+        # 处理其他数据库配置（如果有的话）
+        databases = raw_config.get("databases", {})
+        for name, db_config in databases.items():
+            database_configs[name] = DatabaseSettings(**db_config)
+            
+        return database_configs
+
+    def get_database_config(self, name: str = "default") -> Optional[DatabaseSettings]:
+        """
+        获取指定名称的数据库配置
+        
+        Args:
+            name: 数据库配置名称，默认为 "default"
+            
+        Returns:
+            DatabaseSettings 或 None（如果配置不存在）
+        """
+        return self.database.get(name)
 
 
 config = Config()

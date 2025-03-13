@@ -20,7 +20,6 @@ temperature = 0.0
 model = "claude-3-5-sonnet"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."
-
 # Optional configuration for specific browser configuration
 # [browser]
 # Whether to run browser in headless mode (default: false)
@@ -42,3 +41,22 @@ api_key = "sk-..."
 # server = "http://proxy-server:port"
 # username = "proxy-username"
 # password = "proxy-password"
+
+# 添加数据库配置部分
+[database]
+# 默认数据库配置
+host = "localhost"
+port = 3306
+user = "root"
+password = "your-password"
+database = "your-database"
+charset = "utf8mb4"
+
+# 其他数据库配置（可选）
+[databases.other_db]
+host = "other-host"
+port = 3306
+user = "other-user"
+password = "other-password"
+database = "other_db"
+charset = "utf8mb4"
