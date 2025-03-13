@@ -187,16 +187,16 @@ class Config:
 
     @property
     def database(self) -> Dict[str, DatabaseSettings]:
-        """获取所有数据库配置"""
+        """Get all database configurations"""
         database_configs = {}
         raw_config = self._load_config()
         
-        # 处理默认数据库配置
+        # Handle default database configuration
         default_db = raw_config.get("database", {})
         if default_db:
             database_configs["default"] = DatabaseSettings(**default_db)
         
-        # 处理其他数据库配置（如果有的话）
+        # Handle other database configurations (if any)
         databases = raw_config.get("databases", {})
         for name, db_config in databases.items():
             database_configs[name] = DatabaseSettings(**db_config)
@@ -205,13 +205,13 @@ class Config:
 
     def get_database_config(self, name: str = "default") -> Optional[DatabaseSettings]:
         """
-        获取指定名称的数据库配置
+        Get database configuration by name
         
         Args:
-            name: 数据库配置名称，默认为 "default"
+            name: Database configuration name, defaults to "default"
             
         Returns:
-            DatabaseSettings 或 None（如果配置不存在）
+            DatabaseSettings or None (if configuration doesn't exist)
         """
         return self.database.get(name)
 

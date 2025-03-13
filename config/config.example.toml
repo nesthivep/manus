@@ -42,9 +42,9 @@ api_key = "sk-..."
 # username = "proxy-username"
 # password = "proxy-password"
 
-# 添加数据库配置部分
+# Add database configuration section
 [database]
-# 默认数据库配置
+# Default database configuration
 host = "localhost"
 port = 3306
 user = "root"
@@ -52,7 +52,7 @@ password = "your-password"
 database = "your-database"
 charset = "utf8mb4"
 
-# 其他数据库配置（可选）
+# Other database configurations (optional)
 [databases.other_db]
 host = "other-host"
 port = 3306
