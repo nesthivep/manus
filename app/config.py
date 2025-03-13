@@ -23,6 +23,7 @@ class LLMSettings(BaseModel):
     temperature: float = Field(1.0, description="Sampling temperature")
     api_type: str = Field(..., description="AzureOpenai or Openai")
     api_version: str = Field(..., description="Azure Openai version if AzureOpenai")
+    extra_body: dict = Field(..., description="Extra body to pass to the API")
 
 
 class ProxySettings(BaseModel):
@@ -119,6 +120,7 @@ class Config:
             "temperature": base_llm.get("temperature", 1.0),
             "api_type": base_llm.get("api_type", ""),
             "api_version": base_llm.get("api_version", ""),
+            "extra_body": base_llm.get("extra_body", {}),
         }
 
         # handle browser config.

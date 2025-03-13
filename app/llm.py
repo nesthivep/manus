@@ -40,6 +40,7 @@ class LLM:
             self.api_key = llm_config.api_key
             self.api_version = llm_config.api_version
             self.base_url = llm_config.base_url
+            self.extra_body = llm_config.extra_body
             if self.api_type == "azure":
                 self.client = AsyncAzureOpenAI(
                     base_url=self.base_url,
@@ -141,6 +142,7 @@ class LLM:
                     max_tokens=self.max_tokens,
                     temperature=temperature or self.temperature,
                     stream=False,
+                    extra_body=self.extra_body,
                 )
                 if not response.choices or not response.choices[0].message.content:
                     raise ValueError("Empty or invalid response from LLM")
@@ -153,6 +155,7 @@ class LLM:
                 max_tokens=self.max_tokens,
                 temperature=temperature or self.temperature,
                 stream=True,
+                extra_body=self.extra_body,
             )
 
             collected_messages = []
@@ -238,6 +241,7 @@ class LLM:
                 tools=tools,
                 tool_choice=tool_choice,
                 timeout=timeout,
+                extra_body=self.extra_body,
                 **kwargs,
             )
 
