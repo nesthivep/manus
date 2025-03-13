@@ -39,6 +39,13 @@ The tool returns a list of URLs that match the search query.
         Returns:
             List[str]: A list of URLs matching the search query.
         """
+        # Ensure num_results is an integer
+        if isinstance(num_results, str):
+            try:
+                num_results = int(num_results)
+            except ValueError:
+                num_results = 10  # Default to 10 if conversion fails
+                
         # Run the search in a thread pool to prevent blocking
         loop = asyncio.get_event_loop()
         links = await loop.run_in_executor(
