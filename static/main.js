@@ -286,27 +286,27 @@ function createStepElement(type, content, timestamp) {
                 fileInteractionHtml = `
                     <div class="file-interaction image-preview">
                         <img src="${filePath}" alt="${fileName}" class="preview-image" onclick="showFullImage('${filePath}')">
-                        <a href="${filePath}" download="${fileName}" class="download-link">⬇️ 下载图片</a>
+                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载图片</a>
                     </div>
                 `;
             } else if (['mp3', 'wav', 'ogg'].includes(fileExtension)) {
                 fileInteractionHtml = `
                     <div class="file-interaction audio-player">
                         <audio controls src="${filePath}"></audio>
-                        <a href="${filePath}" download="${fileName}" class="download-link">⬇️ 下载音频</a>
+                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载音频</a>
                     </div>
                 `;
-            } else if (fileExtension === 'py') {
+            } else if (['html', 'js', 'py'].includes(fileExtension)) {
                 fileInteractionHtml = `
                     <div class="file-interaction code-file">
                         <button onclick="simulateRunPython('${filePath}')" class="run-button">▶️ 模拟运行</button>
-                        <a href="${filePath}" download="${fileName}" class="download-link">⬇️ 下载文件</a>
+                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载文件</a>
                     </div>
                 `;
             } else {
                 fileInteractionHtml = `
                     <div class="file-interaction">
-                        <a href="${filePath}" download="${fileName}" class="download-link">⬇️ 下载文件: ${fileName}</a>
+                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载文件: ${fileName}</a>
                     </div>
                 `;
             }

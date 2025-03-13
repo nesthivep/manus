@@ -6,7 +6,7 @@ set "VENV_DIR=%~dp0venv"
 set "PYTHON_PATH=%VENV_DIR%\python.exe"
 
 where git >nul 2>&1
-if !errorlevel! == 0 (
+if %errorlevel% == 0 (
     echo Trying to sync with GitHub repository...
     git pull origin front-end 2>&1 || echo Failed to sync with GitHub, skipping update...
 ) else (
