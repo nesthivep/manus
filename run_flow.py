@@ -2,14 +2,21 @@ import asyncio
 import time
 
 from app.agent.manus import Manus
+from app.agent.swe import SWEAgent
+# from app.agent.social import InstagramAgent  # Import the Instagram agent
 from app.flow.base import FlowType
 from app.flow.flow_factory import FlowFactory
 from app.logger import logger
+from app.agent.dual_system import DualSystemAgent  # Add import for the new agent
 
 
 async def run_flow():
     agents = {
         "manus": Manus(),
+        "swe": SWEAgent(),
+        "code": SWEAgent(),
+        # "instagram": InstagramAgent(),  # Add the Instagram agent
+        "dual_system": DualSystemAgent(),  # Add the new agent
     }
 
     while True:
@@ -19,10 +26,16 @@ async def run_flow():
                 logger.info("Goodbye!")
                 break
 
+            # Allow selecting the flow type
+            flow_type_input = input("Choose flow type (planning/dual_system) [default: planning]: ").strip().lower()
+            flow_type = FlowType.DUAL_SYSTEM if flow_type_input == "dual_system" else FlowType.PLANNING
+            
             flow = FlowFactory.create_flow(
-                flow_type=FlowType.PLANNING,
+                flow_type=flow_type,
                 agents=agents,
+                executor_keys=["manus", "swe", "code", "dual_system"],
             )
+            
             if prompt.strip().isspace():
                 logger.warning("Skipping empty prompt.")
                 continue

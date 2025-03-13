@@ -1,6 +1,6 @@
 # Global LLM configuration
 [llm]
-model = "claude-3-5-sonnet"
+model = "gpt-4o-mini"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."
 max_tokens = 4096
@@ -20,3 +20,24 @@ temperature = 0.0
 model = "claude-3-5-sonnet"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."
+
+# System 1 (Fast Thinking) LLM configuration
+[llm.system1]
+model = "gpt-4o-mini"  # Faster, smaller model
+base_url = "https://api.openai.com/v1"
+api_key = "sk-..."
+max_tokens = 1024  # Shorter responses
+temperature = 0.7  # More intuitive/creative
+
+# System 2 (Slow Thinking) LLM configuration
+[llm.system2]
+model = "gpt-4o"  # More capable model
+base_url = "https://api.openai.com/v1"
+api_key = "sk-..."
+max_tokens = 4096  # Longer, more detailed responses
+temperature = 0.2  # More analytical/precise
+
+# Dual-System Agent configuration
+[agent.dual_system]
+complexity_threshold = 0.6  # Threshold for system selection (0-1)
+enable_bias_mitigation = true  # Enable cognitive bias detection and mitigation

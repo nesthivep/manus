@@ -38,6 +38,7 @@ class ToolResult(BaseModel):
     output: Any = Field(default=None)
     error: Optional[str] = Field(default=None)
     system: Optional[str] = Field(default=None)
+    data: Dict[str, Any] = Field(default={})
 
     class Config:
         arbitrary_types_allowed = True
@@ -59,6 +60,7 @@ class ToolResult(BaseModel):
             output=combine_fields(self.output, other.output),
             error=combine_fields(self.error, other.error),
             system=combine_fields(self.system, other.system),
+            data={**self.data, **other.data},
         )
 
     def __str__(self):
@@ -79,4 +81,4 @@ class ToolFailure(ToolResult):
 
 
 class AgentAwareTool:
-    agent: Optional = None
+    agent: Optional = None # type: ignore

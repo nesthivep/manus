@@ -47,18 +47,30 @@ class PlanningFlow(BaseFlow):
     def get_executor(self, step_type: Optional[str] = None) -> BaseAgent:
         """
         Get an appropriate executor agent for the current step.
-        Can be extended to select agents based on step type/requirements.
+        
+        Args:
+            step_type: Optional type identifier for the step (e.g. 'code', 'instagram').
+                      This is typically extracted from tags in the step description.
+        
+        Returns:
+            The most appropriate agent to execute this step.
         """
+        # Normalize step type to lowercase if provided
+        normalized_type = step_type.lower() if step_type else None
+        
         # If step type is provided and matches an agent key, use that agent
-        if step_type and step_type in self.agents:
-            return self.agents[step_type]
+        if normalized_type and normalized_type in self.agents:
+            logger.info(f"Using {normalized_type} agent for step with type [{step_type}]")
+            return self.agents[normalized_type]
 
         # Otherwise use the first available executor or fall back to primary agent
         for key in self.executor_keys:
             if key in self.agents:
+                logger.info(f"Using {key} agent (fallback from executor_keys)")
                 return self.agents[key]
 
         # Fallback to primary agent
+        logger.info("Using primary agent (final fallback)")
         return self.primary_agent
 
     async def execute(self, input_text: str) -> str:
@@ -111,7 +123,15 @@ class PlanningFlow(BaseFlow):
         system_message = Message.system_message(
             "You are a planning assistant. Create a concise, actionable plan with clear steps. "
             "Focus on key milestones rather than detailed sub-steps. "
-            "Optimize for clarity and efficiency."
+            "Optimize for clarity and efficiency.\n\n"
+            "When creating plans, tag steps with the appropriate agent type in square brackets if known:\n"
+            "- [INSTAGRAM] for social media tasks involving Instagram posting, engagement, or analytics\n"
+            "- [CODE] or [SWE] for software development or coding tasks\n"
+            "- [MANUS] for general purpose tasks\n\n"
+            "Examples:\n"
+            "- \"Post our latest product to Instagram\" → [INSTAGRAM] Post latest product to Instagram...\n"
+            "- \"Set up a database schema\" → [CODE] Set up database schema...\n"
+            "- \"Research market trends\" → [MANUS] Research market trends..."
         )
 
         # Create a user message with the request
@@ -165,6 +185,7 @@ class PlanningFlow(BaseFlow):
     async def _get_current_step_info(self) -> tuple[Optional[int], Optional[dict]]:
         """
         Parse the current plan to identify the first non-completed step's index and info.
+        Extracts step type from tags like [CODE], [INSTAGRAM], etc.
         Returns (None, None) if no active step is found.
         """
         if (
@@ -194,9 +215,12 @@ class PlanningFlow(BaseFlow):
                     # Try to extract step type from the text (e.g., [SEARCH] or [CODE])
                     import re
 
-                    type_match = re.search(r"\[([A-Z_]+)\]", step)
+                    # Look for tags at the beginning of the step text
+                    type_match = re.search(r"^\s*\[([A-Za-z_]+)\]", step)
                     if type_match:
-                        step_info["type"] = type_match.group(1).lower()
+                        step_type = type_match.group(1).lower()
+                        step_info["type"] = step_type
+                        logger.info(f"Detected step type: {step_type} for step {i}")
 
                     # Mark current step as in_progress
                     try:
@@ -231,6 +255,7 @@ class PlanningFlow(BaseFlow):
         # Prepare context for the agent with current plan status
         plan_status = await self._get_plan_text()
         step_text = step_info.get("text", f"Step {self.current_step_index}")
+        step_type = step_info.get("type", "general")
 
         # Create a prompt for the agent to execute the current step
         step_prompt = f"""
@@ -239,12 +264,14 @@ class PlanningFlow(BaseFlow):
 
         YOUR CURRENT TASK:
         You are now working on step {self.current_step_index}: "{step_text}"
+        Step type: {step_type}
 
         Please execute this step using the appropriate tools. When you're done, provide a summary of what you accomplished.
         """
 
         # Use agent.run() to execute the step
         try:
+            logger.info(f"Executing step {self.current_step_index} with {executor.name} agent")
             step_result = await executor.run(step_prompt)
 
             # Mark the step as completed after successful execution
