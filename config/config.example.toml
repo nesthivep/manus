@@ -44,6 +44,13 @@ api_key = "sk-..."
 # password = "proxy-password"
 
 # Optional configuration, Search settings.
-# [search]
-# Search engine for agent to use. Default is "Google", can be set to "Baidu" or "DuckDuckGo".
+#[search]
+# Search engine for agent to use. Default is "Google", can be set to "Baidu", "DuckDuckGo" or "Searxng".
 #engine = "Google"
+
+# SearxNG setting.
+[search.searxng]
+# SearxNG instance address, can use public instance or local instance
+#base_url = "http://127.0.0.1:prot"
+# Number of search results
+#num_results = 5

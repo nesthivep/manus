@@ -22,3 +22,8 @@ aiofiles~=24.1.0
 pydantic_core~=2.27.2
 colorama~=0.4.6
 playwright~=1.49.1
+
+# SearxNG dependencies
+requests~=2.31.0
+pytz~=2024.1
+toml~=0.10.2
