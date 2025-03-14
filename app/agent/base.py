@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Union
+import re
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -40,6 +41,10 @@ class BaseAgent(BaseModel, ABC):
     current_step: int = Field(default=0, description="Current step in execution")
 
     duplicate_threshold: int = 2
+    
+    # Store the current thought and action for each step
+    current_thought: Optional[str] = None
+    current_action: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -109,15 +114,48 @@ class BaseAgent(BaseModel, ABC):
         msg_factory = message_map[role]
         msg = msg_factory(content, **kwargs) if role == "tool" else msg_factory(content)
         self.memory.add_message(msg)
+        
+        # Capture thoughts from assistant messages
+        if role == "assistant" and not kwargs.get("tool_call_id"):
+            self.current_thought = content
 
-    async def run(self, request: Optional[str] = None) -> str:
+    def _extract_command_and_url(self, step_result: str) -> Dict[str, Optional[str]]:
+        """Extract command and URL from step result if present.
+        
+        Args:
+            step_result: The result string from a step execution.
+            
+        Returns:
+            Dictionary with command and url keys if found, None otherwise.
+        """
+        result = {"command": None, "url": None}
+        
+        # Extract command if present
+        cmd_match = re.search(r"Observed output of cmd `([^`]+)`", step_result)
+        if cmd_match:
+            result["command"] = cmd_match.group(1)
+            
+        # Extract URL if present - looking for common URL patterns
+        url_match = re.search(r"https?://[^\s\)\"\'\>]+", step_result)
+        if url_match:
+            result["url"] = url_match.group(0)
+            
+        # Extract file path from file_saver tool
+        if "file_saver" in step_result and "Content successfully saved to" in step_result:
+            file_path_match = re.search(r"Content successfully saved to (.+)", step_result)
+            if file_path_match:
+                result["url"] = file_path_match.group(1).strip()
+                
+        return result
+
+    async def run(self, request: Optional[str] = None) -> List[Dict[str, Any]]:
         """Execute the agent's main loop asynchronously.
 
         Args:
             request: Optional initial user request to process.
 
         Returns:
-            A string summarizing the execution results.
+            A list of step objects with structured information about each step.
 
         Raises:
             RuntimeError: If the agent is not in IDLE state at start.
@@ -128,27 +166,71 @@ class BaseAgent(BaseModel, ABC):
         if request:
             self.update_memory("user", request)
 
-        results: List[str] = []
+        results: List[Dict[str, Any]] = []
         async with self.state_context(AgentState.RUNNING):
             while (
                 self.current_step < self.max_steps and self.state != AgentState.FINISHED
             ):
                 self.current_step += 1
                 logger.info(f"Executing step {self.current_step}/{self.max_steps}")
-                step_result = await self.step()
+                
+                # Reset thought and action for this step
+                self.current_thought = None
+                self.current_action = None
+                
+                try:
+                    step_result = await self.step()
+                    self.current_action = step_result
+                    
+                    # Extract command and URL if present
+                    extracted = self._extract_command_and_url(step_result)
+                    
+                    # Create structured step object
+                    step_obj = {
+                        "step": self.current_step,
+                        "command": extracted["command"],
+                        "url": extracted["url"],
+                        "thought": self.current_thought,
+                        "action": self.current_action
+                    }
+                    
+                    # Check if result contains an error
+                    if "Error:" in step_result:
+                        step_obj["error"] = step_result
+                    
+                    results.append(step_obj)
+                    
+                except Exception as e:
+                    error_msg = str(e)
+                    logger.error(f"Error in step {self.current_step}: {error_msg}")
+                    results.append({
+                        "step": self.current_step,
+                        "error": error_msg,
+                        "thought": self.current_thought,
+                        "action": None
+                    })
 
                 # Check for stuck state
                 if self.is_stuck():
                     self.handle_stuck_state()
-
-                results.append(f"Step {self.current_step}: {step_result}")
+                    results.append({
+                        "step": self.current_step,
+                        "error": "Agent detected stuck state. Attempting to change strategy.",
+                        "thought": "Detected repetitive behavior, changing strategy",
+                        "action": None
+                    })
 
             if self.current_step >= self.max_steps:
                 self.current_step = 0
                 self.state = AgentState.IDLE
-                results.append(f"Terminated: Reached max steps ({self.max_steps})")
+                results.append({
+                    "step": self.current_step + 1,
+                    "termination_reason": f"Reached max steps ({self.max_steps})",
+                    "thought": None,
+                    "action": None
+                })
 
-        return "\n".join(results) if results else "No steps executed"
+        return results if results else [{"step": 0, "error": "No steps executed", "thought": None, "action": None}]
 
     @abstractmethod
     async def step(self) -> str:

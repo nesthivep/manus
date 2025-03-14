@@ -1,5 +1,5 @@
 import json
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, Dict
 
 from pydantic import Field
 
@@ -59,6 +59,9 @@ class ToolCallAgent(ReActAgent):
             logger.info(
                 f"🧰 Tools being prepared: {[call.function.name for call in response.tool_calls]}"
             )
+
+        # Capture the agent's thoughts
+        self.current_thought = response.content
 
         try:
             # Handle different tool_choices modes
@@ -126,7 +129,10 @@ class ToolCallAgent(ReActAgent):
             self.memory.add_message(tool_msg)
             results.append(result)
 
-        return "\n\n".join(results)
+        # Store the combined results as the current action
+        combined_results = "\n\n".join(results)
+        self.current_action = combined_results
+        return combined_results
 
     async def execute_tool(self, command: ToolCall) -> str:
         """Execute a single tool call with robust error handling"""

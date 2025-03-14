@@ -50,14 +50,29 @@ The tool returns a list of URLs that match the search query.
             List[str]: A list of URLs matching the search query.
         """
         # Run the search in a thread pool to prevent blocking
-        loop = asyncio.get_event_loop()
+        num_results = int(num_results)
         search_engine = self.get_search_engine()
-        links = await loop.run_in_executor(
-            None,
-            lambda: list(search_engine.perform_search(query, num_results=num_results)),
-        )
-
-        return links
+        
+        try:
+            # Check if the search result is awaitable (coroutine)
+            search_result = search_engine.perform_search(query, num_results=num_results)
+            
+            # If it's a coroutine, await it
+            if asyncio.iscoroutine(search_result):
+                links = await search_result
+            else:
+                # If it's already an iterable, convert to list
+                links = list(search_result)
+                
+            # Ensure we always return a list
+            if not isinstance(links, list):
+                links = [links] if links else []
+                
+            return links
+        except Exception as e:
+            # Return a descriptive error message as a list with one item
+            error_msg = f"Search error: {str(e)}"
+            return [error_msg]
 
     def get_search_engine(self) -> WebSearchEngine:
         """Determines the search engine to use based on the configuration."""
