@@ -46,11 +46,19 @@ The tool accepts the recipient's email address, subject, and body of the email .
         Returns:
             str: A message indicating the result of the email sending operation.
         """
+        
         try:
-            sender_email = config.email.sender_email
-            app_password = config.email.app_password
-            print(f"email send config {sender_email}")
-            print(f"email send config {app_password}")
+            sender_email = config.email_config.sender_email
+            app_password = config.email_config.app_password
+            
+            # Check if email settings are None
+            if not sender_email or not app_password:
+                raise ValueError(
+                    "Email configuration is invalid. "
+                    "Please check if sender_email and app_password are properly set "
+                    "in the [email.gmail] section of your config.toml file."
+                )
+
             # Create a multipart message
             message = MIMEMultipart()
             message['From'] = sender_email
@@ -58,14 +66,27 @@ The tool accepts the recipient's email address, subject, and body of the email .
             message['Subject'] = subject
             message.attach(MIMEText(body, 'plain'))
 
-            server = smtplib.SMTP('smtp.gmail.com', 587)
-            server.starttls()  # Secure the connection
-            server.login(sender_email, app_password)
+            try:
+                server = smtplib.SMTP('smtp.gmail.com', 587)
+                server.starttls()  # Secure the connection
+                
+                try:
+                    server.login(sender_email, app_password)
+                except smtplib.SMTPAuthenticationError:
+                    raise ValueError(
+                        "Gmail authentication failed. "
+                        "Please verify your app_password is correct. "
+                        "Make sure you have enabled 2-Step Verification and set up an App Password properly."
+                    )
 
-            # Send the email
-            server.sendmail(sender_email, recipient_email, message.as_string())
-            server.quit()
+                # Send the email
+                server.sendmail(sender_email, recipient_email, message.as_string())
+                return f"Email successfully sent to {recipient_email}"
+            
+            except smtplib.SMTPException as smtp_error:
+                raise ValueError(f"SMTP server error: {str(smtp_error)}")
+            finally:
+                server.quit()
 
-            return f"Email successfully send to {recipient_email}"
         except Exception as e:
             return f"Failed to send email to {recipient_email}: {str(e)}"

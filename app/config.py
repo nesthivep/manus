@@ -58,8 +58,8 @@ class BrowserSettings(BaseModel):
 
 
 class EmailSettings(BaseModel):
-    sender_email: str = Field(..., description="Sender's email address")
-    app_password: str = Field(..., description="Application-specific password for email")
+    sender_email: str = Field(None, description="Sender's email address")
+    app_password: str = Field(None, description="Application-specific password for email")
 
 
 class AppConfig(BaseModel):
@@ -69,6 +69,9 @@ class AppConfig(BaseModel):
     )
     search_config: Optional[SearchSettings] = Field(
         None, description="Search configuration"
+    )
+    email_config: EmailSettings = Field(
+        None, description="Email configuration"
     )
 
     class Config:
@@ -166,6 +169,9 @@ class Config:
         if search_config:
             search_settings = SearchSettings(**search_config)
 
+        email_config = raw_config.get("email", {}).get("gmail", {})
+        email_settings = EmailSettings(**email_config)
+
         config_dict = {
             "llm": {
                 "default": default_settings,
@@ -176,6 +182,7 @@ class Config:
             },
             "browser_config": browser_settings,
             "search_config": search_settings,
+            "email_config": email_settings,
         }
 
         self._config = AppConfig(**config_dict)
@@ -189,8 +196,8 @@ class Config:
         return self._config.browser_config
 
     @property
-    def email(self) -> EmailSettings:
-        return self._config.email
+    def email_config(self) -> EmailSettings:
+        return self._config.email_config
 
     @property
     def search_config(self) -> Optional[SearchSettings]:
