@@ -1,3 +1,5 @@
+import os
+import toml
 import threading
 import tomllib
 from pathlib import Path
@@ -5,6 +7,15 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+
+# Load config from file
+config = toml.load("config/config.toml")
+
+# Override with environment variables if available
+if "ANTHROPIC_API_KEY" in os.environ:
+    config["llm"]["api_key"] = os.environ["ANTHROPIC_API_KEY"]
+    if "vision" in config["llm"]:
+        config["llm"]["vision"]["api_key"] = os.environ["ANTHROPIC_API_KEY"]
 
 def get_project_root() -> Path:
     """Get the project root directory"""
