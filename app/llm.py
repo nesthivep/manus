@@ -1,5 +1,5 @@
-from typing import Dict, List, Optional, Union
 import re
+from typing import Dict, List, Optional, Union
 
 from openai import (
     APIError,
@@ -91,9 +91,11 @@ class LLM:
 
         def clean_text(text: str) -> str:
             """Clean unwanted characters from text (nested for encapsulation)."""
-            text = LLM._NEWLINE_PATTERN.sub("", text) # Remove escaped newlines
-            text = LLM._TAB_PATTERN.sub("", text)     # Remove escaped tabs
-            text = LLM._BACKSLASH_PATTERN.sub(r"\\", text) # Replace multiple backslashes with one
+            text = LLM._NEWLINE_PATTERN.sub("", text)  # Remove escaped newlines
+            text = LLM._TAB_PATTERN.sub("", text)  # Remove escaped tabs
+            text = LLM._BACKSLASH_PATTERN.sub(
+                r"\\", text
+            )  # Replace multiple backslashes with one
             return text
 
         for message in messages:
@@ -110,9 +112,9 @@ class LLM:
 
         # Clean ALL string values using nested comprehensions
         # to avoid unnecessary tokens in the LLM prompt
-        formatted_messages  = [
-        {k: clean_text(v) if isinstance(v, str) else v for k, v in msg.items()}
-        for msg in formatted_messages
+        formatted_messages = [
+            {k: clean_text(v) if isinstance(v, str) else v for k, v in msg.items()}
+            for msg in formatted_messages
         ]
 
         # Validate all messages have required fields
