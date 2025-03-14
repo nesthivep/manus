@@ -87,7 +87,7 @@ class ToolCallAgent(ReActAgent):
 
             # For 'auto' mode, continue with content if no commands but content exists
             if self.tool_choices == ToolChoice.AUTO and not self.tool_calls:
-                return bool(response.content)
+                return False
 
             return bool(self.tool_calls)
         except Exception as e:

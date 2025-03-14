@@ -65,7 +65,7 @@ class PlanningAgent(ToolCallAgent):
 
         # After thinking, if we decided to execute a tool and it's not a planning tool or special tool,
         # associate it with the current step for tracking
-        if result and self.tool_calls:
+        if self.tool_calls:
             latest_tool_call = self.tool_calls[0]  # Get the most recent tool call
             if (
                 latest_tool_call.function.name != "planning"
