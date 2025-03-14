@@ -57,6 +57,11 @@ class BrowserSettings(BaseModel):
     )
 
 
+class EmailSettings(BaseModel):
+    sender_email: str = Field(..., description="Sender's email address")
+    app_password: str = Field(..., description="Application-specific password for email")
+
+
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
     browser_config: Optional[BrowserSettings] = Field(
@@ -182,6 +187,10 @@ class Config:
     @property
     def browser_config(self) -> Optional[BrowserSettings]:
         return self._config.browser_config
+
+    @property
+    def email(self) -> EmailSettings:
+        return self._config.email
 
     @property
     def search_config(self) -> Optional[SearchSettings]:
