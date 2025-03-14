@@ -1,13 +1,13 @@
 INFO     [browser_use] BrowserUse logging setup complete with level info
 INFO     [root] Anonymized telemetry enabled. See https://docs.browser-use.com/development/telemetry for more information.
-Enter your prompt: 2025-03-13 23:38:34.055 | WARNING  | __main__:main:15 - Processing your request...
-2025-03-13 23:38:34.056 | INFO     | app.agent.base:run:137 - Executing step 1/20
-2025-03-13 23:38:36.165 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
-2025-03-13 23:38:39.112 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
-2025-03-13 23:38:42.002 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
-2025-03-13 23:38:47.225 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
-2025-03-13 23:38:53.067 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
-2025-03-13 23:38:56.678 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
+Enter your prompt: 2025-03-14 08:34:16.620 | WARNING  | __main__:main:15 - Processing your request...
+2025-03-14 08:34:16.621 | INFO     | app.agent.base:run:137 - Executing step 1/20
+2025-03-14 08:34:18.560 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
+2025-03-14 08:34:21.421 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
+2025-03-14 08:34:24.909 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
+2025-03-14 08:34:29.858 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
+2025-03-14 08:34:38.016 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
+2025-03-14 08:34:55.527 | ERROR    | app.llm:ask_tool:260 - API error: Connection error.
 Traceback (most recent call last):
   File "/home/kplymel/.local/lib/python3.12/site-packages/httpcore/_exceptions.py", line 10, in map_exceptions
     yield
@@ -292,4 +292,4 @@ Traceback (most recent call last):
            ^^^^^^^^^^^^^^^^^^^^^
   File "/home/kplymel/miniconda3/lib/python3.12/site-packages/tenacity/__init__.py", line 419, in exc_check
     raise retry_exc from fut.exception()
-tenacity.RetryError: RetryError[<Future at 0x7f0a9e652c90 state=finished raised APIConnectionError>]
+tenacity.RetryError: RetryError[<Future at 0x7f3c12c1d220 state=finished raised APIConnectionError>]
