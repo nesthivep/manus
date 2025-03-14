@@ -12,7 +12,8 @@ async def main():
             logger.warning("Empty prompt provided.")
             return
 
-        logger.warning("Processing your request...")
+        # log the prompt
+        logger.warning(f"Processing your request:{prompt}.strip()")
         await agent.run(prompt)
         logger.info("Request processing completed.")
     except KeyboardInterrupt:
