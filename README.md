@@ -87,11 +87,16 @@ OpenManus requires configuration for the LLM APIs it uses. Follow these steps to
 cp config/config.example.toml config/config.toml
 ```
 
-2. Edit `config/config.toml` to add your API keys and customize settings:
+2. Edit `config/config.toml` to add your API keys and customize settings.
+
+### OpenAI Configuration
+
+For OpenAI models (default):
 
 ```toml
 # Global LLM configuration
 [llm]
+api_type = "openai"  # Use OpenAI API
 model = "gpt-4o"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."  # Replace with your actual API key
@@ -104,6 +109,43 @@ model = "gpt-4o"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."  # Replace with your actual API key
 ```
+
+### HuggingFace Configuration
+
+For HuggingFace models (new):
+
+```toml
+# Global LLM configuration
+[llm]
+api_type = "hf"  # Use HuggingFace API
+model = "Qwen/Qwen2.5-72B-Instruct"  # Recommended model
+base_url = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct"
+api_key = "hf_..."  # Replace with your HuggingFace API key
+max_tokens = 4096
+temperature = 0.0
+```
+
+## Model Support
+
+OpenManus now supports multiple LLM providers, giving you flexibility in your choice of models.
+
+### OpenAI Models (Original)
+
+These models have been thoroughly tested and work well with OpenManus:
+- `gpt-4o` (default, recommended)
+- `gpt-4` 
+- `gpt-3.5-turbo`
+
+### HuggingFace Models (New)
+
+HuggingFace integration adds support for open-source models. The following models have been tested and work well with OpenManus:
+- `Qwen/Qwen2.5-72B-Instruct` (recommended)
+- `meta-llama/Meta-Llama-3-70B-Instruct`
+
+To use HuggingFace models:
+1. Sign up for a HuggingFace account at [huggingface.co](https://huggingface.co)
+2. Get your API key from your [HuggingFace settings page](https://huggingface.co/settings/tokens)
+3. Configure the `config.toml` file as shown in the HuggingFace Configuration section
 
 ## Quick Start
 
@@ -120,6 +162,35 @@ For unstable version, you also can run:
 ```bash
 python run_flow.py
 ```
+
+## Advanced Features
+
+### File Creation and Browser Testing
+
+OpenManus now includes enhanced capabilities to create files and automatically test them in a browser:
+
+1. **FileCreatorViewer Tool**: A powerful combined tool that creates a file and immediately opens it in the browser. This is perfect for iterative development of HTML, CSS, and other web files where you want to see the results instantly.
+
+2. **Enhanced File Creation Workflow**: The agent follows a methodical approach:
+   - Creates necessary files using FileSaver or FileCreatorViewer
+   - Tests them using BrowserUseTool or FileCreatorViewer
+   - Makes adjustments based on what it observes
+   - Retests to verify improvements
+   - Continues this cycle until the solution is optimal
+
+3. **Improved Browser Integration**: When working with web applications, the agent can now:
+   - Create HTML, CSS, and JavaScript files
+   - Open them directly in a browser
+   - Navigate and interact with elements
+   - Modify files based on testing results
+   - Create complete web applications from scratch
+
+Example usage:
+```
+Create a weather dashboard app that shows current temperature and forecast for my location
+```
+
+The agent will create all necessary files, test them in a browser, and refine them until the application works as expected.
 
 ## How to contribute
 

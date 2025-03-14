@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 from app.exceptions import ToolError
 from app.tool.base import BaseTool, CLIResult, ToolResult
@@ -132,7 +132,7 @@ class Bash(BaseTool):
     _session: Optional[_BashSession] = None
 
     async def execute(
-        self, command: str | None = None, restart: bool = False, **kwargs
+        self, command: Optional[str] = None, restart: bool = False, **kwargs
     ) -> CLIResult:
         if restart:
             if self._session:

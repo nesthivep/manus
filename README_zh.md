@@ -91,11 +91,16 @@ OpenManus 需要配置使用的 LLM API，请按以下步骤设置：
 cp config/config.example.toml config/config.toml
 ```
 
-2. 编辑 `config/config.toml` 添加 API 密钥和自定义设置：
+2. 编辑 `config/config.toml` 添加 API 密钥和自定义设置。
+
+### OpenAI 配置
+
+对于 OpenAI 模型（默认）：
 
 ```toml
 # 全局 LLM 配置
 [llm]
+api_type = "openai"  # 使用 OpenAI API
 model = "gpt-4o"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."  # 替换为真实 API 密钥
@@ -108,6 +113,46 @@ model = "gpt-4o"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-..."  # 替换为真实 API 密钥
 ```
+
+### HuggingFace 配置
+
+对于 HuggingFace 模型（新增）：
+
+```toml
+# 全局 LLM 配置
+[llm]
+api_type = "hf"  # 使用 HuggingFace API
+model = "Qwen/Qwen2.5-72B-Instruct"  # 推荐模型
+base_url = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct"
+api_key = "hf_..."  # 替换为你的 HuggingFace API 密钥
+max_tokens = 4096
+temperature = 0.0
+```
+
+## 模型支持
+
+OpenManus 现在支持多种 LLM 提供商，让您可以灵活选择适合的模型。
+
+### OpenAI 模型（原有）
+
+以下模型已经过全面测试，与 OpenManus 配合良好：
+
+- `gpt-4o`（默认，推荐）
+- `gpt-4`
+- `gpt-3.5-turbo`
+
+### HuggingFace 模型（新增）
+
+HuggingFace 集成增加了对开源模型的支持。以下模型已经过测试，与 OpenManus 配合良好：
+
+- `Qwen/Qwen2.5-72B-Instruct`（推荐）
+- `meta-llama/Meta-Llama-3-70B-Instruct`
+
+使用 HuggingFace 模型步骤：
+
+1. 在 [huggingface.co](https://huggingface.co) 注册 HuggingFace 账户
+2. 从 [HuggingFace 设置页面](https://huggingface.co/settings/tokens) 获取 API 密钥
+3. 按照 HuggingFace 配置部分所示配置 `config.toml` 文件
 
 ## 快速启动
 
@@ -125,11 +170,41 @@ python main.py
 python run_flow.py
 ```
 
+## 高级功能
+
+### 文件创建与浏览器测试
+
+OpenManus 现在具有增强的文件创建和浏览器自动测试功能：
+
+1. **FileCreatorViewer 工具**：一个强大的组合工具，可以创建文件并立即在浏览器中打开。这对于迭代开发 HTML、CSS 和其他 Web 文件特别有用，您可以立即查看结果。
+
+2. **增强的文件创建工作流**：智能体遵循以下方法论：
+   - 使用 FileSaver 或 FileCreatorViewer 创建必要的文件
+   - 使用 BrowserUseTool 或 FileCreatorViewer 进行测试
+   - 根据观察结果进行调整
+   - 重新测试以验证改进
+   - 持续这个循环直到解决方案达到最佳状态
+
+3. **改进的浏览器集成**：在处理 Web 应用程序时，智能体现在能够：
+   - 创建 HTML、CSS 和 JavaScript 文件
+   - 直接在浏览器中打开它们
+   - 导航并与元素交互
+   - 根据测试结果修改文件
+   - 从头开始创建完整的 Web 应用程序
+
+使用示例：
+
+```
+创建一个显示当前位置温度和天气预报的天气仪表板应用
+```
+
+智能体将创建所有必要的文件，在浏览器中测试它们，并进行优化直到应用程序按预期工作。
+
 ## 贡献指南
 
 我们欢迎任何友好的建议和有价值的贡献！可以直接创建 issue 或提交 pull request。
 
-或通过 📧 邮件联系 @mannaandpoem：mannaandpoem@gmail.com
+或通过 📧 邮件联系 @mannaandpoem：<mannaandpoem@gmail.com>
 
 **注意**: 在提交 pull request 之前，请使用 pre-commit 工具检查您的更改。运行 `pre-commit run --all-files` 来执行检查。
 

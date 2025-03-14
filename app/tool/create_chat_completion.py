@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Type, Union, get_args, get_origin
+from typing import Any, Dict, List, Optional, Type, Union, get_args, get_origin
 
 from pydantic import BaseModel, Field
 
@@ -127,7 +127,7 @@ class CreateChatCompletion(BaseTool):
             "required": self.required,
         }
 
-    async def execute(self, required: list | None = None, **kwargs) -> Any:
+    async def execute(self, required: Optional[list] = None, **kwargs) -> Any:
         """Execute the chat completion with type conversion.
 
         Args:
