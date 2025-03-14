@@ -1,4 +1,5 @@
 from typing import Dict, List, Optional, Union
+import re
 
 from openai import (
     APIError,
@@ -26,6 +27,11 @@ REASONING_MODELS = ["o1", "o3-mini"]
 
 class LLM:
     _instances: Dict[str, "LLM"] = {}
+
+    # Precompile regex patterns for better performance
+    _NEWLINE_PATTERN = re.compile(r"\\n")
+    _TAB_PATTERN = re.compile(r"\\t")
+    _BACKSLASH_PATTERN = re.compile(r"\\{2,}")
 
     def __new__(
         cls, config_name: str = "default", llm_config: Optional[LLMSettings] = None
@@ -83,6 +89,13 @@ class LLM:
         """
         formatted_messages = []
 
+        def clean_text(text: str) -> str:
+            """Clean unwanted characters from text (nested for encapsulation)."""
+            text = LLM._NEWLINE_PATTERN.sub("", text) # Remove escaped newlines
+            text = LLM._TAB_PATTERN.sub("", text)     # Remove escaped tabs
+            text = LLM._BACKSLASH_PATTERN.sub(r"\\", text) # Replace multiple backslashes with one
+            return text
+
         for message in messages:
             if isinstance(message, dict):
                 # If message is already a dict, ensure it has required fields
@@ -94,6 +107,13 @@ class LLM:
                 formatted_messages.append(message.to_dict())
             else:
                 raise TypeError(f"Unsupported message type: {type(message)}")
+
+        # Clean ALL string values using nested comprehensions
+        # to avoid unnecessary tokens in the LLM prompt
+        formatted_messages  = [
+        {k: clean_text(v) if isinstance(v, str) else v for k, v in msg.items()}
+        for msg in formatted_messages
+        ]
 
         # Validate all messages have required fields
         for msg in formatted_messages:
