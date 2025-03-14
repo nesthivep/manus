@@ -4,12 +4,22 @@ import threading
 import tomllib
 from pathlib import Path
 from typing import Dict, List, Optional
-
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Load config from file
 config = toml.load("config/config.toml")
+
+# Override API keys with environment variables if available
+if "ANTHROPIC_API_KEY" in os.environ:
+    config["llm"]["api_key"] = os.environ["ANTHROPIC_API_KEY"]
+    # Also update the vision model API key if it exists in the config
+    if "vision" in config["llm"]:
+        config["llm"]["vision"]["api_key"] = os.environ["ANTHROPIC_API_KEY"]
 
 # Override with environment variables if available
 if "ANTHROPIC_API_KEY" in os.environ:
