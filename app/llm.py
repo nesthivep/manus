@@ -152,7 +152,7 @@ class LLM:
                 cache_key = self.cache.generate_key(messages, self.model)
                 cached_response = self.cache.get(cache_key)
                 if cached_response:
-                    logger.info("Using cached LLM response")
+                    logger.info("🧠💾 Using cached LLM response")
                     return cached_response
 
             params = {
@@ -179,6 +179,7 @@ class LLM:
 
                 # Save LLM response to cache if enabled
                 if self.cache_enabled:
+                    logger.info("💾🧠 Saving LLM response to cache")
                     cache_key = self.cache.generate_key(messages, self.model)
                     self.cache.set(cache_key, content)
 
@@ -201,6 +202,7 @@ class LLM:
 
             # Save LLM response to cache if enabled
             if self.cache_enabled:
+                logger.info("💾🧠 Saving LLM response to cache")
                 cache_key = self.cache.generate_key(messages, self.model)
                 self.cache.set(cache_key, full_response)
 
@@ -273,7 +275,7 @@ class LLM:
                 cache_key = self.cache.generate_key(messages, self.model, tools=tools)
                 cached_response = self.cache.get(cache_key)
                 if cached_response:
-                    logger.info("Using cached tool response")
+                    logger.info("🧠💾 Using cached tool response")
                     return cached_response
 
             # Set up the completion request
@@ -301,6 +303,7 @@ class LLM:
 
             # Save tool call response to cache if enabled
             if self.cache_enabled:
+                logger.info("💾🧠 Saving tool call response to cache")
                 cache_key = self.cache.generate_key(messages, self.model, tools=tools)
                 self.cache.set(cache_key, response.choices[0].message)
 
