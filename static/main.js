@@ -1,11 +1,16 @@
 let currentEventSource = null;
 
+// 导航功能
+function goToChat() {
+    window.location.href = '/chat';
+}
+
 function createTask() {
     const promptInput = document.getElementById('prompt-input');
     const prompt = promptInput.value.trim();
 
     if (!prompt) {
-        alert("Please enter a valid prompt");
+        alert("请输入有效的提示");
         promptInput.focus();
         return;
     }
@@ -16,7 +21,7 @@ function createTask() {
     }
 
     const container = document.getElementById('task-container');
-    container.innerHTML = '<div class="loading">Initializing task...</div>';
+    container.innerHTML = '<div class="loading">正在初始化任务...</div>';
     document.getElementById('input-container').classList.add('bottom');
 
     fetch('/tasks', {
@@ -28,21 +33,21 @@ function createTask() {
     })
     .then(response => {
         if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.detail || 'Request failed') });
+            return response.json().then(err => { throw new Error(err.detail || '请求失败') });
         }
         return response.json();
     })
     .then(data => {
         if (!data.task_id) {
-            throw new Error('Invalid task ID');
+            throw new Error('无效的任务ID');
         }
         setupSSE(data.task_id);
         loadHistory();
         promptInput.value = '';
     })
     .catch(error => {
-        container.innerHTML = `<div class="error">Error: ${error.message}</div>`;
-        console.error('Failed to create task:', error);
+        container.innerHTML = `<div class="error">错误: ${error.message}</div>`;
+        console.error('创建任务失败:', error);
     });
 }
 
@@ -495,22 +500,18 @@ print("Hello from Python Simulated environment!")
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadHistory();
-
-    document.getElementById('prompt-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            createTask();
-        }
-    });
-
-    const historyToggle = document.getElementById('history-toggle');
-    if (historyToggle) {
-        historyToggle.addEventListener('click', () => {
-            const historyPanel = document.getElementById('history-panel');
-            if (historyPanel) {
-                historyPanel.classList.toggle('open');
-                historyToggle.classList.toggle('active');
+    // 加载历史记录（如果在聊天页面）
+    if (document.getElementById('task-list')) {
+        loadHistory();
+    }
+    
+    // 聊天页面的事件监听
+    const promptInput = document.getElementById('prompt-input');
+    if (promptInput) {
+        promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                createTask();
             }
         });
     }
@@ -518,12 +519,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearButton = document.getElementById('clear-btn');
     if (clearButton) {
         clearButton.addEventListener('click', () => {
-            document.getElementById('prompt-input').value = '';
-            document.getElementById('prompt-input').focus();
+            if (promptInput) {
+                promptInput.value = '';
+                promptInput.focus();
+            }
         });
     }
 
-    // Add keyboard event listener to close modal boxes
+    // 主页导航按钮
+    const goToChatButton = document.getElementById('go-to-chat');
+    if (goToChatButton) {
+        goToChatButton.addEventListener('click', goToChat);
+    }
+    
+    const goToChatSecondary = document.getElementById('go-to-chat-secondary');
+    if (goToChatSecondary) {
+        goToChatSecondary.addEventListener('click', goToChat);
+    }
+
+    // 添加键盘事件监听，关闭模态框
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const imageModal = document.getElementById('image-modal');

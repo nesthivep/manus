@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenManus - 聊天</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="history-panel">
+            <div class="history-header">
+                <h2>历史记录</h2>
+                <a href="/" class="home-link">返回首页</a>
+            </div>
+            <div id="task-list" class="task-list"></div>
+        </div>
+
+        <div class="main-panel">
+            <div id="task-container" class="task-container">
+                <div class="welcome-message">
+                    <h1>欢迎使用 OpenManus 智能助手</h1>
+                    <p>请输入您的问题或任务描述开始交流</p>
+                </div>
+                <div id="log-container" class="step-container"></div>
+            </div>
+
+            <div id="input-container" class="input-container">
+                <input
+                    type="text"
+                    id="prompt-input"
+                    placeholder="输入您的问题或任务..."
+                    onkeypress="if(event.keyCode === 13) createTask()"
+                >
+                <button id="clear-btn" type="button">清空</button>
+                <button onclick="createTask()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/main.js"></script>
+</body>
+</html> 

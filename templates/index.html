@@ -1,35 +1,127 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenManus Local Version</title>
+    <title>OpenManus 智能助手</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="history-panel">
-            <h2>History Tasks</h2>
-            <div id="task-list" class="task-list"></div>
+    <div class="landing-container">
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-emoji-container">
+                    <div class="floating-emoji">🤖</div>
+                    <div class="floating-emoji delay-1">💡</div>
+                    <div class="floating-emoji delay-2">🌐</div>
+                    <div class="floating-emoji delay-3">💻</div>
+                    <div class="floating-emoji delay-4">📊</div>
+                </div>
+                <h1 class="title">OpenManus <span class="gradient-text">智能助手</span></h1>
+                <p class="subtitle">强大的AI智能助手，无需邀请码即可实现任何想法</p>
+                <div class="cta-container">
+                    <button type="button" id="go-to-chat" class="cta-button">
+                        开始对话
+                        <span class="btn-icon">→</span>
+                    </button>
+                </div>
+            </div>
+            <div class="wave-container">
+                <svg class="wave" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                    <path fill="#f8fafc" fill-opacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,170.7C960,160,1056,192,1152,197.3C1248,203,1344,181,1392,170.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
         </div>
 
-        <div class="main-panel">
-            <div id="task-container" class="task-container">
-                <div class="welcome-message">
-                    <h1>Welcome to OpenManus Local Version</h1>
-                    <p>Please enter a task prompt to start a new task</p>
+        <div class="features-section">
+            <h2 class="section-title">
+                <span class="section-emoji">✨</span>
+                主要功能
+            </h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-emoji">💬</div>
+                    <h3>智能对话</h3>
+                    <p>与先进的AI助手进行自然流畅的对话，获取信息、建议和解决方案。</p>
                 </div>
-                <div id="log-container" class="step-container"></div>
+                <div class="feature-card">
+                    <div class="feature-emoji">🔍</div>
+                    <h3>网络搜索</h3>
+                    <p>通过集成的Google搜索功能，直接从对话中获取最新网络信息。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-emoji">💻</div>
+                    <h3>代码执行</h3>
+                    <p>实时执行Python代码，解决编程问题，分析数据或创建脚本。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-emoji">🌐</div>
+                    <h3>浏览器操作</h3>
+                    <p>使用AI控制浏览器，自动执行网页交互，提取和处理网页内容。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-emoji">📁</div>
+                    <h3>文件处理</h3>
+                    <p>创建、保存和管理文件，轻松导出对话结果或生成的内容。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-emoji">🔧</div>
+                    <h3>多工具集成</h3>
+                    <p>将多种工具无缝组合，打造定制化解决方案，提高工作效率。</p>
+                </div>
             </div>
+        </div>
 
-            <div id="input-container" class="input-container">
-                <input
-                    type="text"
-                    id="prompt-input"
-                    placeholder="Enter task prompt..."
-                    onkeypress="if(event.keyCode === 13) createTask()"
-                >
-                <button onclick="createTask()">Create Task</button>
+        <div class="how-to-section">
+            <h2 class="section-title">
+                <span class="section-emoji">🚀</span>
+                如何使用
+            </h2>
+            <div class="steps-container">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>开始对话</h3>
+                        <p>点击"开始对话"按钮或导航到聊天页面</p>
+                    </div>
+                    <div class="step-emoji">🎯</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>输入您的需求</h3>
+                        <p>在输入框中描述您的问题或需要完成的任务</p>
+                    </div>
+                    <div class="step-emoji">✏️</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>获取响应</h3>
+                        <p>AI助手将分析您的请求并提供相应的解决方案</p>
+                    </div>
+                    <div class="step-emoji">💡</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>持续交互</h3>
+                        <p>根据需要继续与AI助手交流，直到您的问题得到解决</p>
+                    </div>
+                    <div class="step-emoji">🔄</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <div class="cta-card">
+                <div class="cta-emoji">🚀</div>
+                <h2>准备好探索AI的可能性了吗？</h2>
+                <p>立即开始使用OpenManus，体验下一代AI助手的强大能力</p>
+                <button id="go-to-chat-secondary" class="cta-button-secondary">
+                    立即开始
+                    <span class="btn-icon">→</span>
+                </button>
             </div>
         </div>
     </div>
