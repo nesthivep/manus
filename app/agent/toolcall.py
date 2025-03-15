@@ -132,8 +132,30 @@ class ToolCallAgent(ReActAgent):
         for command in self.tool_calls:
             result = await self.execute_tool(command)
 
-            if self.max_observe:
-                result = result[: self.max_observe]
+            # Check if the tool has its own max_observe attribute
+            tool_name = command.function.name
+            tool = self.available_tools.get_tool(tool_name)
+            tool_max_observe = None
+            if tool and hasattr(tool, "max_observe"):
+                tool_max_observe = tool.max_observe
+                
+            # Use the tool's max_observe or the agent's max_observe
+            max_observe_to_use = tool_max_observe if tool_max_observe is not None else self.max_observe
+            
+            # Add log entries showing which max_observe source and value is being used
+            if tool_max_observe is not None:
+                logger.info(f"📏 Tool '{tool_name}' using its own max_observe: {tool_max_observe}")
+            else:
+                logger.info(f"📏 Tool '{tool_name}' using agent's max_observe: {self.max_observe}")
+            
+            if max_observe_to_use:
+                # Record result length and truncation information
+                original_length = len(result)
+                result = result[:max_observe_to_use]
+                if original_length > max_observe_to_use:
+                    logger.info(f"✂️ Result truncated from {original_length} to {max_observe_to_use} characters")
+                else:
+                    logger.info(f"✅ Result length ({original_length}) within max_observe limit")
 
             logger.info(
                 f"🎯 Tool '{command.function.name}' completed its mission! Result: {result}"
