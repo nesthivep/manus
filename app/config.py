@@ -59,7 +59,9 @@ class BrowserSettings(BaseModel):
 
 class EmailSettings(BaseModel):
     sender_email: str = Field(None, description="Sender's email address")
-    app_password: str = Field(None, description="Application-specific password for email")
+    app_password: str = Field(
+        None, description="Application-specific password for email"
+    )
 
 
 class AppConfig(BaseModel):
@@ -70,9 +72,7 @@ class AppConfig(BaseModel):
     search_config: Optional[SearchSettings] = Field(
         None, description="Search configuration"
     )
-    email_config: EmailSettings = Field(
-        None, description="Email configuration"
-    )
+    email_config: EmailSettings = Field(None, description="Email configuration")
 
     class Config:
         arbitrary_types_allowed = True
