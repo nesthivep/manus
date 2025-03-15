@@ -6,6 +6,8 @@ from app.logger import logger
 
 async def main():
     agent = Manus()
+    await agent.llm.test_connection_sync()
+
     try:
         prompt = input("Enter your prompt: ")
         if not prompt.strip():
