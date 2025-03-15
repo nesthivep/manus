@@ -1,5 +1,4 @@
 from typing import Dict, List, Optional, Union
-import asyncio
 
 import tiktoken
 from openai import (
@@ -99,7 +98,9 @@ class LLM:
             if isinstance(e, AuthenticationError):
                 logger.error("Authentication failed. Check your API key in config.toml")
             elif "api_key" in str(e).lower():
-                logger.error("API key issue detected. Verify your API key in config.toml")
+                logger.error(
+                    "API key issue detected. Verify your API key in config.toml"
+                )
             raise
 
     def count_tokens(self, text: str) -> int:
