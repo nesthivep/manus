@@ -1,0 +1,9 @@
+:root {
+  color-scheme: light;
+  --el-fg-color:#ffffff;
+  --el-bg-color: #f5f5f5;
+  --el-vd-bg-color: rgb(255, 255, 255, 0.9);
+  --el-vd-border: #cccccc;
+  --bg-color-overlay: #f5f5f5;
+
+}

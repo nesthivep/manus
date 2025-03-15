@@ -1,0 +1,8 @@
+html.dark {
+  color-scheme: dark;
+  --el-fg-color: #1d1e1f;
+  --el-bg-color: #141414;
+  --el-vd-bg-color: rgb(20, 20, 20, 0.8);
+  --el-vd-border: var(--el-border-color);
+  --bg-color-overlay: #1d1e1f;
+}
