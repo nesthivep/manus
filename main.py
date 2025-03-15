@@ -2,7 +2,8 @@ import asyncio
 
 from app.agent.manus import Manus
 from app.logger import logger
-
+import os
+os.environ["ANONYMIZED_TELEMETRY"] = "false"
 
 async def main():
     agent = Manus()
