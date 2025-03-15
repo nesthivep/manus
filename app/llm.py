@@ -10,6 +10,7 @@ from openai import (
 )
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
+from app.cache import LLMCache
 from app.config import LLMSettings, config
 from app.logger import logger  # Assuming a logger is set up in your app
 from app.schema import (
@@ -49,6 +50,10 @@ class LLM:
             self.api_key = llm_config.api_key
             self.api_version = llm_config.api_version
             self.base_url = llm_config.base_url
+
+            self.cache_enabled = config.cache_config.enabled
+            self.cache = LLMCache() if self.cache_enabled else None
+
             if self.api_type == "azure":
                 self.client = AsyncAzureOpenAI(
                     base_url=self.base_url,
@@ -142,6 +147,14 @@ class LLM:
             else:
                 messages = self.format_messages(messages)
 
+            # Attempt retrieve cached LLM response if enabled and not streaming
+            if self.cache_enabled and not stream:
+                cache_key = self.cache.generate_key(messages, self.model)
+                cached_response = self.cache.get(cache_key)
+                if cached_response:
+                    logger.info("Using cached LLM response")
+                    return cached_response
+
             params = {
                 "model": self.model,
                 "messages": messages,
@@ -151,7 +164,7 @@ class LLM:
                 params["max_completion_tokens"] = self.max_tokens
             else:
                 params["max_tokens"] = self.max_tokens
-                params["temperature"] = temperature or self.temperature
+                params["temperature"] = temperature if temperature is not None else self.temperature
 
             if not stream:
                 # Non-streaming request
@@ -161,7 +174,15 @@ class LLM:
 
                 if not response.choices or not response.choices[0].message.content:
                     raise ValueError("Empty or invalid response from LLM")
-                return response.choices[0].message.content
+
+                content = response.choices[0].message.content
+
+                # Save LLM response to cache if enabled
+                if self.cache_enabled:
+                    cache_key = self.cache.generate_key(messages, self.model)
+                    self.cache.set(cache_key, content)
+
+                return content
 
             # Streaming request
             params["stream"] = True
@@ -177,6 +198,12 @@ class LLM:
             full_response = "".join(collected_messages).strip()
             if not full_response:
                 raise ValueError("Empty response from streaming LLM")
+
+            # Save LLM response to cache if enabled
+            if self.cache_enabled:
+                cache_key = self.cache.generate_key(messages, self.model)
+                self.cache.set(cache_key, full_response)
+
             return full_response
 
         except ValueError as ve:
@@ -241,6 +268,14 @@ class LLM:
                     if not isinstance(tool, dict) or "type" not in tool:
                         raise ValueError("Each tool must be a dict with 'type' field")
 
+            # Attempt retrieve cached tool call response if enabled
+            if self.cache_enabled:
+                cache_key = self.cache.generate_key(messages, self.model, tools=tools)
+                cached_response = self.cache.get(cache_key)
+                if cached_response:
+                    logger.info("Using cached tool response")
+                    return cached_response
+
             # Set up the completion request
             params = {
                 "model": self.model,
@@ -255,7 +290,7 @@ class LLM:
                 params["max_completion_tokens"] = self.max_tokens
             else:
                 params["max_tokens"] = self.max_tokens
-                params["temperature"] = temperature or self.temperature
+                params["temperature"] = temperature if temperature is not None else self.temperature
 
             response = await self.client.chat.completions.create(**params)
 
@@ -263,6 +298,11 @@ class LLM:
             if not response.choices or not response.choices[0].message:
                 print(response)
                 raise ValueError("Invalid or empty response from LLM")
+
+            # Save tool call response to cache if enabled
+            if self.cache_enabled:
+                cache_key = self.cache.generate_key(messages, self.model, tools=tools)
+                self.cache.set(cache_key, response.choices[0].message)
 
             return response.choices[0].message
 
