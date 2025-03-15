@@ -3,6 +3,7 @@ import os
 import aiofiles
 
 from app.tool.base import BaseTool
+from app.config import PROJECT_ROOT, OUTPUT_DIR
 
 
 class FileSaver(BaseTool):
@@ -47,6 +48,10 @@ The tool accepts content and a file path, and saves the content to that location
         try:
             # Ensure the directory exists
             directory = os.path.dirname(file_path)
+            if not directory:
+                directory = f"{PROJECT_ROOT}/{OUTPUT_DIR}"
+                file_path = os.path.join(directory, file_path)
+
             if directory and not os.path.exists(directory):
                 os.makedirs(directory)
 
