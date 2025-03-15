@@ -50,8 +50,8 @@ temperature = 0.0     # Controls randomness for vision model
 # Search engine for agent to use. Default is "Google", can be set to "Baidu" or "DuckDuckGo".
 #engine = "Google"
 
-[llm.default]
-# Existing config options...
-enabled = false
-ttl = 86400  # Cache time-to-live in seconds (24 hours)
-cache_dir = "cache"  # Path can be relative to project root or absolute
+# Optional configuration, Cache settings. Disabled by default.
+# [cache]
+# enabled = false
+# ttl = 86400  # Cache time-to-live in seconds (24 hour default)
+# cache_dir = "cache"  # Path to the cache. Supports relative to project root or absolute
