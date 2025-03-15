@@ -1,4 +1,4 @@
-from typing import Any,ClassVar, Dict
+from typing import Any, ClassVar, Dict
 
 from pydantic import Field
 
@@ -8,8 +8,8 @@ from app.tool import Terminate, ToolCollection
 from app.tool.browser_use_tool import BrowserUseTool
 from app.tool.file_saver import FileSaver
 from app.tool.python_execute import PythonExecute
-from app.tool.web_search import WebSearch
 from app.tool.stock_data_tool import StockSearch
+from app.tool.web_search import WebSearch
 
 
 class Manus(ToolCallAgent):
@@ -33,14 +33,17 @@ class Manus(ToolCallAgent):
     max_steps: int = 20
 
     # Configuration for tool-specific max_observe values
-    tool_specific_max_observe: ClassVar[Dict[str, int]] = {
-        "StockSearch": 13000
-    }
+    tool_specific_max_observe: ClassVar[Dict[str, int]] = {"StockSearch": 13000}
 
     # Add general-purpose tools to the tool collection
     available_tools: ToolCollection = Field(
         default_factory=lambda: ToolCollection(
-            PythonExecute(), WebSearch(), BrowserUseTool(), FileSaver(), Terminate(), StockSearch()
+            PythonExecute(),
+            WebSearch(),
+            BrowserUseTool(),
+            FileSaver(),
+            Terminate(),
+            StockSearch(),
         )
     )
 
@@ -57,7 +60,9 @@ class Manus(ToolCallAgent):
         old_max_observe = self.max_observe
         if tool_name:
             await self._set_max_observe_for_tool(tool_name)
-            print(f"Tool call: {tool_name}, max_observe value: {self.max_observe} (original value: {old_max_observe})")
+            print(
+                f"Tool call: {tool_name}, max_observe value: {self.max_observe} (original value: {old_max_observe})"
+            )
         return await super().use_tool(*args, **kwargs)
 
     async def _handle_special_tool(self, name: str, result: Any, **kwargs):
