@@ -18,7 +18,9 @@ class LLMCache:
         Initialize the LLM cache.
         """
         self.cache_dir = config.cache_config.cache_dir
-        self.cache_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), self.cache_dir)
+        self.cache_dir = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), self.cache_dir
+        )
         os.makedirs(self.cache_dir, exist_ok=True)
 
         self.ttl = config.cache_config.ttl

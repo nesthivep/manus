@@ -56,12 +56,12 @@ class BrowserSettings(BaseModel):
         None, description="Proxy settings for the browser"
     )
 
+
 class CacheSettings(BaseModel):
     enabled: bool = Field(False, description="Whether to enable caching")
     ttl: int = Field(86400, description="Cache time-to-live in seconds")
-    cache_dir: str = Field(
-        "cache", description="Path to the cache directory"
-    )
+    cache_dir: str = Field("cache", description="Path to the cache directory")
+
 
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
@@ -199,7 +199,7 @@ class Config:
     @property
     def search_config(self) -> Optional[SearchSettings]:
         return self._config.search_config
-    
+
     @property
     def cache_config(self) -> Optional[CacheSettings]:
         return self._config.cache_config
