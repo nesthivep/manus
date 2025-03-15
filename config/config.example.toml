@@ -66,7 +66,7 @@ temperature = 0.0     # Controls randomness for vision model
 # Search engine for agent to use. Default is "Google", can be set to "Baidu" or "DuckDuckGo".
 #engine = "Google"
 
-# Optional configuration, Cache settings. Disabled by default.
+# Optional configuration, Cache settings for reusing LLM responses and tool calls. Disabled by default.
 # [cache]
 # enabled = false
 # ttl = 86400  # Cache time-to-live in seconds (24 hour default)
