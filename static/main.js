@@ -5,7 +5,7 @@ function createTask() {
     const prompt = promptInput.value.trim();
 
     if (!prompt) {
-        alert("Please enter a valid prompt");
+        alert("Please enter a valid task prompt");
         promptInput.focus();
         return;
     }
@@ -15,9 +15,21 @@ function createTask() {
         currentEventSource = null;
     }
 
-    const container = document.getElementById('task-container');
-    container.innerHTML = '<div class="loading">Initializing task...</div>';
-    document.getElementById('input-container').classList.add('bottom');
+    const taskContainer = document.getElementById('task-container');
+    const stepsContainer = document.getElementById('steps-container');
+    const resultContainer = document.getElementById('result-container');
+    
+    // 隐藏结果面板
+    hideResultPanel();
+    
+    // 隐藏欢迎信息，显示步骤加载状态
+    const welcomeMessage = taskContainer.querySelector('.welcome-message');
+    if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+    }
+    
+    stepsContainer.innerHTML = '<div class="loading">Initializing task...</div>';
+    resultContainer.innerHTML = '';
 
     fetch('/tasks', {
         method: 'POST',
@@ -28,21 +40,23 @@ function createTask() {
     })
     .then(response => {
         if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.detail || 'Request failed') });
+            return response.json().then(err => { throw new Error(err.detail || '请求失败') });
         }
         return response.json();
     })
     .then(data => {
         if (!data.task_id) {
-            throw new Error('Invalid task ID');
+            throw new Error('无效的任务ID');
         }
         setupSSE(data.task_id);
         loadHistory();
         promptInput.value = '';
     })
     .catch(error => {
-        container.innerHTML = `<div class="error">Error: ${error.message}</div>`;
-        console.error('Failed to create task:', error);
+        stepsContainer.innerHTML = `<div class="error">错误: ${error.message}</div>`;
+        updateResultPanel({result: error.message}, 'error');
+        showResultPanel();
+        console.error('创建任务失败:', error);
     });
 }
 
@@ -52,14 +66,21 @@ function setupSSE(taskId) {
     const retryDelay = 2000;
     let lastResultContent = '';
 
-    const container = document.getElementById('task-container');
+    const stepsContainer = document.getElementById('steps-container');
+    const resultContainer = document.getElementById('result-container');
+    
+    // 默认隐藏结果面板
+    hideResultPanel();
 
     function connect() {
         const eventSource = new EventSource(`/tasks/${taskId}/events`);
         currentEventSource = eventSource;
 
         let heartbeatTimer = setInterval(() => {
-            container.innerHTML += '<div class="ping">·</div>';
+            const pingDiv = document.createElement('div');
+            pingDiv.className = 'ping';
+            pingDiv.innerHTML = '·';
+            stepsContainer.appendChild(pingDiv);
         }, 5000);
 
         // Initial polling
@@ -69,22 +90,35 @@ function setupSSE(taskId) {
                 updateTaskStatus(task);
             })
             .catch(error => {
-                console.error('Initial status fetch failed:', error);
+                console.error('初始状态获取失败:', error);
             });
 
         const handleEvent = (event, type) => {
             clearInterval(heartbeatTimer);
             try {
                 const data = JSON.parse(event.data);
-                container.querySelector('.loading')?.remove();
-                container.classList.add('active');
+                const loadingDiv = stepsContainer.querySelector('.loading');
+                if (loadingDiv) loadingDiv.remove();
 
-                const stepContainer = ensureStepContainer(container);
                 const { formattedContent, timestamp } = formatStepContent(data, type);
                 const step = createStepElement(type, formattedContent, timestamp);
 
-                stepContainer.appendChild(step);
-                autoScroll(stepContainer);
+                // 移除其他步骤的active状态
+                document.querySelectorAll('.step-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // 为当前步骤添加active状态
+                step.classList.add('active');
+                
+                stepsContainer.appendChild(step);
+                autoScroll(stepsContainer);
+                
+                // 更新结果面板并显示（但仅对某些类型的步骤）
+                if (type === 'tool' || type === 'act' || type === 'result') {
+                    updateResultPanel(data, type);
+                    showResultPanel();
+                }
 
                 fetch(`/tasks/${taskId}`)
                     .then(response => response.json())
@@ -92,10 +126,10 @@ function setupSSE(taskId) {
                         updateTaskStatus(task);
                     })
                     .catch(error => {
-                        console.error('Status update failed:', error);
+                        console.error('状态更新失败:', error);
                     });
             } catch (e) {
-                console.error(`Error handling ${type} event:`, e);
+                console.error(`处理 ${type} 事件时出错:`, e);
             }
         };
 
@@ -110,12 +144,13 @@ function setupSSE(taskId) {
                 const data = JSON.parse(event.data);
                 lastResultContent = data.result || '';
 
-                container.innerHTML += `
-                    <div class="complete">
-                        <div>✅ Task completed</div>
-                        <pre>${lastResultContent}</pre>
-                    </div>
-                `;
+                const completeDiv = document.createElement('div');
+                completeDiv.className = 'complete';
+                completeDiv.innerHTML = '<div>✅ 任务完成</div>';
+                stepsContainer.appendChild(completeDiv);
+                
+                updateResultPanel({result: lastResultContent}, 'complete');
+                showResultPanel();
 
                 fetch(`/tasks/${taskId}`)
                     .then(response => response.json())
@@ -123,13 +158,13 @@ function setupSSE(taskId) {
                         updateTaskStatus(task);
                     })
                     .catch(error => {
-                        console.error('Final status update failed:', error);
+                        console.error('最终状态更新失败:', error);
                     });
 
                 eventSource.close();
                 currentEventSource = null;
             } catch (e) {
-                console.error('Error handling complete event:', e);
+                console.error('处理完成事件时出错:', e);
             }
         });
 
@@ -137,22 +172,25 @@ function setupSSE(taskId) {
             clearInterval(heartbeatTimer);
             try {
                 const data = JSON.parse(event.data);
-                container.innerHTML += `
-                    <div class="error">
-                        ❌ Error: ${data.message}
-                    </div>
-                `;
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.innerHTML = `<div>❌ 错误: ${data.message}</div>`;
+                stepsContainer.appendChild(errorDiv);
+                
+                updateResultPanel({result: data.message}, 'error');
+                showResultPanel();
+                
                 eventSource.close();
                 currentEventSource = null;
             } catch (e) {
-                console.error('Error handling failed:', e);
+                console.error('处理错误时出错:', e);
             }
         });
 
         eventSource.onerror = (err) => {
             if (eventSource.readyState === EventSource.CLOSED) return;
 
-            console.error('SSE connection error:', err);
+            console.error('SSE连接错误:', err);
             clearInterval(heartbeatTimer);
             eventSource.close();
 
@@ -162,36 +200,44 @@ function setupSSE(taskId) {
                     if (task.status === 'completed' || task.status === 'failed') {
                         updateTaskStatus(task);
                         if (task.status === 'completed') {
-                            container.innerHTML += `
-                                <div class="complete">
-                                    <div>✅ Task completed</div>
-                                </div>
-                            `;
+                            const completeDiv = document.createElement('div');
+                            completeDiv.className = 'complete';
+                            completeDiv.innerHTML = '<div>✅ 任务完成</div>';
+                            stepsContainer.appendChild(completeDiv);
+                            
+                            if (task.steps && task.steps.length > 0) {
+                                const lastStep = task.steps[task.steps.length - 1];
+                                updateResultPanel({result: lastStep.result}, 'complete');
+                                showResultPanel();
+                            }
                         } else {
-                            container.innerHTML += `
-                                <div class="error">
-                                    ❌ Error: ${task.error || 'Task failed'}
-                                </div>
-                            `;
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'error';
+                            errorDiv.innerHTML = `<div>❌ 错误: ${task.error || '任务失败'}</div>`;
+                            stepsContainer.appendChild(errorDiv);
+                            
+                            updateResultPanel({result: task.error || '任务失败'}, 'error');
+                            showResultPanel();
                         }
                     } else if (retryCount < maxRetries) {
                         retryCount++;
-                        container.innerHTML += `
-                            <div class="warning">
-                                ⚠ Connection lost, retrying in ${retryDelay/1000} seconds (${retryCount}/${maxRetries})...
-                            </div>
-                        `;
+                        const warningDiv = document.createElement('div');
+                        warningDiv.className = 'warning';
+                        warningDiv.innerHTML = `<div>⚠ 连接断开，${retryDelay/1000}秒后重试 (${retryCount}/${maxRetries})...</div>`;
+                        stepsContainer.appendChild(warningDiv);
                         setTimeout(connect, retryDelay);
                     } else {
-                        container.innerHTML += `
-                            <div class="error">
-                                ⚠ Connection lost, please try refreshing the page
-                            </div>
-                        `;
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error';
+                        errorDiv.innerHTML = '<div>⚠ 连接断开，请刷新页面重试</div>';
+                        stepsContainer.appendChild(errorDiv);
+                        
+                        updateResultPanel({result: '连接断开，请刷新页面重试'}, 'error');
+                        showResultPanel();
                     }
                 })
                 .catch(error => {
-                    console.error('Task status check failed:', error);
+                    console.error('任务状态检查失败:', error);
                     if (retryCount < maxRetries) {
                         retryCount++;
                         setTimeout(connect, retryDelay);
@@ -203,50 +249,148 @@ function setupSSE(taskId) {
     connect();
 }
 
+function updateResultPanel(data, type) {
+    const resultContainer = document.getElementById('result-container');
+    const currentStep = document.getElementById('current-step');
+    
+    if (!resultContainer || !currentStep) return;
+    
+    // 更新顶部步骤信息（红框部分）
+    currentStep.innerHTML = `<span class="emoji-icon">${getEventIcon(type)}</span> ${getEventLabel(type)}:`;
+    
+    // 更新内容区域（蓝框部分）
+    let content = '';
+    
+    if (data.result) {
+        content = data.result;
+    } else if (data.message) {
+        content = data.message;
+    } else {
+        content = JSON.stringify(data, null, 2);
+    }
+    
+    // 清空之前的内容，添加新内容
+    resultContainer.innerHTML = '';
+    
+    // 创建内容高亮区域
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('content-highlight');
+    contentDiv.innerHTML = `<pre>${content}</pre>`;
+    resultContainer.appendChild(contentDiv);
+}
+
 function loadHistory() {
     fetch('/tasks')
     .then(response => {
         if (!response.ok) {
             return response.text().then(text => {
-                throw new Error(`request failure: ${response.status} - ${text.substring(0, 100)}`);
+                throw new Error(`请求失败: ${response.status} - ${text.substring(0, 100)}`);
             });
         }
         return response.json();
     })
     .then(tasks => {
         const listContainer = document.getElementById('task-list');
+        if (tasks.length === 0) {
+            listContainer.innerHTML = '<div class="info">暂无历史任务</div>';
+            return;
+        }
+        
         listContainer.innerHTML = tasks.map(task => `
-            <div class="task-card" data-task-id="${task.id}">
+            <div class="task-card" data-task-id="${task.id}" onclick="loadTask('${task.id}')">
                 <div>${task.prompt}</div>
                 <div class="task-meta">
                     ${new Date(task.created_at).toLocaleString()} -
                     <span class="status status-${task.status ? task.status.toLowerCase() : 'unknown'}">
-                        ${task.status || 'Unknown state'}
+                        ${task.status || '未知状态'}
                     </span>
                 </div>
             </div>
         `).join('');
     })
     .catch(error => {
-        console.error('Failed to load history records:', error);
+        console.error('加载历史记录失败:', error);
         const listContainer = document.getElementById('task-list');
-        listContainer.innerHTML = `<div class="error">Load Fail: ${error.message}</div>`;
+        listContainer.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
     });
 }
 
-
-function ensureStepContainer(container) {
-    let stepContainer = container.querySelector('.step-container');
-    if (!stepContainer) {
-        container.innerHTML = '<div class="step-container"></div>';
-        stepContainer = container.querySelector('.step-container');
+function loadTask(taskId) {
+    if (currentEventSource) {
+        currentEventSource.close();
+        currentEventSource = null;
     }
-    return stepContainer;
+    
+    const taskContainer = document.getElementById('task-container');
+    const stepsContainer = document.getElementById('steps-container');
+    const resultContainer = document.getElementById('result-container');
+    
+    // 隐藏欢迎信息
+    const welcomeMessage = taskContainer.querySelector('.welcome-message');
+    if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+    }
+    
+    // 默认隐藏结果面板
+    hideResultPanel();
+    
+    stepsContainer.innerHTML = '<div class="loading">加载任务...</div>';
+    resultContainer.innerHTML = '';
+    
+    fetch(`/tasks/${taskId}`)
+        .then(response => response.json())
+        .then(task => {
+            const taskCards = document.querySelectorAll('.task-card');
+            taskCards.forEach(card => {
+                card.classList.remove('active');
+                if (card.getAttribute('data-task-id') === taskId) {
+                    card.classList.add('active');
+                }
+            });
+            
+            stepsContainer.innerHTML = '';
+            if (task.steps && task.steps.length > 0) {
+                task.steps.forEach((step, index) => {
+                    const stepElement = createStepElement(
+                        step.type, 
+                        step.result, 
+                        new Date(task.created_at).toLocaleTimeString()
+                    );
+                    
+                    // 设置最后一个步骤为展开状态，其他为折叠状态
+                    if (index !== task.steps.length - 1) {
+                        setTimeout(() => {
+                            const logBody = stepElement.querySelector('.log-body');
+                            if (logBody) logBody.style.display = 'none';
+                            stepElement.classList.add('minimized');
+                        }, 10);
+                    } else {
+                        // 最后一个步骤添加高亮标记
+                        stepElement.classList.add('active');
+                    }
+                    
+                    stepsContainer.appendChild(stepElement);
+                    
+                    // 显示最后一个步骤的结果，但不自动显示结果面板
+                    if (index === task.steps.length - 1) {
+                        updateResultPanel({result: step.result}, step.type);
+                    }
+                });
+            } else {
+                stepsContainer.innerHTML = '<div class="info">该任务没有记录步骤</div>';
+            }
+            
+            updateTaskStatus(task);
+        })
+        .catch(error => {
+            console.error('加载任务失败:', error);
+            stepsContainer.innerHTML = `<div class="error">错误: ${error.message}</div>`;
+        });
 }
 
 function formatStepContent(data, eventType) {
     return {
-        formattedContent: data.result,
+        formattedContent: data.result || (data.message || JSON.stringify(data)),
         timestamp: new Date().toLocaleTimeString()
     };
 }
@@ -273,7 +417,9 @@ function createStepElement(type, content, timestamp) {
         const match = content.match(saveRegex);
 
         step.className = `step-item ${type}`;
-
+        step.dataset.type = type;
+        
+        let stepContentHtml = '';
         if (match && match[1]) {
             const filePath = match[1].trim();
             const fileName = filePath.split('/').pop();
@@ -311,31 +457,133 @@ function createStepElement(type, content, timestamp) {
                 `;
             }
 
-            step.innerHTML = `
-                <div class="log-line">
-                    <span class="log-prefix">${getEventIcon(type)} [${timestamp}] ${getEventLabel(type)}:</span>
+            stepContentHtml = `
+                <div class="log-content">
                     <pre>${content}</pre>
                     ${fileInteractionHtml}
                 </div>
             `;
         } else {
-            step.innerHTML = `
-                <div class="log-line">
-                    <span class="log-prefix">${getEventIcon(type)} [${timestamp}] ${getEventLabel(type)}:</span>
+            stepContentHtml = `
+                <div class="log-content">
                     <pre>${content}</pre>
                 </div>
             `;
         }
+
+        step.innerHTML = `
+            <div class="log-header" onclick="toggleStepContent(this)">
+                <span class="log-prefix">${getEventIcon(type)} [${timestamp}] ${getEventLabel(type)}</span>
+                <div class="step-controls">
+                    <span class="minimize-btn" onclick="minimizeStep(event, this)"></span>
+                </div>
+            </div>
+            <div class="log-body">${stepContentHtml}</div>
+        `;
     } else {
         step.className = `step-item ${type}`;
+        step.dataset.type = type;
+
         step.innerHTML = `
-            <div class="log-line">
-                <span class="log-prefix">${getEventIcon(type)} [${timestamp}] ${getEventLabel(type)}:</span>
-                <pre>${content}</pre>
+            <div class="log-header" onclick="toggleStepContent(this)">
+                <span class="log-prefix">${getEventIcon(type)} [${timestamp}] ${getEventLabel(type)}</span>
+                <div class="step-controls">
+                    <span class="minimize-btn" onclick="minimizeStep(event, this)"></span>
+                </div>
+            </div>
+            <div class="log-body">
+                <div class="log-content">
+                    <pre>${content}</pre>
+                </div>
             </div>
         `;
     }
+    
     return step;
+}
+
+// 切换步骤内容的显示/隐藏
+function toggleStepContent(header) {
+    const stepItem = header.closest('.step-item');
+    if (!stepItem) return;
+    
+    const logBody = stepItem.querySelector('.log-body');
+    if (!logBody) return;
+    
+    if (logBody.style.display === 'none') {
+        logBody.style.display = 'block';
+        stepItem.classList.remove('minimized');
+    } else {
+        logBody.style.display = 'none';
+        stepItem.classList.add('minimized');
+    }
+    
+    // 高亮当前步骤
+    highlightStep(stepItem);
+    
+    // 更新结果面板并显示
+    const type = stepItem.dataset.type;
+    const content = stepItem.querySelector('pre')?.textContent || '';
+    updateResultPanel({result: content}, type);
+    showResultPanel();
+}
+
+// 最小化步骤
+function minimizeStep(event, btn) {
+    event.stopPropagation(); // 阻止事件冒泡
+    
+    const stepItem = btn.closest('.step-item');
+    if (!stepItem) return;
+    
+    stepItem.classList.toggle('minimized');
+    
+    const logBody = stepItem.querySelector('.log-body');
+    if (logBody) {
+        if (stepItem.classList.contains('minimized')) {
+            logBody.style.display = 'none';
+        } else {
+            logBody.style.display = 'block';
+        }
+    }
+}
+
+// 切换结果面板的显示状态
+function toggleResultPanel() {
+    const resultPanel = document.getElementById('result-panel');
+    const container = document.querySelector('.container');
+    if (!resultPanel) return;
+    
+    // 如果面板已经是最小化状态，则完全显示
+    if (resultPanel.classList.contains('minimized')) {
+        resultPanel.classList.remove('minimized');
+        container.classList.add('with-result');
+    } else {
+        // 否则最小化面板
+        resultPanel.classList.add('minimized');
+        container.classList.remove('with-result');
+    }
+}
+
+// 隐藏结果面板
+function hideResultPanel() {
+    const resultPanel = document.getElementById('result-panel');
+    const container = document.querySelector('.container');
+    if (resultPanel) {
+        resultPanel.classList.add('hidden');
+        resultPanel.classList.remove('minimized'); // 确保隐藏时重置最小化状态
+        container.classList.remove('with-result'); // 移除容器样式
+    }
+}
+
+// 显示结果面板
+function showResultPanel() {
+    const resultPanel = document.getElementById('result-panel');
+    const container = document.querySelector('.container');
+    if (resultPanel) {
+        resultPanel.classList.remove('hidden');
+        resultPanel.classList.remove('minimized'); // 确保显示时不是最小化状态
+        container.classList.add('with-result'); // 添加容器样式
+    }
 }
 
 function autoScroll(element) {
@@ -350,33 +598,32 @@ function autoScroll(element) {
     }, 100);
 }
 
-
-function getEventIcon(eventType) {
-    const icons = {
-        'think': '🤔',
-        'tool': '🛠️',
-        'act': '🚀',
-        'result': '🏁',
-        'error': '❌',
-        'complete': '✅',
-        'log': '📝',
-        'run': '⚙️'
-    };
-    return icons[eventType] || 'ℹ️';
+function getEventIcon(type) {
+    switch (type) {
+        case 'think': return '🤔';
+        case 'tool': return '🛠️';
+        case 'act': return '🚀';
+        case 'log': return '📝';
+        case 'run': return '▶️';
+        case 'message': return '💬';
+        case 'complete': return '✅';
+        case 'error': return '❌';
+        default: return '📌';
+    }
 }
 
-function getEventLabel(eventType) {
-    const labels = {
-        'think': 'Thinking',
-        'tool': 'Using Tool',
-        'act': 'Action',
-        'result': 'Result',
-        'error': 'Error',
-        'complete': 'Complete',
-        'log': 'Log',
-        'run': 'Running'
-    };
-    return labels[eventType] || 'Info';
+function getEventLabel(type) {
+    switch (type) {
+        case 'think': return 'Thinking';
+        case 'tool': return 'Using Tool';
+        case 'act': return 'Taking Action';
+        case 'log': return 'Log';
+        case 'run': return 'Running';
+        case 'message': return 'Message';
+        case 'complete': return 'Completed';
+        case 'error': return 'Error';
+        default: return 'Step';
+    }
 }
 
 function updateTaskStatus(task) {
@@ -384,56 +631,53 @@ function updateTaskStatus(task) {
     if (!statusBar) return;
 
     if (task.status === 'completed') {
-        statusBar.innerHTML = `<span class="status-complete">✅ Task completed</span>`;
+        statusBar.innerHTML = `<span class="status-complete">✅ 任务完成</span>`;
 
         if (currentEventSource) {
             currentEventSource.close();
             currentEventSource = null;
         }
     } else if (task.status === 'failed') {
-        statusBar.innerHTML = `<span class="status-error">❌ Task failed: ${task.error || 'Unknown error'}</span>`;
+        statusBar.innerHTML = `<span class="status-error">❌ 任务失败: ${task.error || '未知错误'}</span>`;
 
         if (currentEventSource) {
             currentEventSource.close();
             currentEventSource = null;
         }
     } else {
-        statusBar.innerHTML = `<span class="status-running">⚙️ Task running: ${task.status}</span>`;
+        statusBar.innerHTML = `<span class="status-running">⚙️ 任务运行中: ${task.status}</span>`;
     }
 }
 
-// Display full screen image
 function showFullImage(imageSrc) {
-    const modal = document.getElementById('image-modal');
+    let modal = document.getElementById('image-modal');
     if (!modal) {
-        const modalDiv = document.createElement('div');
-        modalDiv.id = 'image-modal';
-        modalDiv.className = 'image-modal';
-        modalDiv.innerHTML = `
+        modal = document.createElement('div');
+        modal.id = 'image-modal';
+        modal.className = 'image-modal';
+        modal.innerHTML = `
             <span class="close-modal">&times;</span>
             <img src="${imageSrc}" class="modal-content" id="full-image">
         `;
-        document.body.appendChild(modalDiv);
+        document.body.appendChild(modal);
 
-        const closeBtn = modalDiv.querySelector('.close-modal');
+        const closeBtn = modal.querySelector('.close-modal');
         closeBtn.addEventListener('click', () => {
-            modalDiv.classList.remove('active');
+            modal.classList.remove('active');
         });
 
-        modalDiv.addEventListener('click', (e) => {
-            if (e.target === modalDiv) {
-                modalDiv.classList.remove('active');
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
             }
         });
-
-        setTimeout(() => modalDiv.classList.add('active'), 10);
     } else {
         document.getElementById('full-image').src = imageSrc;
-        modal.classList.add('active');
     }
+    
+    modal.classList.add('active');
 }
 
-// Simulate running Python files
 function simulateRunPython(filePath) {
     let modal = document.getElementById('python-modal');
     if (!modal) {
@@ -443,7 +687,7 @@ function simulateRunPython(filePath) {
         modal.innerHTML = `
             <div class="python-console">
                 <div class="close-modal">&times;</div>
-                <div class="python-output">Loading Python file contents...</div>
+                <div class="python-output">正在加载Python文件内容...</div>
             </div>
         `;
         document.body.appendChild(modal);
@@ -474,24 +718,35 @@ function simulateRunPython(filePath) {
             const resultElement = document.createElement('div');
             resultElement.innerHTML = `
                 <div style="color: #4CAF50; margin-top: 10px; margin-bottom: 10px;">
-                    > Simulated operation output:</div>
+                    > 模拟运行输出结果:</div>
                 <pre style="color: #f8f8f8;">
-#This is the result of Python code simulation run
-#The actual operational results may vary
+# 这是Python代码模拟运行结果
+# 实际运行结果可能会有所不同
 
-# Running ${filePath.split('/').pop()}...
+# 运行 ${filePath.split('/').pop()}...
 print("Hello from Python Simulated environment!")
 
-# Code execution completed
+# 代码执行完成
 </pre>
             `;
             outputDiv.appendChild(resultElement);
         })
         .catch(error => {
-            console.error('Error loading Python file:', error);
+            console.error('加载Python文件错误:', error);
             const outputDiv = modal.querySelector('.python-output');
-            outputDiv.innerHTML = `Error loading file: ${error.message}`;
+            outputDiv.innerHTML = `加载文件错误: ${error.message}`;
         });
+}
+
+// 高亮显示当前选中的步骤
+function highlightStep(stepElement) {
+    // 移除其他步骤的高亮
+    document.querySelectorAll('.step-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // 为当前步骤添加高亮
+    stepElement.classList.add('active');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -504,26 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const historyToggle = document.getElementById('history-toggle');
-    if (historyToggle) {
-        historyToggle.addEventListener('click', () => {
-            const historyPanel = document.getElementById('history-panel');
-            if (historyPanel) {
-                historyPanel.classList.toggle('open');
-                historyToggle.classList.toggle('active');
-            }
-        });
-    }
-
-    const clearButton = document.getElementById('clear-btn');
-    if (clearButton) {
-        clearButton.addEventListener('click', () => {
-            document.getElementById('prompt-input').value = '';
-            document.getElementById('prompt-input').focus();
-        });
-    }
-
-    // Add keyboard event listener to close modal boxes
+    // 添加键盘事件监听器关闭模态框
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const imageModal = document.getElementById('image-modal');

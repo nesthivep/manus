@@ -7,6 +7,21 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <img src="/static/logo.jpg" alt="OpenManus Logo" class="logo-img">
+            </div>
+        </div>
+        <div class="header-center">
+            <!-- 可以在此处添加中间区域内容 -->
+        </div>
+        <div class="header-right">
+            <!-- 将设置按钮改为登录按钮 -->
+            <button class="header-btn login-btn">Login</button>
+        </div>
+    </div>
+
     <div class="container">
         <div class="history-panel">
             <h2>History Tasks</h2>
@@ -16,17 +31,38 @@
         <div class="main-panel">
             <div id="task-container" class="task-container">
                 <div class="welcome-message">
-                    <h1>Welcome to OpenManus Local Version</h1>
-                    <p>Please enter a task prompt to start a new task</p>
+                    <div class="logo-animation">
+                        <img src="/static/logo.jpg" alt="OpenManus Logo" class="welcome-logo">
+                    </div>
+                    <h1>Welcome to OpenManus</h1>
+                    <p class="animated-text">Your personal AI assistant for any task</p>
+                    <p class="animated-subtext">Enter your prompt below to start a new task</p>
                 </div>
-                <div id="log-container" class="step-container"></div>
+                <div id="steps-container" class="steps-container"></div>
+            </div>
+            
+            <div id="result-panel" class="result-panel hidden">
+                <div class="result-header">
+                    <h2>Manus Computer</h2>
+                    <div class="result-controls">
+                        <span class="minimize-result" onclick="toggleResultPanel()"></span>
+                    </div>
+                </div>
+                
+                <div class="step-info-container">
+                    <div id="current-step" class="step-highlight">
+                        <!-- 步骤信息将由JavaScript动态填充 -->
+                    </div>
+                </div>
+                
+                <div id="result-container" class="result-container"></div>
             </div>
 
             <div id="input-container" class="input-container">
                 <input
                     type="text"
                     id="prompt-input"
-                    placeholder="Enter task prompt..."
+                    placeholder="Enter your task prompt..."
                     onkeypress="if(event.keyCode === 13) createTask()"
                 >
                 <button onclick="createTask()">Create Task</button>
