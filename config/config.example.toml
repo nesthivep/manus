@@ -1,10 +1,17 @@
 # Global LLM configuration
-[llm]
-model = "claude-3-7-sonnet"     # The LLM model to use
-base_url = "https://api.openai.com/v1"    # API endpoint URL
-api_key = "sk-..."    # Your API key
+[llm] #ANTHROPIC
+model = "claude-3-7-sonnet-20250219"    # The LLM model to use
+base_url = "https://api.anthropic.com/v1"    # API endpoint URL
+api_key = "ANTHROPIC API KEY"    # Your API key
 max_tokens = 8192     # Maximum number of tokens in the response
 temperature = 0.0     # Controls randomness
+
+[llm] #OPENAI
+model = "gpt-4o"
+base_url = "https://api.openai.com/v1"
+api_key = "OPENAPI API KEY"
+max_tokens = 8192
+temperature = 0.0
 
 # [llm] #AZURE OPENAI:
 # api_type= 'azure'
