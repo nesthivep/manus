@@ -32,6 +32,7 @@ class LLM:
     _NEWLINE_PATTERN = re.compile(r"\\n")
     _TAB_PATTERN = re.compile(r"\\t")
     _BACKSLASH_PATTERN = re.compile(r"\\{2,}")
+    _SPACE_PATTERN = re.compile(r" {2,}")
 
     def __new__(
         cls, config_name: str = "default", llm_config: Optional[LLMSettings] = None
@@ -91,22 +92,22 @@ class LLM:
 
         def clean_text(text: str) -> str:
             """Clean unwanted characters from text (nested for encapsulation)."""
-            text = LLM._NEWLINE_PATTERN.sub("", text)  # Remove escaped newlines
-            text = LLM._TAB_PATTERN.sub("", text)  # Remove escaped tabs
-            text = LLM._BACKSLASH_PATTERN.sub(
-                r"\\", text
-            )  # Replace multiple backslashes with one
+            text = LLM._NEWLINE_PATTERN.sub(" ", text)  # Replace escaped newlines
+            text = LLM._TAB_PATTERN.sub(" ", text)  # Replace escaped tabs
+            text = LLM._BACKSLASH_PATTERN.sub(r"\\", text)  # Normalize backslashes
+            text = LLM._SPACE_PATTERN.sub(" ", text)  # Reduce multiple spaces to one
             return text
 
         for message in messages:
+            if isinstance(message, Message):
+                message = message.to_dict()
             if isinstance(message, dict):
-                # If message is already a dict, ensure it has required fields
+                # If message is a dict, ensure it has required fields
                 if "role" not in message:
                     raise ValueError("Message dict must contain 'role' field")
-                formatted_messages.append(message)
-            elif isinstance(message, Message):
-                # If message is a Message object, convert it to dict
-                formatted_messages.append(message.to_dict())
+                if "content" in message or "tool_calls" in message:
+                    formatted_messages.append(message)
+                # else: do not include the message
             else:
                 raise TypeError(f"Unsupported message type: {type(message)}")
 
@@ -121,10 +122,6 @@ class LLM:
         for msg in formatted_messages:
             if msg["role"] not in ROLE_VALUES:
                 raise ValueError(f"Invalid role: {msg['role']}")
-            if "content" not in msg and "tool_calls" not in msg:
-                raise ValueError(
-                    "Message must contain either 'content' or 'tool_calls'"
-                )
 
         return formatted_messages
 
