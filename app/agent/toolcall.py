@@ -7,7 +7,7 @@ from pydantic import Field
 from app.agent.react import ReActAgent
 from app.logger import logger
 from app.prompt.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
-from app.schema import TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoice
+from app.schema import TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoice, Function
 from app.tool import CreateChatCompletion, Terminate, ToolCollection
 from app.tool.ask_user import AskUser
 
@@ -77,30 +77,25 @@ class ToolCallAgent(ReActAgent):
             # If no tools selected but response appears to be asking a question
             # Automatically convert it to an ask_user tool call
             if not self.tool_calls and response.content:
-                if self._is_asking_question(response.content):
-                    logger.info(f"🔄 Converting question to ask_user tool call: {response.content}")
-                    # Create a tool call for ask_user
-                    ask_user_tool = ToolCall(
-                        id="auto_ask_user",
-                        type="function",
-                        function=ToolCall.Function(
-                            name="ask_user",
-                            arguments=json.dumps({
-                                "question": response.content,
-                                "dangerous_action": False,
-                                "question_type": "follow-up"
-                            })
-                        )
-                    )
-                    self.tool_calls = [ask_user_tool]
-                    
-                    # Create and add the assistant message
-                    assistant_msg = Message.from_tool_calls(
-                        content=f"I need to get more information from you: {response.content}", 
-                        tool_calls=self.tool_calls
-                    )
-                    self.memory.add_message(assistant_msg)
-                    return True
+                try:
+                    if self._is_asking_question(response.content):
+                        logger.info(f"🔄 Converting question to ask_user tool call: {response.content}")
+                        
+                        # Use the safe method to create the tool call
+                        self.tool_calls = self._create_ask_user_tool_call(response.content)
+                        
+                        # Only proceed if we successfully created the tool call
+                        if self.tool_calls:
+                            # Create and add the assistant message
+                            assistant_msg = Message.from_tool_calls(
+                                content=f"I need to get more information from you", 
+                                tool_calls=self.tool_calls
+                            )
+                            self.memory.add_message(assistant_msg)
+                            return True
+                except Exception as e:
+                    logger.error(f"Error converting question to ask_user tool call: {str(e)}")
+                    # Fall through to normal processing
 
             # Create and add assistant message
             assistant_msg = (
@@ -248,6 +243,10 @@ class ToolCallAgent(ReActAgent):
         Returns:
             bool: True if the text appears to be asking for user input
         """
+        # Skip status/information messages that just happen to contain question patterns
+        if text.startswith("I successfully") or "sum of" in text.lower() or "sum is" in text.lower():
+            return False
+            
         # Check for question marks
         if "?" in text:
             return True
@@ -265,13 +264,85 @@ class ToolCallAgent(ReActAgent):
             r"(?i)what.*(?:would|should|can|could)",
             r"(?i)how.*(?:would|should|can|could)",
             r"(?i)which.*(?:option|choice)",
-            r"(?i)let me know",
+            # Don't treat "if you need any further assistance, let me know" as a question
+            # r"(?i)let me know",
             r"(?i)if you have",
             r"(?i)if you would like",
         ]
         
         for pattern in question_patterns:
             if re.search(pattern, text):
+                # Don't treat closing statements as questions
+                if pattern == r"(?i)please let me know" and ("if you need" in text.lower() or "further assistance" in text.lower()):
+                    return False
                 return True
                 
         return False
+
+    # Add this method to handle safe conversion to ask_user tool
+    def _create_ask_user_tool_call(self, question_text: str) -> List[ToolCall]:
+        """
+        Safely create an ask_user tool call from a question text.
+        
+        Args:
+            question_text: The text of the question
+            
+        Returns:
+            List[ToolCall]: A list containing the ask_user tool call
+        """
+        try:
+            # Trim question text if too long to prevent JSON serialization issues
+            max_length = 500
+            if len(question_text) > max_length:
+                question_text = question_text[:max_length] + "..."
+                
+            # Sanitize question text for JSON 
+            # Replace newlines with spaces and escape quotes for JSON safety
+            question_text = question_text.replace('\n', ' ').replace('\r', ' ')
+            
+            # Create the arguments as a proper Python dictionary first
+            args = {
+                "question": question_text,
+                "dangerous_action": False,
+                "question_type": "follow-up"
+            }
+            
+            # Convert to JSON with error handling
+            try:
+                args_json = json.dumps(args)
+            except Exception as json_err:
+                logger.error(f"JSON serialization error: {str(json_err)}, using simplified question")
+                # Try with simpler text if JSON fails
+                args = {
+                    "question": "I need more information to proceed. Please provide details.",
+                    "dangerous_action": False,
+                    "question_type": "follow-up"
+                }
+                args_json = json.dumps(args)
+                
+            # Create the function object using the schema's Function class
+            try:
+                function_obj = Function(
+                    name="ask_user",
+                    arguments=args_json
+                )
+            except Exception as func_err:
+                logger.error(f"Error creating Function object: {str(func_err)}, {type(func_err)}")
+                return []
+                
+            # Create the full tool call
+            try:
+                ask_user_tool = ToolCall(
+                    id="auto_ask_user",
+                    type="function",
+                    function=function_obj
+                )
+                return [ask_user_tool]
+            except Exception as tool_err:
+                logger.error(f"Error creating ToolCall object: {str(tool_err)}, {type(tool_err)}")
+                return []
+                
+        except Exception as e:
+            logger.error(f"Error creating ask_user tool call: {str(e)}, {type(e)}")
+            logger.error(f"Question text causing error: '{question_text[:100]}...'")
+            return []
