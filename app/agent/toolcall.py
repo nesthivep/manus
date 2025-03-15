@@ -1,5 +1,6 @@
 import json
-from typing import Any, List, Optional, Union
+import re
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -8,6 +9,7 @@ from app.logger import logger
 from app.prompt.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
 from app.schema import TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoice
 from app.tool import CreateChatCompletion, Terminate, ToolCollection
+from app.tool.ask_user import AskUser
 
 
 TOOL_CALL_REQUIRED = "Tool calls required but none provided"
@@ -72,6 +74,34 @@ class ToolCallAgent(ReActAgent):
                     return True
                 return False
 
+            # If no tools selected but response appears to be asking a question
+            # Automatically convert it to an ask_user tool call
+            if not self.tool_calls and response.content:
+                if self._is_asking_question(response.content):
+                    logger.info(f"🔄 Converting question to ask_user tool call: {response.content}")
+                    # Create a tool call for ask_user
+                    ask_user_tool = ToolCall(
+                        id="auto_ask_user",
+                        type="function",
+                        function=ToolCall.Function(
+                            name="ask_user",
+                            arguments=json.dumps({
+                                "question": response.content,
+                                "dangerous_action": False,
+                                "question_type": "follow-up"
+                            })
+                        )
+                    )
+                    self.tool_calls = [ask_user_tool]
+                    
+                    # Create and add the assistant message
+                    assistant_msg = Message.from_tool_calls(
+                        content=f"I need to get more information from you: {response.content}", 
+                        tool_calls=self.tool_calls
+                    )
+                    self.memory.add_message(assistant_msg)
+                    return True
+
             # Create and add assistant message
             assistant_msg = (
                 Message.from_tool_calls(
@@ -99,7 +129,7 @@ class ToolCallAgent(ReActAgent):
             )
             return False
 
-    async def act(self) -> str:
+    async def act(self) -> Union[str, Dict[str, Any]]:
         """Execute tool calls and handle their results"""
         if not self.tool_calls:
             if self.tool_choices == ToolChoice.REQUIRED:
@@ -111,6 +141,17 @@ class ToolCallAgent(ReActAgent):
         results = []
         for command in self.tool_calls:
             result = await self.execute_tool(command)
+            
+            # Special handling for tools requiring user input
+            if isinstance(result, dict) and result.get("requires_user_response", False):
+                # Add tool response to memory
+                tool_msg = Message.tool_message(
+                    content=str(result), tool_call_id=command.id, name=command.function.name
+                )
+                self.memory.add_message(tool_msg)
+                
+                # Return the result directly to trigger user input
+                return result
 
             if self.max_observe:
                 result = result[: self.max_observe]
@@ -128,7 +169,7 @@ class ToolCallAgent(ReActAgent):
 
         return "\n\n".join(results)
 
-    async def execute_tool(self, command: ToolCall) -> str:
+    async def execute_tool(self, command: ToolCall) -> Union[str, Dict[str, Any]]:
         """Execute a single tool call with robust error handling"""
         if not command or not command.function or not command.function.name:
             return "Error: Invalid command format"
@@ -144,6 +185,11 @@ class ToolCallAgent(ReActAgent):
             # Execute the tool
             logger.info(f"🔧 Activating tool: '{name}'...")
             result = await self.available_tools.execute(name=name, tool_input=args)
+
+            # If the tool result is a dictionary and contains requires_user_response flag,
+            # return it directly to trigger user input handling
+            if isinstance(result, dict) and result.get("requires_user_response", False):
+                return result
 
             # Format result for display
             observation = (
@@ -172,6 +218,12 @@ class ToolCallAgent(ReActAgent):
         if not self._is_special_tool(name):
             return
 
+        # Check for ask_user tool - this should not terminate execution
+        if name.lower() == "ask_user":
+            logger.info(f"✋ Special tool '{name}' is waiting for user input.")
+            return
+
+        # For other special tools like terminate
         if self._should_finish_execution(name=name, result=result, **kwargs):
             # Set agent state to finished
             logger.info(f"🏁 Special tool '{name}' has completed the task!")
@@ -185,3 +237,41 @@ class ToolCallAgent(ReActAgent):
     def _is_special_tool(self, name: str) -> bool:
         """Check if tool name is in special tools list"""
         return name.lower() in [n.lower() for n in self.special_tool_names]
+
+    def _is_asking_question(self, text: str) -> bool:
+        """
+        Detects if the given text is asking a question or requesting input from the user.
+        
+        Args:
+            text: The text to analyze
+            
+        Returns:
+            bool: True if the text appears to be asking for user input
+        """
+        # Check for question marks
+        if "?" in text:
+            return True
+            
+        # Common question patterns
+        question_patterns = [
+            r"(?i)would you like",
+            r"(?i)do you want",
+            r"(?i)can you",
+            r"(?i)could you",
+            r"(?i)please provide",
+            r"(?i)please let me know",
+            r"(?i)please specify",
+            r"(?i)tell me",
+            r"(?i)what.*(?:would|should|can|could)",
+            r"(?i)how.*(?:would|should|can|could)",
+            r"(?i)which.*(?:option|choice)",
+            r"(?i)let me know",
+            r"(?i)if you have",
+            r"(?i)if you would like",
+        ]
+        
+        for pattern in question_patterns:
+            if re.search(pattern, text):
+                return True
+                
+        return False
