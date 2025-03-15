@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any,ClassVar, Dict
 
 from pydantic import Field
 
@@ -9,6 +9,7 @@ from app.tool.browser_use_tool import BrowserUseTool
 from app.tool.file_saver import FileSaver
 from app.tool.python_execute import PythonExecute
 from app.tool.web_search import WebSearch
+from app.tool.stock_data_tool import StockSearch
 
 
 class Manus(ToolCallAgent):
@@ -28,19 +29,37 @@ class Manus(ToolCallAgent):
     system_prompt: str = SYSTEM_PROMPT
     next_step_prompt: str = NEXT_STEP_PROMPT
 
-    max_observe: int = 2000
+    max_observe: int = 2000  # Default value is 2000
     max_steps: int = 20
+
+    # Configuration for tool-specific max_observe values
+    tool_specific_max_observe: ClassVar[Dict[str, int]] = {
+        "StockSearch": 13000
+    }
 
     # Add general-purpose tools to the tool collection
     available_tools: ToolCollection = Field(
         default_factory=lambda: ToolCollection(
-            PythonExecute(), WebSearch(), BrowserUseTool(), FileSaver(), Terminate()
+            PythonExecute(), WebSearch(), BrowserUseTool(), FileSaver(), Terminate(), StockSearch()
         )
     )
 
-    async def _handle_special_tool(self, name: str, result: Any, **kwargs):
-        if not self._is_special_tool(name):
-            return
+    async def _set_max_observe_for_tool(self, tool_name: str):
+        """Set different max_observe values based on the tool type"""
+        if tool_name in self.tool_specific_max_observe:
+            self.max_observe = self.tool_specific_max_observe[tool_name]
         else:
-            await self.available_tools.get_tool(BrowserUseTool().name).cleanup()
-            await super()._handle_special_tool(name, result, **kwargs)
+            self.max_observe = 2000  # Default value
+
+    async def use_tool(self, *args, **kwargs):
+        """Override use_tool method to set appropriate max_observe value before calling tools"""
+        tool_name = kwargs.get("name") or (args[0] if args else None)
+        old_max_observe = self.max_observe
+        if tool_name:
+            await self._set_max_observe_for_tool(tool_name)
+            print(f"Tool call: {tool_name}, max_observe value: {self.max_observe} (original value: {old_max_observe})")
+        return await super().use_tool(*args, **kwargs)
+
+    async def _handle_special_tool(self, name: str, result: Any, **kwargs):
+        await self.available_tools.get_tool(BrowserUseTool().name).cleanup()
+        await super()._handle_special_tool(name, result, **kwargs)
