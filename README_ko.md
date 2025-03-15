@@ -26,16 +26,46 @@ OpenManus를 통해 여러분만의 에이전트를 즐겨보세요!
 
 두 가지 설치 방법을 제공합니다. **방법 2 (uv 사용)** 이 더 빠른 설치와 효율적인 종속성 관리를 위해 권장됩니다.
 
-### 방법 1: conda 사용
+### 방법 1: uv 사용 (권장)
 
-1. 새로운 conda 환경을 생성합니다:
+1. uv를 설치합니다 (빠른 Python 패키지 설치 관리자 및 리졸버):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+2. 리포지토리를 복제합니다:
+
+```bash
+git clone https://github.com/mannaandpoem/OpenManus.git
+cd OpenManus
+```
+
+3. 새 가상 환경을 생성하고 활성화합니다:
+
+```bash
+uv venv
+source .venv/bin/activate  # Unix/macOS에서
+# Windows에서:
+# .venv\Scripts\activate
+```
+
+4. 종속성을 설치합니다:
+
+```bash
+uv pip install -r requirements.txt
+```
+
+### 방법 2: conda 사용
+
+1. 새 conda 환경을 생성합니다:
 
 ```bash
 conda create -n open_manus python=3.12
 conda activate open_manus
 ```
 
-2. 저장소를 클론합니다:
+2. 리포지토리를 복제합니다:
 
 ```bash
 git clone https://github.com/mannaandpoem/OpenManus.git
@@ -46,36 +76,6 @@ cd OpenManus
 
 ```bash
 pip install -r requirements.txt
-```
-
-### 방법 2: uv 사용 (권장)
-
-1. uv를 설치합니다. (빠른 Python 패키지 설치 및 종속성 관리 도구):
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-2. 저장소를 클론합니다:
-
-```bash
-git clone https://github.com/mannaandpoem/OpenManus.git
-cd OpenManus
-```
-
-3. 새로운 가상 환경을 생성하고 활성화합니다:
-
-```bash
-uv venv
-source .venv/bin/activate  # Unix/macOS의 경우
-# Windows의 경우:
-# .venv\Scripts\activate
-```
-
-4. 종속성을 설치합니다:
-
-```bash
-uv pip install -r requirements.txt
 ```
 
 ## 설정 방법

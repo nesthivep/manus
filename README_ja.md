@@ -26,29 +26,7 @@ OpenManusで自分だけのエージェントを楽しみましょう！
 
 インストール方法は2つ提供しています。方法2（uvを使用）は、より高速なインストールと優れた依存関係管理のため推奨されています。
 
-### 方法1：condaを使用
-
-1. 新しいconda環境を作成します：
-
-```bash
-conda create -n open_manus python=3.12
-conda activate open_manus
-```
-
-2. リポジトリをクローンします：
-
-```bash
-git clone https://github.com/mannaandpoem/OpenManus.git
-cd OpenManus
-```
-
-3. 依存関係をインストールします：
-
-```bash
-pip install -r requirements.txt
-```
-
-### 方法2：uvを使用（推奨）
+### 方法1：uvを使用（推奨）
 
 1. uv（高速なPythonパッケージインストーラーと管理機能）をインストールします：
 
@@ -76,6 +54,28 @@ source .venv/bin/activate  # Unix/macOSの場合
 
 ```bash
 uv pip install -r requirements.txt
+```
+
+### 方法2：condaを使用
+
+1. 新しいconda環境を作成します：
+
+```bash
+conda create -n open_manus python=3.12
+conda activate open_manus
+```
+
+2. リポジトリをクローンします：
+
+```bash
+git clone https://github.com/mannaandpoem/OpenManus.git
+cd OpenManus
+```
+
+3. 依存関係をインストールします：
+
+```bash
+pip install -r requirements.txt
 ```
 
 ## 設定

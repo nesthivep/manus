@@ -29,29 +29,7 @@ Manus 非常棒，但 OpenManus 无需邀请码即可实现任何创意 🛫！
 
 我们提供两种安装方式。推荐使用方式二（uv），因为它能提供更快的安装速度和更好的依赖管理。
 
-### 方式一：使用 conda
-
-1. 创建新的 conda 环境：
-
-```bash
-conda create -n open_manus python=3.12
-conda activate open_manus
-```
-
-2. 克隆仓库：
-
-```bash
-git clone https://github.com/mannaandpoem/OpenManus.git
-cd OpenManus
-```
-
-3. 安装依赖：
-
-```bash
-pip install -r requirements.txt
-```
-
-### 方式二：使用 uv（推荐）
+### 方式一：使用 uv（推荐）
 
 1. 安装 uv（一个快速的 Python 包管理器）：
 
@@ -79,6 +57,28 @@ source .venv/bin/activate  # Unix/macOS 系统
 
 ```bash
 uv pip install -r requirements.txt
+```
+
+### 方式二：使用 conda
+
+1. 创建新的 conda 环境：
+
+```bash
+conda create -n open_manus python=3.12
+conda activate open_manus
+```
+
+2. 克隆仓库：
+
+```bash
+git clone https://github.com/mannaandpoem/OpenManus.git
+cd OpenManus
+```
+
+3. 安装依赖：
+
+```bash
+pip install -r requirements.txt
 ```
 
 ## 配置说明
