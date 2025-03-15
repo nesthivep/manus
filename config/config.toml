@@ -1,0 +1,9 @@
+[llm]
+# Using llama3-groq-tool-use via Ollama (specialized for tool use)
+api_type = "ollama"
+model = "llama3-groq-tool-use"
+base_url = "http://localhost:11434/v1"
+api_key = "ollama"
+# Increased from 4096 to 8192 to better handle web search results and response synthesis
+max_tokens = 8192
+temperature = 0.0
