@@ -4,6 +4,7 @@ import time
 from app.agent.manus import Manus
 from app.flow.base import FlowType
 from app.flow.flow_factory import FlowFactory
+from app.input_handler import get_user_input, is_break_command
 from app.logger import logger
 
 
@@ -13,11 +14,14 @@ async def run_flow():
     }
 
     try:
-        prompt = input("Enter your prompt: ")
+        prompt = get_user_input("Enter your prompt: ")
 
         if prompt.strip().isspace() or not prompt:
             logger.warning("Empty prompt provided.")
             return
+            
+        if is_break_command(prompt):
+            logger.warning("Break command provided at start. No ongoing conversation to affect.")
 
         flow = FlowFactory.create_flow(
             flow_type=FlowType.PLANNING,
