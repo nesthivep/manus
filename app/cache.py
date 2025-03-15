@@ -27,8 +27,6 @@ class LLMCache:
         self,
         messages: List[Union[dict, Message]],
         model: str,
-        temperature: float,
-        max_tokens: int,
         tools: Optional[List[dict]] = None,
     ) -> str:
         """Generate a unique cache key based on request parameters."""
@@ -44,8 +42,6 @@ class LLMCache:
         key_data = {
             "messages": formatted_messages,
             "model": model,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
         }
 
         # Add tools to key if provided
