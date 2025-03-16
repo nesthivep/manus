@@ -48,8 +48,8 @@
           </div>
         </div>
         <div>
-          <el-text class="pr-10">任务状态:</el-text>
-          <el-text>{{ taskInfo.status }}</el-text>
+          <el-text class="pr-10">{{ t('taskStatus.name') }}:</el-text>
+          <el-text>{{ t(taskInfo.status) }}</el-text>
         </div>
 
       </div>
