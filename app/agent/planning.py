@@ -1,5 +1,5 @@
 import time
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import Field, model_validator
 
@@ -27,14 +27,14 @@ class PlanningAgent(ToolCallAgent):
     available_tools: ToolCollection = Field(
         default_factory=lambda: ToolCollection(PlanningTool(), Terminate())
     )
-    tool_choices: TOOL_CHOICE_TYPE = ToolChoice.AUTO  # type: ignore
+    tool_choices: TOOL_CHOICE_TYPE = ToolChoice.AUTO
     special_tool_names: List[str] = Field(default_factory=lambda: [Terminate().name])
 
     tool_calls: List[ToolCall] = Field(default_factory=list)
     active_plan_id: Optional[str] = Field(default=None)
 
     # Add a dictionary to track the step status for each tool call
-    step_execution_tracker: Dict[str, Dict] = Field(default_factory=dict)
+    step_execution_tracker: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     current_step_index: Optional[int] = None
 
     max_steps: int = 20
@@ -111,7 +111,7 @@ class PlanningAgent(ToolCallAgent):
             name="planning",
             tool_input={"command": "get", "plan_id": self.active_plan_id},
         )
-        return result.output if hasattr(result, "output") else str(result)
+        return str(result.output) if hasattr(result, "output") else str(result)
 
     async def run(self, request: Optional[str] = None) -> str:
         """Run the agent with an optional initial request."""
@@ -246,7 +246,7 @@ class PlanningAgent(ToolCallAgent):
             self.memory.add_message(tool_msg)
 
 
-async def main():
+async def main() -> None:
     # Configure and run the agent
     agent = PlanningAgent(available_tools=ToolCollection(PlanningTool(), Terminate()))
     result = await agent.run("Help me plan a trip to the moon")

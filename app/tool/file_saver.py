@@ -1,6 +1,7 @@
 import os
+from typing import Any, Dict
 
-import aiofiles
+import aiofiles  # type: ignore
 
 from app.tool.base import BaseTool
 
@@ -11,7 +12,7 @@ class FileSaver(BaseTool):
 Use this tool when you need to save text, code, or generated content to a file on the local filesystem.
 The tool accepts content and a file path, and saves the content to that location.
 """
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "content": {
@@ -32,18 +33,20 @@ The tool accepts content and a file path, and saves the content to that location
         "required": ["content", "file_path"],
     }
 
-    async def execute(self, content: str, file_path: str, mode: str = "w") -> str:
+    async def execute(self, **kwargs: Any) -> str:
         """
         Save content to a file at the specified path.
 
         Args:
-            content (str): The content to save to the file.
-            file_path (str): The path where the file should be saved.
-            mode (str, optional): The file opening mode. Default is 'w' for write. Use 'a' for append.
+            **kwargs: The keyword arguments containing content, file_path, and mode.
 
         Returns:
-            str: A message indicating the result of the operation.
+            Coroutine[Any, Any, str]: A coroutine that returns a message indicating the result of the operation.
         """
+        content: str = kwargs.get("content", "")
+        file_path: str = kwargs.get("file_path", "")
+        mode: str = kwargs.get("mode", "w")
+
         try:
             # Ensure the directory exists
             directory = os.path.dirname(file_path)

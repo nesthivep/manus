@@ -25,7 +25,7 @@ class ToolCallAgent(ReActAgent):
     available_tools: ToolCollection = ToolCollection(
         CreateChatCompletion(), Terminate()
     )
-    tool_choices: TOOL_CHOICE_TYPE = ToolChoice.AUTO  # type: ignore
+    tool_choices: TOOL_CHOICE_TYPE = ToolChoice.AUTO
     special_tool_names: List[str] = Field(default_factory=lambda: [Terminate().name])
 
     tool_calls: List[ToolCall] = Field(default_factory=list)
@@ -167,7 +167,7 @@ class ToolCallAgent(ReActAgent):
             logger.error(error_msg)
             return f"Error: {error_msg}"
 
-    async def _handle_special_tool(self, name: str, result: Any, **kwargs):
+    async def _handle_special_tool(self, name: str, result: Any, **kwargs: Any) -> None:
         """Handle special tool execution and state changes"""
         if not self._is_special_tool(name):
             return
@@ -178,7 +178,7 @@ class ToolCallAgent(ReActAgent):
             self.state = AgentState.FINISHED
 
     @staticmethod
-    def _should_finish_execution(**kwargs) -> bool:
+    def _should_finish_execution(**kwargs: Any) -> bool:
         """Determine if tool execution should finish the agent"""
         return True
 

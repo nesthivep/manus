@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -60,7 +60,7 @@ class Message(BaseModel):
     name: Optional[str] = Field(default=None)
     tool_call_id: Optional[str] = Field(default=None)
 
-    def __add__(self, other) -> List["Message"]:
+    def __add__(self, other: Union["Message", List["Message"]]) -> List["Message"]:
         """支持 Message + list 或 Message + Message 的操作"""
         if isinstance(other, list):
             return [self] + other
@@ -71,7 +71,7 @@ class Message(BaseModel):
                 f"unsupported operand type(s) for +: '{type(self).__name__}' and '{type(other).__name__}'"
             )
 
-    def __radd__(self, other) -> List["Message"]:
+    def __radd__(self, other: Union["Message", List["Message"]]) -> List["Message"]:
         """支持 list + Message 的操作"""
         if isinstance(other, list):
             return other + [self]
@@ -80,7 +80,7 @@ class Message(BaseModel):
                 f"unsupported operand type(s) for +: '{type(other).__name__}' and '{type(self).__name__}'"
             )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert message to dictionary format"""
         message = {"role": self.role}
         if self.content is not None:
@@ -109,7 +109,7 @@ class Message(BaseModel):
         return cls(role=Role.ASSISTANT, content=content)
 
     @classmethod
-    def tool_message(cls, content: str, name, tool_call_id: str) -> "Message":
+    def tool_message(cls, content: str, name: str, tool_call_id: str) -> "Message":
         """Create a tool message"""
         return cls(
             role=Role.TOOL, content=content, name=name, tool_call_id=tool_call_id
@@ -117,8 +117,8 @@ class Message(BaseModel):
 
     @classmethod
     def from_tool_calls(
-        cls, tool_calls: List[Any], content: Union[str, List[str]] = "", **kwargs
-    ):
+        cls, tool_calls: List[Any], content: Union[str, List[str]] = "", **kwargs: Any
+    ) -> "Message":
         """Create ToolCallsMessage from raw tool calls.
 
         Args:
@@ -157,6 +157,6 @@ class Memory(BaseModel):
         """Get n most recent messages"""
         return self.messages[-n:]
 
-    def to_dict_list(self) -> List[dict]:
+    def to_dict_list(self) -> List[Dict[str, Any]]:
         """Convert messages to list of dicts"""
         return [msg.to_dict() for msg in self.messages]

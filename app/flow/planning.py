@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -22,8 +22,10 @@ class PlanningFlow(BaseFlow):
     current_step_index: Optional[int] = None
 
     def __init__(
-        self, agents: Union[BaseAgent, List[BaseAgent], Dict[str, BaseAgent]], **data
-    ):
+        self,
+        agents: Union[BaseAgent, List[BaseAgent], Dict[str, BaseAgent]],
+        **data: Any,
+    ) -> None:
         # Set executor keys before super().__init__
         if "executors" in data:
             data["executor_keys"] = data.pop("executors")
@@ -64,7 +66,7 @@ class PlanningFlow(BaseFlow):
     async def execute(self, input_text: str) -> str:
         """Execute the planning flow with agents."""
         try:
-            if not self.primary_agent:
+            if self.primary_agent is None:
                 raise ValueError("No primary agent available")
 
             # Create initial plan if input provided
@@ -154,12 +156,10 @@ class PlanningFlow(BaseFlow):
 
         # Create default plan using the ToolCollection
         await self.planning_tool.execute(
-            **{
-                "command": "create",
-                "plan_id": self.active_plan_id,
-                "title": f"Plan for: {request[:50]}{'...' if len(request) > 50 else ''}",
-                "steps": ["Analyze request", "Execute task", "Verify results"],
-            }
+            command="create",
+            plan_id=self.active_plan_id,
+            title=f"Plan for: {request[:50]}{'...' if len(request) > 50 else ''}",
+            steps=["Analyze request", "Execute task", "Verify results"],
         )
 
     async def _get_current_step_info(self) -> tuple[Optional[int], Optional[dict]]:
@@ -226,7 +226,9 @@ class PlanningFlow(BaseFlow):
             logger.warning(f"Error finding current step index: {e}")
             return None, None
 
-    async def _execute_step(self, executor: BaseAgent, step_info: dict) -> str:
+    async def _execute_step(
+        self, executor: BaseAgent, step_info: Dict[str, Any]
+    ) -> str:
         """Execute the current step with the specified agent using agent.run()."""
         # Prepare context for the agent with current plan status
         plan_status = await self._get_plan_text()
@@ -292,7 +294,7 @@ class PlanningFlow(BaseFlow):
             result = await self.planning_tool.execute(
                 command="get", plan_id=self.active_plan_id
             )
-            return result.output if hasattr(result, "output") else str(result)
+            return str(result.output) if hasattr(result, "output") else str(result)
         except Exception as e:
             logger.error(f"Error getting plan: {e}")
             return self._generate_plan_text_from_storage()

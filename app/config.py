@@ -1,7 +1,7 @@
 import threading
 import tomllib
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -71,22 +71,22 @@ class AppConfig(BaseModel):
 
 
 class Config:
-    _instance = None
+    _instance: Optional["Config"] = None
     _lock = threading.Lock()
-    _initialized = False
+    _initialized: bool = False
 
-    def __new__(cls):
+    def __new__(cls) -> "Config":
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         if not self._initialized:
             with self._lock:
                 if not self._initialized:
-                    self._config = None
+                    self._config: Optional[AppConfig] = None
                     self._load_initial_config()
                     self._initialized = True
 
@@ -101,12 +101,12 @@ class Config:
             return example_path
         raise FileNotFoundError("No configuration file found in config directory")
 
-    def _load_config(self) -> dict:
+    def _load_config(self) -> Dict[str, Any]:
         config_path = self._get_config_path()
         with config_path.open("rb") as f:
             return tomllib.load(f)
 
-    def _load_initial_config(self):
+    def _load_initial_config(self) -> None:
         raw_config = self._load_config()
         base_llm = raw_config.get("llm", {})
         llm_overrides = {
@@ -177,14 +177,20 @@ class Config:
 
     @property
     def llm(self) -> Dict[str, LLMSettings]:
+        if self._config is None:
+            raise ValueError("Configuration was not loaded")
         return self._config.llm
 
     @property
     def browser_config(self) -> Optional[BrowserSettings]:
+        if self._config is None:
+            raise ValueError("Configuration was not loaded")
         return self._config.browser_config
 
     @property
     def search_config(self) -> Optional[SearchSettings]:
+        if self._config is None:
+            raise ValueError("Configuration was not loaded")
         return self._config.search_config
 
 

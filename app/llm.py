@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Sequence, TypeVar, Union
 
 from openai import (
     APIError,
@@ -23,13 +23,18 @@ from app.schema import (
 
 REASONING_MODELS = ["o1", "o3-mini"]
 
+T = TypeVar("T", bound="LLM")
+
 
 class LLM:
     _instances: Dict[str, "LLM"] = {}
 
+    @classmethod
     def __new__(
-        cls, config_name: str = "default", llm_config: Optional[LLMSettings] = None
-    ):
+        cls: type[T],
+        config_name: str = "default",
+        llm_config: Optional[LLMSettings] = None,
+    ) -> T:
         if config_name not in cls._instances:
             instance = super().__new__(cls)
             instance.__init__(config_name, llm_config)
@@ -38,19 +43,20 @@ class LLM:
 
     def __init__(
         self, config_name: str = "default", llm_config: Optional[LLMSettings] = None
-    ):
+    ) -> None:
         if not hasattr(self, "client"):  # Only initialize if not already initialized
             llm_config = llm_config or config.llm
-            llm_config = llm_config.get(config_name, llm_config["default"])
-            self.model = llm_config.model
-            self.max_tokens = llm_config.max_tokens
-            self.temperature = llm_config.temperature
-            self.api_type = llm_config.api_type
-            self.api_key = llm_config.api_key
-            self.api_version = llm_config.api_version
-            self.base_url = llm_config.base_url
+            if isinstance(llm_config, LLMSettings):
+                llm_config = llm_config.get(config_name, llm_config["default"])
+            self.model: str = llm_config["model"]
+            self.max_tokens: int = llm_config["max_tokens"]
+            self.temperature: float = llm_config["temperature"]
+            self.api_type: str = llm_config["api_type"]
+            self.api_key: str = llm_config["api_key"]
+            self.api_version: str = llm_config["api_version"]
+            self.base_url: str = llm_config["base_url"]
             if self.api_type == "azure":
-                self.client = AsyncAzureOpenAI(
+                self.client: Union[AsyncAzureOpenAI, AsyncOpenAI] = AsyncAzureOpenAI(
                     base_url=self.base_url,
                     api_key=self.api_key,
                     api_version=self.api_version,
@@ -59,7 +65,9 @@ class LLM:
                 self.client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
 
     @staticmethod
-    def format_messages(messages: List[Union[dict, Message]]) -> List[dict]:
+    def format_messages(
+        messages: Sequence[Union[Dict[str, Any], Message]]
+    ) -> List[Dict[str, Any]]:
         """
         Format messages for LLM by converting them to OpenAI message format.
 
@@ -106,14 +114,11 @@ class LLM:
 
         return formatted_messages
 
-    @retry(
-        wait=wait_random_exponential(min=1, max=60),
-        stop=stop_after_attempt(6),
-    )
+    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     async def ask(
         self,
-        messages: List[Union[dict, Message]],
-        system_msgs: Optional[List[Union[dict, Message]]] = None,
+        messages: Sequence[Union[Dict[str, Any], Message]],
+        system_msgs: Optional[Sequence[Union[Dict[str, Any], Message]]] = None,
         stream: bool = True,
         temperature: Optional[float] = None,
     ) -> str:
@@ -138,13 +143,14 @@ class LLM:
             # Format system and user messages
             if system_msgs:
                 system_msgs = self.format_messages(system_msgs)
-                messages = system_msgs + self.format_messages(messages)
-            else:
                 messages = self.format_messages(messages)
+                formatted_messages = system_msgs + messages
+            else:
+                formatted_messages = self.format_messages(messages)
 
-            params = {
+            params: Dict[str, Any] = {
                 "model": self.model,
-                "messages": messages,
+                "messages": formatted_messages,
             }
 
             if self.model in REASONING_MODELS:
@@ -161,7 +167,7 @@ class LLM:
 
                 if not response.choices or not response.choices[0].message.content:
                     raise ValueError("Empty or invalid response from LLM")
-                return response.choices[0].message.content
+                return str(response.choices[0].message.content)
 
             # Streaming request
             params["stream"] = True
@@ -195,14 +201,14 @@ class LLM:
     )
     async def ask_tool(
         self,
-        messages: List[Union[dict, Message]],
-        system_msgs: Optional[List[Union[dict, Message]]] = None,
+        messages: Sequence[Union[Dict[str, Any], Message]],
+        system_msgs: Optional[Sequence[Union[Dict[str, Any], Message]]] = None,
         timeout: int = 300,
-        tools: Optional[List[dict]] = None,
-        tool_choice: TOOL_CHOICE_TYPE = ToolChoice.AUTO,  # type: ignore
+        tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: TOOL_CHOICE_TYPE = ToolChoice.AUTO,
         temperature: Optional[float] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> Any:
         """
         Ask LLM using functions/tools and return the response.
 
@@ -231,9 +237,10 @@ class LLM:
             # Format messages
             if system_msgs:
                 system_msgs = self.format_messages(system_msgs)
-                messages = system_msgs + self.format_messages(messages)
-            else:
                 messages = self.format_messages(messages)
+                formatted_messages = system_msgs + messages
+            else:
+                formatted_messages = self.format_messages(messages)
 
             # Validate tools if provided
             if tools:
@@ -242,9 +249,9 @@ class LLM:
                         raise ValueError("Each tool must be a dict with 'type' field")
 
             # Set up the completion request
-            params = {
+            params: Dict[str, Any] = {
                 "model": self.model,
-                "messages": messages,
+                "messages": formatted_messages,
                 "tools": tools,
                 "tool_choice": tool_choice,
                 "timeout": timeout,

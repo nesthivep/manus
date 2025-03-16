@@ -55,7 +55,7 @@ class BaseAgent(BaseModel, ABC):
         return self
 
     @asynccontextmanager
-    async def state_context(self, new_state: AgentState):
+    async def state_context(self, new_state: AgentState) -> None:
         """Context manager for safe agent state transitions.
 
         Args:
@@ -157,7 +157,7 @@ class BaseAgent(BaseModel, ABC):
         Must be implemented by subclasses to define specific behavior.
         """
 
-    def handle_stuck_state(self):
+    def handle_stuck_state(self) -> None:
         """Handle stuck state by adding a prompt to change strategy"""
         stuck_prompt = "\
         Observed duplicate responses. Consider new strategies and avoid repeating ineffective paths already attempted."
@@ -188,6 +188,6 @@ class BaseAgent(BaseModel, ABC):
         return self.memory.messages
 
     @messages.setter
-    def messages(self, value: List[Message]):
+    def messages(self, value: List[Message]) -> None:
         """Set the list of messages in the agent's memory."""
         self.memory.messages = value

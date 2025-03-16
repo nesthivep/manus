@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from app.tool.base import BaseTool
 
 
@@ -8,7 +10,7 @@ When you have finished all the tasks, call this tool to end the work."""
 class Terminate(BaseTool):
     name: str = "terminate"
     description: str = _TERMINATE_DESCRIPTION
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "status": {
@@ -20,6 +22,7 @@ class Terminate(BaseTool):
         "required": ["status"],
     }
 
-    async def execute(self, status: str) -> str:
+    async def execute(self, **kwargs: Any) -> str:
         """Finish the current execution"""
+        status: str = kwargs.get("status", "")
         return f"The interaction has been completed with status: {status}"

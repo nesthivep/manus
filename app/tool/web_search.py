@@ -1,5 +1,5 @@
 import asyncio
-from typing import List
+from typing import Any, Coroutine, Dict, List
 
 from app.config import config
 from app.tool.base import BaseTool
@@ -17,7 +17,7 @@ class WebSearch(BaseTool):
 Use this tool when you need to find information on the web, get up-to-date data, or research specific topics.
 The tool returns a list of URLs that match the search query.
 """
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "query": {
@@ -32,13 +32,13 @@ The tool returns a list of URLs that match the search query.
         },
         "required": ["query"],
     }
-    _search_engine: dict[str, WebSearchEngine] = {
+    _search_engine: Dict[str, WebSearchEngine] = {
         "google": GoogleSearchEngine(),
         "baidu": BaiduSearchEngine(),
         "duckduckgo": DuckDuckGoSearchEngine(),
     }
 
-    async def execute(self, query: str, num_results: int = 10) -> List[str]:
+    async def execute(self, **kwargs: Any) -> Coroutine[Any, Any, List[str]]:
         """
         Execute a Web search and return a list of URLs.
 
@@ -47,8 +47,11 @@ The tool returns a list of URLs that match the search query.
             num_results (int, optional): The number of search results to return. Default is 10.
 
         Returns:
-            List[str]: A list of URLs matching the search query.
+            Coroutine[Any, Any, List[str]]: A coroutine that returns a list of URLs matching the search query.
         """
+        query: str = kwargs.get("query", "")
+        num_results: int = kwargs.get("num_results", 10)
+
         # Run the search in a thread pool to prevent blocking
         loop = asyncio.get_event_loop()
         search_engine = self.get_search_engine()
@@ -57,7 +60,10 @@ The tool returns a list of URLs that match the search query.
             lambda: list(search_engine.perform_search(query, num_results=num_results)),
         )
 
-        return links
+        # Extract URLs from search results
+        urls = [link["url"] for link in links]
+
+        return urls
 
     def get_search_engine(self) -> WebSearchEngine:
         """Determines the search engine to use based on the configuration."""

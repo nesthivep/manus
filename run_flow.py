@@ -1,14 +1,16 @@
 import asyncio
 import time
+from typing import Mapping
 
+from app.agent.base import BaseAgent
 from app.agent.manus import Manus
 from app.flow.base import FlowType
 from app.flow.flow_factory import FlowFactory
 from app.logger import logger
 
 
-async def run_flow():
-    agents = {
+async def run_flow() -> None:
+    agents: Mapping[str, BaseAgent] = {
         "manus": Manus(),
     }
 
