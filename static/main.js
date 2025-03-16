@@ -1,11 +1,12 @@
 let currentEventSource = null;
+let historyVisible = false; // Track history panel status
 
 function createTask() {
     const promptInput = document.getElementById('prompt-input');
     const prompt = promptInput.value.trim();
 
     if (!prompt) {
-        alert("Please enter a valid task prompt");
+        alert("Please enter a valid task");
         promptInput.focus();
         return;
     }
@@ -19,10 +20,10 @@ function createTask() {
     const stepsContainer = document.getElementById('steps-container');
     const resultContainer = document.getElementById('result-container');
     
-    // 隐藏结果面板
+    // Hide result panel
     hideResultPanel();
     
-    // 隐藏欢迎信息，显示步骤加载状态
+    // Hide welcome message, show step loading status
     const welcomeMessage = taskContainer.querySelector('.welcome-message');
     if (welcomeMessage) {
         welcomeMessage.style.display = 'none';
@@ -30,6 +31,9 @@ function createTask() {
     
     stepsContainer.innerHTML = '<div class="loading">Initializing task...</div>';
     resultContainer.innerHTML = '';
+
+    // Close history panel on mobile devices
+    closeHistoryOnMobile();
 
     fetch('/tasks', {
         method: 'POST',
@@ -40,23 +44,23 @@ function createTask() {
     })
     .then(response => {
         if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.detail || '请求失败') });
+            return response.json().then(err => { throw new Error(err.detail || 'Request failed') });
         }
         return response.json();
     })
     .then(data => {
         if (!data.task_id) {
-            throw new Error('无效的任务ID');
+            throw new Error('Invalid task ID');
         }
         setupSSE(data.task_id);
         loadHistory();
         promptInput.value = '';
     })
     .catch(error => {
-        stepsContainer.innerHTML = `<div class="error">错误: ${error.message}</div>`;
+        stepsContainer.innerHTML = `<div class="error">Error: ${error.message}</div>`;
         updateResultPanel({result: error.message}, 'error');
         showResultPanel();
-        console.error('创建任务失败:', error);
+        console.error('Failed to create task:', error);
     });
 }
 
@@ -69,7 +73,7 @@ function setupSSE(taskId) {
     const stepsContainer = document.getElementById('steps-container');
     const resultContainer = document.getElementById('result-container');
     
-    // 默认隐藏结果面板
+    // Hide result panel by default
     hideResultPanel();
 
     function connect() {
@@ -90,7 +94,7 @@ function setupSSE(taskId) {
                 updateTaskStatus(task);
             })
             .catch(error => {
-                console.error('初始状态获取失败:', error);
+                console.error('Initial status retrieval failed:', error);
             });
 
         const handleEvent = (event, type) => {
@@ -103,18 +107,18 @@ function setupSSE(taskId) {
                 const { formattedContent, timestamp } = formatStepContent(data, type);
                 const step = createStepElement(type, formattedContent, timestamp);
 
-                // 移除其他步骤的active状态
+                // Remove active status from other steps
                 document.querySelectorAll('.step-item').forEach(item => {
                     item.classList.remove('active');
                 });
                 
-                // 为当前步骤添加active状态
+                // Add active status to current step
                 step.classList.add('active');
                 
                 stepsContainer.appendChild(step);
                 autoScroll(stepsContainer);
                 
-                // 更新结果面板并显示（但仅对某些类型的步骤）
+                // Update result panel and show (but only for certain types of steps)
                 if (type === 'tool' || type === 'act' || type === 'result') {
                     updateResultPanel(data, type);
                     showResultPanel();
@@ -126,10 +130,10 @@ function setupSSE(taskId) {
                         updateTaskStatus(task);
                     })
                     .catch(error => {
-                        console.error('状态更新失败:', error);
+                        console.error('Failed to update status:', error);
                     });
             } catch (e) {
-                console.error(`处理 ${type} 事件时出错:`, e);
+                console.error(`Error processing ${type} event:`, e);
             }
         };
 
@@ -146,7 +150,7 @@ function setupSSE(taskId) {
 
                 const completeDiv = document.createElement('div');
                 completeDiv.className = 'complete';
-                completeDiv.innerHTML = '<div>✅ 任务完成</div>';
+                completeDiv.innerHTML = '<div>✅ Task completed</div>';
                 stepsContainer.appendChild(completeDiv);
                 
                 updateResultPanel({result: lastResultContent}, 'complete');
@@ -158,13 +162,13 @@ function setupSSE(taskId) {
                         updateTaskStatus(task);
                     })
                     .catch(error => {
-                        console.error('最终状态更新失败:', error);
+                        console.error('Failed to update final status:', error);
                     });
 
                 eventSource.close();
                 currentEventSource = null;
             } catch (e) {
-                console.error('处理完成事件时出错:', e);
+                console.error('Error processing completion event:', e);
             }
         });
 
@@ -174,7 +178,7 @@ function setupSSE(taskId) {
                 const data = JSON.parse(event.data);
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'error';
-                errorDiv.innerHTML = `<div>❌ 错误: ${data.message}</div>`;
+                errorDiv.innerHTML = `<div>❌ Error: ${data.message}</div>`;
                 stepsContainer.appendChild(errorDiv);
                 
                 updateResultPanel({result: data.message}, 'error');
@@ -183,14 +187,14 @@ function setupSSE(taskId) {
                 eventSource.close();
                 currentEventSource = null;
             } catch (e) {
-                console.error('处理错误时出错:', e);
+                console.error('Error processing error:', e);
             }
         });
 
         eventSource.onerror = (err) => {
             if (eventSource.readyState === EventSource.CLOSED) return;
 
-            console.error('SSE连接错误:', err);
+            console.error('SSE connection error:', err);
             clearInterval(heartbeatTimer);
             eventSource.close();
 
@@ -202,7 +206,7 @@ function setupSSE(taskId) {
                         if (task.status === 'completed') {
                             const completeDiv = document.createElement('div');
                             completeDiv.className = 'complete';
-                            completeDiv.innerHTML = '<div>✅ 任务完成</div>';
+                            completeDiv.innerHTML = '<div>✅ Task completed</div>';
                             stepsContainer.appendChild(completeDiv);
                             
                             if (task.steps && task.steps.length > 0) {
@@ -213,31 +217,31 @@ function setupSSE(taskId) {
                         } else {
                             const errorDiv = document.createElement('div');
                             errorDiv.className = 'error';
-                            errorDiv.innerHTML = `<div>❌ 错误: ${task.error || '任务失败'}</div>`;
+                            errorDiv.innerHTML = `<div>❌ Error: ${task.error || 'Task failed'}</div>`;
                             stepsContainer.appendChild(errorDiv);
                             
-                            updateResultPanel({result: task.error || '任务失败'}, 'error');
+                            updateResultPanel({result: task.error || 'Task failed'}, 'error');
                             showResultPanel();
                         }
                     } else if (retryCount < maxRetries) {
                         retryCount++;
                         const warningDiv = document.createElement('div');
                         warningDiv.className = 'warning';
-                        warningDiv.innerHTML = `<div>⚠ 连接断开，${retryDelay/1000}秒后重试 (${retryCount}/${maxRetries})...</div>`;
+                        warningDiv.innerHTML = `<div>⚠ Connection lost, retrying in ${retryDelay/1000} seconds (${retryCount}/${maxRetries})...</div>`;
                         stepsContainer.appendChild(warningDiv);
                         setTimeout(connect, retryDelay);
                     } else {
                         const errorDiv = document.createElement('div');
                         errorDiv.className = 'error';
-                        errorDiv.innerHTML = '<div>⚠ 连接断开，请刷新页面重试</div>';
+                        errorDiv.innerHTML = '<div>⚠ Connection lost, please refresh the page</div>';
                         stepsContainer.appendChild(errorDiv);
                         
-                        updateResultPanel({result: '连接断开，请刷新页面重试'}, 'error');
+                        updateResultPanel({result: 'Connection lost, please refresh the page'}, 'error');
                         showResultPanel();
                     }
                 })
                 .catch(error => {
-                    console.error('任务状态检查失败:', error);
+                    console.error('Failed to check task status:', error);
                     if (retryCount < maxRetries) {
                         retryCount++;
                         setTimeout(connect, retryDelay);
@@ -255,10 +259,36 @@ function updateResultPanel(data, type) {
     
     if (!resultContainer || !currentStep) return;
     
-    // 更新顶部步骤信息（红框部分）
-    currentStep.innerHTML = `<span class="emoji-icon">${getEventIcon(type)}</span> ${getEventLabel(type)}:`;
+    // Update top step information
+    const typeLabel = getEventLabel(type);
+    const icon = getEventIcon(type);
     
-    // 更新内容区域（蓝框部分）
+    // Clear and build new UI
+    currentStep.innerHTML = '';
+    
+    // Add icon
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'emoji-icon';
+    iconSpan.textContent = icon;
+    currentStep.appendChild(iconSpan);
+    
+    // Create status text element, add typewriter effect
+    const statusText = document.createElement('span');
+    statusText.className = 'status-text';
+    currentStep.appendChild(statusText);
+    
+    // Typewriter effect displaying status text
+    let i = 0;
+    let typingEffect = setInterval(() => {
+        if (i < typeLabel.length) {
+            statusText.textContent += typeLabel.charAt(i);
+            i++;
+        } else {
+            clearInterval(typingEffect);
+        }
+    }, 50);
+    
+    // Update content area
     let content = '';
     
     if (data.result) {
@@ -269,14 +299,19 @@ function updateResultPanel(data, type) {
         content = JSON.stringify(data, null, 2);
     }
     
-    // 清空之前的内容，添加新内容
+    // Clear previous content, add new content
     resultContainer.innerHTML = '';
     
-    // 创建内容高亮区域
+    // Create content area
     const contentDiv = document.createElement('div');
-    contentDiv.classList.add('content-highlight');
+    contentDiv.classList.add('content-box');
     contentDiv.innerHTML = `<pre>${content}</pre>`;
     resultContainer.appendChild(contentDiv);
+    
+    // Delay adding visible class to trigger fade-in animation
+    setTimeout(() => {
+        contentDiv.classList.add('visible');
+    }, 100);
 }
 
 function loadHistory() {
@@ -284,7 +319,7 @@ function loadHistory() {
     .then(response => {
         if (!response.ok) {
             return response.text().then(text => {
-                throw new Error(`请求失败: ${response.status} - ${text.substring(0, 100)}`);
+                throw new Error(`Request failed: ${response.status} - ${text.substring(0, 100)}`);
             });
         }
         return response.json();
@@ -292,26 +327,32 @@ function loadHistory() {
     .then(tasks => {
         const listContainer = document.getElementById('task-list');
         if (tasks.length === 0) {
-            listContainer.innerHTML = '<div class="info">暂无历史任务</div>';
+            listContainer.innerHTML = '<div class="info">No history tasks</div>';
             return;
+        }
+        
+        // Update history count
+        const historyCount = document.querySelector('.history-count');
+        if (historyCount) {
+            historyCount.textContent = tasks.length;
         }
         
         listContainer.innerHTML = tasks.map(task => `
             <div class="task-card" data-task-id="${task.id}" onclick="loadTask('${task.id}')">
-                <div>${task.prompt}</div>
+                <div class="task-title">${task.prompt}</div>
                 <div class="task-meta">
-                    ${new Date(task.created_at).toLocaleString()} -
+                    <span>${new Date(task.created_at).toLocaleString()}</span>
                     <span class="status status-${task.status ? task.status.toLowerCase() : 'unknown'}">
-                        ${task.status || '未知状态'}
+                        ${getStatusText(task.status)}
                     </span>
                 </div>
             </div>
         `).join('');
     })
     .catch(error => {
-        console.error('加载历史记录失败:', error);
+        console.error('Failed to load history:', error);
         const listContainer = document.getElementById('task-list');
-        listContainer.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+        listContainer.innerHTML = `<div class="error">Loading failed: ${error.message}</div>`;
     });
 }
 
@@ -325,17 +366,20 @@ function loadTask(taskId) {
     const stepsContainer = document.getElementById('steps-container');
     const resultContainer = document.getElementById('result-container');
     
-    // 隐藏欢迎信息
+    // Hide welcome message
     const welcomeMessage = taskContainer.querySelector('.welcome-message');
     if (welcomeMessage) {
         welcomeMessage.style.display = 'none';
     }
     
-    // 默认隐藏结果面板
+    // Hide result panel by default
     hideResultPanel();
     
-    stepsContainer.innerHTML = '<div class="loading">加载任务...</div>';
+    stepsContainer.innerHTML = '<div class="loading">Loading task...</div>';
     resultContainer.innerHTML = '';
+    
+    // Close history panel on mobile devices
+    closeHistoryOnMobile();
     
     fetch(`/tasks/${taskId}`)
         .then(response => response.json())
@@ -357,34 +401,31 @@ function loadTask(taskId) {
                         new Date(task.created_at).toLocaleTimeString()
                     );
                     
-                    // 设置最后一个步骤为展开状态，其他为折叠状态
-                    if (index !== task.steps.length - 1) {
-                        setTimeout(() => {
-                            const logBody = stepElement.querySelector('.log-body');
-                            if (logBody) logBody.style.display = 'none';
-                            stepElement.classList.add('minimized');
-                        }, 10);
-                    } else {
-                        // 最后一个步骤添加高亮标记
+                    // All steps are collapsed by default
+                    // Only the last step is set to expanded state
+                    if (index === task.steps.length - 1) {
+                        // Expand the last step
+                        stepElement.classList.add('expanded');
                         stepElement.classList.add('active');
                     }
                     
                     stepsContainer.appendChild(stepElement);
                     
-                    // 显示最后一个步骤的结果，但不自动显示结果面板
+                    // Show the result of the last step
                     if (index === task.steps.length - 1) {
                         updateResultPanel({result: step.result}, step.type);
+                        showResultPanel();
                     }
                 });
             } else {
-                stepsContainer.innerHTML = '<div class="info">该任务没有记录步骤</div>';
+                stepsContainer.innerHTML = '<div class="info">No steps recorded for this task</div>';
             }
             
             updateTaskStatus(task);
         })
         .catch(error => {
-            console.error('加载任务失败:', error);
-            stepsContainer.innerHTML = `<div class="error">错误: ${error.message}</div>`;
+            console.error('Failed to load task:', error);
+            stepsContainer.innerHTML = `<div class="error">Error: ${error.message}</div>`;
         });
 }
 
@@ -411,82 +452,34 @@ function createStepElement(type, content, timestamp) {
             <div class="step-line"></div>
             <div class="step-info">${currentStep}/${totalSteps}</div>
         `;
-    } else if (type === 'act') {
-        // Check if it contains information about file saving
-        const saveRegex = /Content successfully saved to (.+)/;
-        const match = content.match(saveRegex);
+    } else {
+        // Get content preview
+        let contentPreview = "";
+        if (type === 'think' && content.length > 0) {
+            // Extract the first 50 characters of the thinking content as preview
+            contentPreview = content.substring(0, 50) + (content.length > 50 ? "..." : "");
+        } else if (type === 'tool' && content.includes('selected')) {
+            // Tool selection content remains as is
+            contentPreview = content;
+        } else if (type === 'log') {
+            // Log content remains as is, usually short
+            contentPreview = content;
+        } else {
+            // Other types take the first 30 characters
+            contentPreview = content.substring(0, 30) + (content.length > 30 ? "..." : "");
+        }
 
         step.className = `step-item ${type}`;
         step.dataset.type = type;
         
-        let stepContentHtml = '';
-        if (match && match[1]) {
-            const filePath = match[1].trim();
-            const fileName = filePath.split('/').pop();
-            const fileExtension = fileName.split('.').pop().toLowerCase();
-
-            // Handling different types of files
-            let fileInteractionHtml = '';
-
-            if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(fileExtension)) {
-                fileInteractionHtml = `
-                    <div class="file-interaction image-preview">
-                        <img src="${filePath}" alt="${fileName}" class="preview-image" onclick="showFullImage('${filePath}')">
-                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载图片</a>
-                    </div>
-                `;
-            } else if (['mp3', 'wav', 'ogg'].includes(fileExtension)) {
-                fileInteractionHtml = `
-                    <div class="file-interaction audio-player">
-                        <audio controls src="${filePath}"></audio>
-                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载音频</a>
-                    </div>
-                `;
-            } else if (['html', 'js', 'py'].includes(fileExtension)) {
-                fileInteractionHtml = `
-                    <div class="file-interaction code-file">
-                        <button onclick="simulateRunPython('${filePath}')" class="run-button">▶️ 模拟运行</button>
-                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载文件</a>
-                    </div>
-                `;
-            } else {
-                fileInteractionHtml = `
-                    <div class="file-interaction">
-                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载文件: ${fileName}</a>
-                    </div>
-                `;
-            }
-
-            stepContentHtml = `
-                <div class="log-content">
-                    <pre>${content}</pre>
-                    ${fileInteractionHtml}
-                </div>
-            `;
-        } else {
-            stepContentHtml = `
-                <div class="log-content">
-                    <pre>${content}</pre>
-                </div>
-            `;
-        }
-
+        // Use modified layout, remove arrow indicator
         step.innerHTML = `
             <div class="log-header" onclick="toggleStepContent(this)">
-                <span class="log-prefix">${getEventIcon(type)} [${timestamp}] ${getEventLabel(type)}</span>
-                <div class="step-controls">
-                    <span class="minimize-btn" onclick="minimizeStep(event, this)"></span>
+                <div class="log-prefix">
+                    <span class="log-prefix-icon">${getEventIcon(type)}</span>
+                    [${timestamp}] ${getEventLabel(type)}
+                    <span class="content-preview">${contentPreview}</span>
                 </div>
-            </div>
-            <div class="log-body">${stepContentHtml}</div>
-        `;
-    } else {
-        step.className = `step-item ${type}`;
-        step.dataset.type = type;
-
-        step.innerHTML = `
-            <div class="log-header" onclick="toggleStepContent(this)">
-                <span class="log-prefix">${getEventIcon(type)} [${timestamp}] ${getEventLabel(type)}</span>
                 <div class="step-controls">
                     <span class="minimize-btn" onclick="minimizeStep(event, this)"></span>
                 </div>
@@ -499,10 +492,20 @@ function createStepElement(type, content, timestamp) {
         `;
     }
     
+    // Apply fade-in animation
+    step.style.opacity = '0';
+    step.style.transform = 'translateY(10px)';
+    
+    setTimeout(() => {
+        step.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        step.style.opacity = '1';
+        step.style.transform = 'translateY(0)';
+    }, 10);
+    
     return step;
 }
 
-// 切换步骤内容的显示/隐藏
+// Toggle display/hide of step content
 function toggleStepContent(header) {
     const stepItem = header.closest('.step-item');
     if (!stepItem) return;
@@ -510,79 +513,66 @@ function toggleStepContent(header) {
     const logBody = stepItem.querySelector('.log-body');
     if (!logBody) return;
     
-    if (logBody.style.display === 'none') {
-        logBody.style.display = 'block';
-        stepItem.classList.remove('minimized');
-    } else {
-        logBody.style.display = 'none';
-        stepItem.classList.add('minimized');
-    }
+    stepItem.classList.toggle('expanded');
     
-    // 高亮当前步骤
+    // Highlight current step
     highlightStep(stepItem);
     
-    // 更新结果面板并显示
-    const type = stepItem.dataset.type;
-    const content = stepItem.querySelector('pre')?.textContent || '';
-    updateResultPanel({result: content}, type);
-    showResultPanel();
+    // If expanded, update result panel and show
+    if (stepItem.classList.contains('expanded')) {
+        const type = stepItem.dataset.type;
+        const content = stepItem.querySelector('pre')?.textContent || '';
+        updateResultPanel({result: content}, type);
+        showResultPanel();
+    }
 }
 
-// 最小化步骤
+// Minimize step
 function minimizeStep(event, btn) {
-    event.stopPropagation(); // 阻止事件冒泡
+    event.stopPropagation(); // Prevent event bubbling
     
     const stepItem = btn.closest('.step-item');
     if (!stepItem) return;
     
-    stepItem.classList.toggle('minimized');
-    
-    const logBody = stepItem.querySelector('.log-body');
-    if (logBody) {
-        if (stepItem.classList.contains('minimized')) {
-            logBody.style.display = 'none';
-        } else {
-            logBody.style.display = 'block';
-        }
-    }
+    stepItem.classList.toggle('expanded');
 }
 
-// 切换结果面板的显示状态
+// Toggle result panel display state
 function toggleResultPanel() {
     const resultPanel = document.getElementById('result-panel');
     const container = document.querySelector('.container');
     if (!resultPanel) return;
     
-    // 如果面板已经是最小化状态，则完全显示
+    // If panel is already minimized, fully display
     if (resultPanel.classList.contains('minimized')) {
         resultPanel.classList.remove('minimized');
         container.classList.add('with-result');
     } else {
-        // 否则最小化面板
+        // Otherwise minimize panel
         resultPanel.classList.add('minimized');
         container.classList.remove('with-result');
     }
 }
 
-// 隐藏结果面板
+// Hide result panel
 function hideResultPanel() {
     const resultPanel = document.getElementById('result-panel');
     const container = document.querySelector('.container');
     if (resultPanel) {
         resultPanel.classList.add('hidden');
-        resultPanel.classList.remove('minimized'); // 确保隐藏时重置最小化状态
-        container.classList.remove('with-result'); // 移除容器样式
+        resultPanel.classList.remove('minimized'); // Ensure minimized state is reset when hiding
+        container.classList.remove('with-result'); // Remove container style
     }
 }
 
-// 显示结果面板
+// Show result panel
 function showResultPanel() {
     const resultPanel = document.getElementById('result-panel');
     const container = document.querySelector('.container');
     if (resultPanel) {
         resultPanel.classList.remove('hidden');
-        resultPanel.classList.remove('minimized'); // 确保显示时不是最小化状态
-        container.classList.add('with-result'); // 添加容器样式
+        resultPanel.classList.remove('minimized'); // Ensure not minimized when showing
+        container.classList.add('with-result'); // Add container style
     }
 }
 
@@ -631,21 +621,21 @@ function updateTaskStatus(task) {
     if (!statusBar) return;
 
     if (task.status === 'completed') {
-        statusBar.innerHTML = `<span class="status-complete">✅ 任务完成</span>`;
+        statusBar.innerHTML = `<span class="status-complete">✅ Task completed</span>`;
 
         if (currentEventSource) {
             currentEventSource.close();
             currentEventSource = null;
         }
     } else if (task.status === 'failed') {
-        statusBar.innerHTML = `<span class="status-error">❌ 任务失败: ${task.error || '未知错误'}</span>`;
+        statusBar.innerHTML = `<span class="status-error">❌ Task failed: ${task.error || 'Unknown error'}</span>`;
 
         if (currentEventSource) {
             currentEventSource.close();
             currentEventSource = null;
         }
     } else {
-        statusBar.innerHTML = `<span class="status-running">⚙️ 任务运行中: ${task.status}</span>`;
+        statusBar.innerHTML = `<span class="status-running">⚙️ Task running: ${task.status}</span>`;
     }
 }
 
@@ -687,7 +677,7 @@ function simulateRunPython(filePath) {
         modal.innerHTML = `
             <div class="python-console">
                 <div class="close-modal">&times;</div>
-                <div class="python-output">正在加载Python文件内容...</div>
+                <div class="python-output">Loading Python file content...</div>
             </div>
         `;
         document.body.appendChild(modal);
@@ -718,50 +708,127 @@ function simulateRunPython(filePath) {
             const resultElement = document.createElement('div');
             resultElement.innerHTML = `
                 <div style="color: #4CAF50; margin-top: 10px; margin-bottom: 10px;">
-                    > 模拟运行输出结果:</div>
+                    > Simulation run output results:</div>
                 <pre style="color: #f8f8f8;">
-# 这是Python代码模拟运行结果
-# 实际运行结果可能会有所不同
+# This is the simulation run output results
+# Actual run results may vary
 
-# 运行 ${filePath.split('/').pop()}...
+# Running ${filePath.split('/').pop()}...
 print("Hello from Python Simulated environment!")
 
-# 代码执行完成
+# Code execution completed
 </pre>
             `;
             outputDiv.appendChild(resultElement);
         })
         .catch(error => {
-            console.error('加载Python文件错误:', error);
+            console.error('Failed to load Python file:', error);
             const outputDiv = modal.querySelector('.python-output');
-            outputDiv.innerHTML = `加载文件错误: ${error.message}`;
+            outputDiv.innerHTML = `File loading error: ${error.message}`;
         });
 }
 
-// 高亮显示当前选中的步骤
+// Highlight current selected step
 function highlightStep(stepElement) {
-    // 移除其他步骤的高亮
+    // Remove highlight from other steps
     document.querySelectorAll('.step-item').forEach(item => {
         item.classList.remove('active');
     });
     
-    // 为当前步骤添加高亮
+    // Add highlight to current step
     stepElement.classList.add('active');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadHistory();
+// Toggle history panel display state
+function toggleHistory() {
+    const historyPanel = document.querySelector('.history-panel');
+    const overlay = document.querySelector('.overlay');
+    const historyToggle = document.querySelector('.history-toggle');
+    const container = document.querySelector('.container');
+    
+    if (historyVisible) {
+        // Hide history
+        historyPanel.classList.remove('show');
+        overlay.classList.remove('show');
+        historyToggle.classList.remove('active');
+        container.classList.remove('with-history');
+    } else {
+        // Show history
+        historyPanel.classList.add('show');
+        overlay.classList.add('show');
+        historyToggle.classList.add('active');
+        // Add spacing on large screens
+        if (window.innerWidth > 768) {
+            container.classList.add('with-history');
+        }
+    }
+    
+    historyVisible = !historyVisible;
+}
 
+// Close history panel on small screens
+function closeHistoryOnMobile() {
+    if (window.innerWidth <= 768 && historyVisible) {
+        toggleHistory();
+    }
+}
+
+// Get status text
+function getStatusText(status) {
+    switch (status) {
+        case 'pending': return 'Pending';
+        case 'running': return 'Running';
+        case 'completed': return 'Completed';
+        case 'failed': return 'Failed';
+        default: return 'Unknown';
+    }
+}
+
+// Initialize interface
+document.addEventListener('DOMContentLoaded', () => {
+    // Add history toggle logic
+    const historyToggle = document.querySelector('.history-toggle');
+    if (historyToggle) {
+        historyToggle.addEventListener('click', toggleHistory);
+    }
+    
+    // Add overlay click to close history
+    const overlay = document.querySelector('.overlay');
+    if (overlay) {
+        overlay.addEventListener('click', toggleHistory);
+    }
+    
+    // Load history
+    loadHistory();
+    
+    // Bind input field events
     document.getElementById('prompt-input').addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             createTask();
         }
     });
-
-    // 添加键盘事件监听器关闭模态框
+    
+    // Listen for window size changes
+    window.addEventListener('resize', () => {
+        const container = document.querySelector('.container');
+        
+        // Maintain history sidebar effect on large screens, remove on small screens
+        if (window.innerWidth > 768 && historyVisible) {
+            container.classList.add('with-history');
+        } else {
+            container.classList.remove('with-history');
+        }
+    });
+    
+    // Add keyboard event listener to close modal
     document.addEventListener('keydown', (e) => {
+        // ESC key closes history panel
         if (e.key === 'Escape') {
+            if (historyVisible) {
+                toggleHistory();
+            }
+            
             const imageModal = document.getElementById('image-modal');
             if (imageModal && imageModal.classList.contains('active')) {
                 imageModal.classList.remove('active');
