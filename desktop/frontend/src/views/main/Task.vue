@@ -49,7 +49,7 @@
         </div>
         <div>
           <el-text class="pr-10">{{ t('taskStatus.name') }}:</el-text>
-          <el-text>{{ t(taskInfo.status) }}</el-text>
+          <el-text>{{ taskInfo.status }}</el-text>
         </div>
 
       </div>
@@ -124,7 +124,7 @@ const buildEventSource = (taskId) => {
     // 处理错误情况
     loading.value = false
     eventSource.value.close()
-    taskInfo.value.status = "failed"
+    taskInfo.value.status = "taskStatus.failed"
     utils.pop("任务执行失败", "error")
   }
 
@@ -143,7 +143,7 @@ const handleEvent = (event, type) => {
       console.log('task completed');
       loading.value = false
       eventSource.value.close()
-      taskInfo.value.status = "success"
+      taskInfo.value.status = "taskStatus.success"
       utils.pop("任务已完成", "success")
       return
     }
@@ -288,7 +288,7 @@ function stop() {
   console.log("stop")
   loading.value = false
   eventSource.value.close()
-  taskInfo.value.status = "terminated"
+  taskInfo.value.status = "taskStatus.terminated"
   utils.pop("用户终止任务", "error")
 }
 

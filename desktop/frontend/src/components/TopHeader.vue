@@ -67,8 +67,6 @@ const langList = ref(config.langList)
 
 const selectedLang = ref(config.selectedLang != null ? config.selectedLang : langList.value[0])
 
-console.log("selectedLang:", selectedLang)
-
 function handleSwitchLang(lang) {
   selectedLang.value = lang
   config.setSelectedLang(lang)
