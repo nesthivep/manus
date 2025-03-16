@@ -1,6 +1,6 @@
 <template :lang="i18n.locale">
-  <div class="main-content fc" style="height: calc(100vh - 44px);">
-    <el-scrollbar ref="scrollRef" style="width: 100%;">
+  <div class="main-content fc">
+    <el-scrollbar ref="scrollRef">
       <div class="output-area" v-show="taskInfo.taskId != null">
 
         <div class="dialog-user">
@@ -26,7 +26,7 @@
                   <el-card>
                     <div>
                       <h4 class="color-label mr-10" :class="utils.colorByLabel('step')">
-                        STEP
+                        {{ t('step') }}
                       </h4>
                       <el-text>{{ step.result }}</el-text>
                     </div>
@@ -61,7 +61,8 @@
           <FolderAdd />
         </el-icon>
         <el-input ref="promptEle" type="textarea" v-model="prompt" class="input-style" style="border: none;"
-          :autosize="{ minRows: 1, maxRows: 4 }" autofocus placeholder="请输入指令" @keydown.enter="handleInputEnter" />
+          :autosize="{ minRows: 1, maxRows: 4 }" autofocus :placeholder="t('promptInputPlaceHolder')"
+          @keydown.enter="handleInputEnter" />
 
         <el-link class="send-area">
           <el-icon @click="sendPrompt" :size="24" v-show="!loading">
@@ -74,7 +75,7 @@
       </div>
 
       <div>
-        <el-text class="tips">以上内容由OpenManus生成, 仅供参考和借鉴</el-text>
+        <el-text class="tips">{{ t('openManusAgiTips') }}</el-text>
       </div>
     </div>
   </div>

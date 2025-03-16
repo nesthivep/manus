@@ -17,14 +17,17 @@
 <script setup>
 import { ref, reactive, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import {useConfig} from '@/store/config'
+import { useConfig } from '@/store/config'
+import { useI18n } from 'vue-i18n'
 
 const utils = inject('utils')
 const router = useRouter()
 const config = useConfig()
+const { t } = useI18n()
 
 function clearCache() {
- config.$reset()
+  config.$reset()
+  utils.pop(t('clearCacheSuccess'))
 }
 
 </script>

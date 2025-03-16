@@ -10,20 +10,11 @@ const router = createRouter({
         title: "主页"
       },
       // 重定向到默认页面
-      redirect: '/chat',
+      redirect: '/task',
       children: [
         {
-          path: 'chat',
-          component: () => import('@/views/main/Chat.vue'),
-          meta: {
-            keepAlive: false,
-            title: "对话",
-            index: 0
-          }
-        },
-        {
           path: 'task',
-          component: () => import('@/views/main/Chat.vue'),
+          component: () => import('@/views/main/Task.vue'),
           meta: {
             keepAlive: false,
             title: "任务",

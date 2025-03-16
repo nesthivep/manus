@@ -1,22 +1,31 @@
 <template>
   <!-- 导航栏 -->
   <div class="nav-bar">
-    <!-- 左侧固定下拉 -->
-    <el-dropdown trigger="click" @command="handleSwitchModel" class="fxc plr-16">
-      <span class="el-dropdown-link">
-        {{ selectedModel }}
-        <el-icon class="el-icon--right">
-          <arrow-down />
+    <div class="fxc">
+      <!-- 左侧固定下拉 -->
+      <el-dropdown trigger="click" @command="handleSwitchModel" class="fxc plr-16">
+        <span class="el-dropdown-link">
+          {{ selectedModel }}
+          <el-icon class="el-icon--right">
+            <arrow-down />
+          </el-icon>
+        </span>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item v-for="mod in modelList" :key="mod" :command="mod">
+              {{ mod }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+
+      <!-- 刷新 -->
+      <el-link @click="refresh">
+        <el-icon :size="20">
+          <Refresh />
         </el-icon>
-      </span>
-      <template #dropdown>
-        <el-dropdown-menu>
-          <el-dropdown-item v-for="mod in modelList" :key="mod" :command="mod">
-            {{ mod }}
-          </el-dropdown-item>
-        </el-dropdown-menu>
-      </template>
-    </el-dropdown>
+      </el-link>
+    </div>
 
     <!-- 右侧固定下拉 -->
     <el-dropdown trigger="click" @command="handleSwitchLang" class="fxc plr-16">
@@ -39,7 +48,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { ArrowDown } from '@element-plus/icons-vue'
+import { ArrowDown, Refresh } from '@element-plus/icons-vue'
 import { useConfig } from '@/store/config'
 
 const config = useConfig()
@@ -66,6 +75,11 @@ function handleSwitchLang(lang) {
   // i18n.locale = lang.code
   location.reload()
 }
+
+function refresh() {
+  location.reload()
+}
+
 </script>
 
 <style scoped>

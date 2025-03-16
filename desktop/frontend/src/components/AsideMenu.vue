@@ -1,25 +1,19 @@
 <template>
   <el-menu class="el-menu-custom" :default-active="activeMenu()" :collapse="menuCollapse" @open="handleOpen"
     @close="handleClose">
-    <el-menu-item index="M01" @click="routeTo('/chat')">
-      <el-icon>
-        <ChatDotRound />
-      </el-icon>
-      <span>对话</span>
-    </el-menu-item>
 
     <el-menu-item index="M02" @click="routeTo('/task')">
       <el-icon>
         <List />
       </el-icon>
-      <span>任务</span>
+      <span>{{ getMenuNameByCode('M02') }}</span>
     </el-menu-item>
 
     <el-menu-item index="M03" @click="routeTo('/history')">
       <el-icon>
         <Clock />
       </el-icon>
-      <span>历史记录</span>
+      <span>{{ getMenuNameByCode('M03') }}</span>
     </el-menu-item>
 
     <el-sub-menu index="M99" v-if="hasMenuPerm('M99')">
@@ -27,7 +21,7 @@
         <el-icon>
           <setting />
         </el-icon>
-        <span>设置</span>
+        <span>{{ getMenuNameByCode('M99') }}</span>
       </template>
       <el-menu-item v-if="listSubMenu('M99') != null" v-for="secMenu in listSubMenu('M99')" :index="secMenu.index"
         @click="routeTo(secMenu.href)">
@@ -43,8 +37,10 @@ import { ref, inject, onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useConfig } from '@/store/config'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 
 const utils = inject('utils')
+const { t } = useI18n()
 const router = useRouter()
 const config = useConfig()
 const { menuCollapse } = storeToRefs(config)
@@ -59,38 +55,33 @@ const handleClose = (key, keyPath) => {
 // 菜单
 const menuList = [
   {
-    index: "M01",
-    menuName: "对话",
-    href: "/chat"
-  },
-  {
     index: "M02",
-    menuName: "任务",
+    menuName: "menu.task",
     href: "/task"
   },
   {
     index: "M03",
-    menuName: "历史记录",
+    menuName: "menu.history",
     href: "/history"
   },
   {
     index: "M99",
-    menuName: "设置",
+    menuName: "menu.config.settings",
     href: null,
     subMenuList: [
       {
         index: "M9901",
-        menuName: "常规设置",
+        menuName: "menu.config.general",
         href: "/config/general"
       },
       {
         index: "M9902",
-        menuName: "大模型配置",
+        menuName: "menu.config.llm",
         href: "/config/llm"
       },
       {
         index: "M9903",
-        menuName: "主题",
+        menuName: "menu.config.theme",
         href: "/config/theme"
       }
     ]
@@ -236,6 +227,24 @@ function routeTo(href) {
   }
   router.push(href)
 }
+
+function getMenuNameByCode(code) {
+  for (let menu of menuList) {
+    if (menu.index == code) {
+      return t(menu.menuName)
+    }
+    if (menu.subMenuList != null) {
+      for (let subMenu of menu.subMenuList) {
+        if (subMenu.index == code) {
+          return t(subMenu.menuName)
+        }
+      }
+    }
+  }
+  return code
+}
+
+
 
 </script>
 

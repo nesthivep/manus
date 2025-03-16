@@ -1,5 +1,5 @@
 <template :lang="i18n.locale">
-  <div class="main-content fc" style="height: calc(100vh - 44px);">
+  <div class="main-content fc">
     <el-scrollbar ref="scrollRef" style="width: 100%;">
       <div class="output-area" v-show="taskInfo.taskId != null">
 

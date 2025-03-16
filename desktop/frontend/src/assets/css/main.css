@@ -249,7 +249,7 @@ button>span.el-button__text--expand {
   --el-font-size-base: 11px;
 }
 
-/** 菜单样式,菜单组件部分样式必须定义在主类中, 
+/** 菜单样式,菜单组件部分样式必须定义在主类中,
 
 /* 覆盖el-menu的默认高度 */
 .el-menu--horizontal {

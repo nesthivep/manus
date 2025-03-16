@@ -165,6 +165,7 @@ aside.shrink {
 }
 
 main {
+  height: calc(100vh - 44px);
   width: 100%;
   padding: 0px;
   overflow: hidden;
