@@ -25,7 +25,7 @@
       </template>
       <el-menu-item v-if="listSubMenu('M99') != null" v-for="secMenu in listSubMenu('M99')" :index="secMenu.index"
         @click="routeTo(secMenu.href)">
-        {{ secMenu.menuName }}
+        {{ getMenuNameByCode(secMenu.index) }}
       </el-menu-item>
     </el-sub-menu>
   </el-menu>
@@ -241,7 +241,7 @@ function getMenuNameByCode(code) {
       }
     }
   }
-  return code
+  return t(code)
 }
 
 

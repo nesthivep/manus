@@ -1,6 +1,7 @@
 :root {
   --el-menu-base-level-padding: 10px !important;
-  --el-menu-level-padding: 10px !important;
+  /** 子菜单缩进 */
+  --el-menu-level-padding: 20px !important;
 }
 
 #app {
