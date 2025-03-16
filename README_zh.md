@@ -1,7 +1,8 @@
+<p align="center">
+  <img src="assets/logo.jpg" width="200"/>
+</p>
 
 [English](README.md) | 中文 | [한국어](README_ko.md) | [日本語](README_ja.md)
-
-
 
 [![GitHub stars](https://img.shields.io/github/stars/mannaandpoem/OpenManus?style=social)](https://github.com/mannaandpoem/OpenManus/stargazers)
 &ensp;
@@ -69,7 +70,7 @@ cd OpenManus
 3. 创建并激活虚拟环境：
 
 ```bash
-uv venv
+uv venv --python 3.12
 source .venv/bin/activate  # Unix/macOS 系统
 # Windows 系统使用：
 # .venv\Scripts\activate
@@ -119,7 +120,7 @@ python main.py
 
 然后通过终端输入你的创意！
 
-如需体验开发中版本，可运行：
+如需体验不稳定的开发版本，可运行：
 
 ```bash
 python run_flow.py
@@ -130,6 +131,8 @@ python run_flow.py
 我们欢迎任何友好的建议和有价值的贡献！可以直接创建 issue 或提交 pull request。
 
 或通过 📧 邮件联系 @mannaandpoem：mannaandpoem@gmail.com
+
+**注意**: 在提交 pull request 之前，请使用 pre-commit 工具检查您的更改。运行 `pre-commit run --all-files` 来执行检查。
 
 ## 交流群
 
@@ -148,7 +151,7 @@ python run_flow.py
 特别感谢 [anthropic-computer-use](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo)
 和 [browser-use](https://github.com/browser-use/browser-use) 为本项目提供的基础支持！
 
-此外，我们感谢 [AAAJ](https://github.com/metauto-ai/agent-as-a-judge)，[MetaGPT](https://github.com/geekan/MetaGPT) 和 [OpenHands](https://github.com/All-Hands-AI/OpenHands).
+此外，我们感谢 [AAAJ](https://github.com/metauto-ai/agent-as-a-judge)，[MetaGPT](https://github.com/geekan/MetaGPT)，[OpenHands](https://github.com/All-Hands-AI/OpenHands) 和 [SWE-agent](https://github.com/SWE-agent/SWE-agent).
 
 OpenManus 由 MetaGPT 社区的贡献者共同构建，感谢这个充满活力的智能体开发者社区！
 
