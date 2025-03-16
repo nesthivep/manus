@@ -51,13 +51,15 @@ class ToolCallAgent(ReActAgent):
                 tools=self.available_tools.to_params(),
                 tool_choice=self.tool_choices,
             )
-        except ValueError as e:
+        except ValueError:
             raise
         except Exception as e:
             # Check if this is a RetryError containing TokenLimitExceeded
             if hasattr(e, "__cause__") and isinstance(e.__cause__, TokenLimitExceeded):
                 token_limit_error = e.__cause__
-                logger.error(f"🚨 Token limit error (from RetryError): {token_limit_error}")
+                logger.error(
+                    f"🚨 Token limit error (from RetryError): {token_limit_error}"
+                )
                 self.memory.add_message(
                     Message.assistant_message(
                         f"Maximum token limit reached, cannot continue execution: {str(token_limit_error)}"
@@ -74,6 +76,77 @@ class ToolCallAgent(ReActAgent):
         logger.info(
             f"🛠️ {self.name} selected {len(response.tool_calls) if response.tool_calls else 0} tools to use"
         )
+
+        # Handle empty content responses
+        if not response.content and len(self.messages) > 1:
+            # Check if we just executed any tools
+            for i in range(min(5, len(self.messages))):
+                if i < len(self.messages) and self.messages[-(i + 1)].role == "tool":
+                    # Found a recent tool message, we should synthesize a response
+                    try:
+                        # Identify which tools were used
+                        recent_tools = []
+                        for j in range(min(5, len(self.messages))):
+                            if (
+                                j < len(self.messages)
+                                and self.messages[-(j + 1)].role == "tool"
+                            ):
+                                if (
+                                    hasattr(self.messages[-(j + 1)], "name")
+                                    and self.messages[-(j + 1)].name
+                                ):
+                                    recent_tools.append(self.messages[-(j + 1)].name)
+
+                        # Create a generic synthesis prompt based on tool types
+                        synthesis_prompt = (
+                            "Based on the information provided by the tools"
+                        )
+                        if recent_tools:
+                            synthesis_prompt += f" ({', '.join(recent_tools)})"
+                        synthesis_prompt += ", please synthesize a comprehensive response to address the user's request. Be specific and detailed."
+
+                        synthesis_msg = Message.user_message(synthesis_prompt)
+
+                        # Add the synthesis request and get a new response
+                        synthesis_response = await self.llm.ask(
+                            messages=self.messages + [synthesis_msg],
+                            system_msgs=[Message.system_message(self.system_prompt)]
+                            if self.system_prompt
+                            else None,
+                        )
+
+                        # Update with the synthesis response
+                        if (
+                            synthesis_response
+                            and hasattr(synthesis_response, "content")
+                            and synthesis_response.content
+                        ):
+                            logger.info(
+                                f"🔄 Synthesizing tool results: {synthesis_response.content[:100]}..."
+                            )
+                            # Update the original response with synthesized content
+                            response.content = synthesis_response.content
+                            # Create a proper assistant message with the synthesized content
+                            assistant_msg = Message.assistant_message(
+                                content=synthesis_response.content
+                            )
+                            self.memory.add_message(assistant_msg)
+                    except Exception as e:
+                        logger.error(f"🚨 Error synthesizing tool results: {e}")
+                        # Provide a fallback response if synthesis fails
+                        tool_names = (
+                            "results"
+                            if not recent_tools
+                            else f"{', '.join(recent_tools)} results"
+                        )
+                        fallback_msg = f"I've gathered {tool_names}, but I'm having trouble synthesizing a complete response. Please let me know if you'd like specific details from what I found."
+                        response.content = fallback_msg
+                        self.memory.add_message(
+                            Message.assistant_message(content=fallback_msg)
+                        )
+
+                    # We've handled the synthesis, so break out of the loop
+                    break
         if response.tool_calls:
             logger.info(
                 f"🧰 Tools being prepared: {[call.function.name for call in response.tool_calls]}"
@@ -104,8 +177,44 @@ class ToolCallAgent(ReActAgent):
             if self.tool_choices == ToolChoice.REQUIRED and not self.tool_calls:
                 return True  # Will be handled in act()
 
-            # For 'auto' mode, continue with content if no commands but content exists
+            # For 'auto' mode, try to identify and use appropriate tools if none selected
             if self.tool_choices == ToolChoice.AUTO and not self.tool_calls:
+                if self._should_auto_use_web_search(response.content):
+                    # Get LLM validation before proceeding with web search
+                    should_search = await self._validate_web_search_with_llm(response.content)
+                    
+                    if should_search:
+                        logger.info(
+                            "🔍 LLM confirmed web search is appropriate. Auto-selecting web_search tool."
+                        )
+                        # Auto-create a web search tool call
+                        search_query = self._extract_search_query(response.content)
+                        self.tool_calls = [self._create_web_search_tool_call(search_query)]
+                        # Update the assistant message with our synthetic tool call
+                        assistant_msg = Message.from_tool_calls(
+                            content=response.content, tool_calls=self.tool_calls
+                        )
+                        self.memory.messages[-1] = assistant_msg
+                        return True
+                    else:
+                        logger.info("🔍 LLM determined web search is not needed in this context.")
+
+                # Otherwise continue with just content if it exists
+                # If response content is empty but we've been using tools, this should still count as a valid step
+                if not response.content and len(self.messages) > 1:
+                    # Check for any recent tool messages (up to 5 messages back)
+                    has_recent_tool = False
+                    for i in range(min(5, len(self.messages))):
+                        if (
+                            i < len(self.messages)
+                            and self.messages[-(i + 1)].role == "tool"
+                        ):
+                            has_recent_tool = True
+                            break
+
+                    if has_recent_tool:
+                        # We've used tools but got empty response, still count as valid step
+                        return True
                 return bool(response.content)
 
             return bool(self.tool_calls)
@@ -200,6 +309,200 @@ class ToolCallAgent(ReActAgent):
     def _should_finish_execution(**kwargs) -> bool:
         """Determine if tool execution should finish the agent"""
         return True
+
+    def _should_auto_use_web_search(self, content: str) -> bool:
+        """Check if content indicates a web search request
+
+        Args:
+            content: The assistant's response content
+
+        Returns:
+            bool: True if the content suggests a web search should be performed
+        """
+        if not content:
+            return False
+
+        # Normalize content for easier pattern matching
+        normalized = content.lower()
+            
+        # Skip cases where the agent is clearly reporting results or providing saved info
+        result_indicators = ["i've saved", "i have saved", "here are", "saved the", "results found"]
+        if any(phrase in normalized for phrase in result_indicators):
+            return False
+
+        # Test 1: Explicit search request (highest confidence)
+        # These phrases directly indicate a web search is needed
+        explicit_search_phrases = [
+            "search the web", 
+            "look online", 
+            "find on the internet",
+            "search for"
+        ]
+        
+        if any(phrase in normalized for phrase in explicit_search_phrases):
+            return True
+
+        # Test 2: Information seeking + external source needed
+        # Requires both an information-seeking phrase AND indication that external info is needed
+        
+        # Information seeking phrases
+        info_seeking = [
+            "what is", "how to", "where can", "who is", "latest", "current", 
+            "recent developments", "new information"
+        ]
+        
+        # External source indicators
+        external_source = ["information about", "details on", "learn more about", "research", "facts about"]
+        
+        # Require one from each category to reduce false positives
+        return (any(phrase in normalized for phrase in info_seeking) and 
+                any(phrase in normalized for phrase in external_source))
+        
+    async def _validate_web_search_with_llm(self, content: str) -> bool:
+        """Use the LLM to validate whether a web search is appropriate
+        
+        Args:
+            content: The assistant's response content
+            
+        Returns:
+            bool: True if the LLM determines a web search is appropriate
+        """
+        # Get the last few messages for context
+        recent_messages = self.memory.messages[-3:] if len(self.memory.messages) >= 3 else self.memory.messages
+        messages_text = "\n".join([f"{msg.role}: {msg.content}" for msg in recent_messages])
+        
+        # Create a system message for the LLM
+        system_message = Message.system_message(
+            "You are helping determine if a web search is necessary in this conversation. "
+            "Answer only YES or NO. Consider these factors:\n"
+            "1. Is the user explicitly asking for current information that would require a web search?\n"
+            "2. Does the request involve finding specific external resources?\n"
+            "3. Would answering without up-to-date information be harmful or significantly incomplete?\n"
+            "Answer YES only if a web search is clearly needed. Otherwise, answer NO."
+        )
+        
+        # Create a user message with the conversation to analyze
+        prompt_text = (
+            f"Based on this conversation, is a web search necessary to provide a helpful response?\n\n"
+            f"Recent conversation context:\n{messages_text}\n\n"
+            f"The system is considering performing a web search. Should it? Answer only YES or NO."
+        )
+        user_message = Message.user_message(prompt_text)
+        
+        # Call LLM for analysis
+        try:
+            response = await self.llm.ask(messages=[user_message], system_msgs=[system_message])
+            
+            # Handle both object responses with content attribute and direct string responses
+            response_text = (
+                response.content.strip().lower()
+                if hasattr(response, "content")
+                else str(response).strip().lower()
+            )
+            logger.info(f"LLM web search validation: {response_text}")
+            
+            # Check if LLM thinks a web search is needed
+            if "yes" in response_text[:10]:
+                return True
+            else:
+                return False
+        except Exception as e:
+            logger.error(f"Error in LLM validation for web search: {str(e)}")
+            # Default to the pattern-based decision if LLM validation fails
+            return True
+
+    def _extract_search_query(self, content: str) -> str:
+        """Extract or formulate a search query from the assistant's response
+
+        Args:
+            content: The assistant's response content
+
+        Returns:
+            str: Extracted or formulated search query
+        """
+        # Get the original user message for context
+        user_message = ""
+        for msg in reversed(self.memory.messages):
+            if msg.role == "user":
+                user_message = msg.content or ""
+                break
+
+        if not user_message:
+            # If we somehow don't have user message, use assistant content
+            return content.strip()
+
+        # Clean up the query
+        query = user_message.strip()
+
+        # Remove common prefixes that confuse search engines
+        prefixes = [
+            "please ",
+            "can you ",
+            "i need ",
+            "i want ",
+            "help me ",
+            "find ",
+            "search for ",
+            "look up ",
+            "tell me about ",
+            "what is ",
+            "how to ",
+            "where can i find ",
+        ]
+
+        for prefix in prefixes:
+            if query.lower().startswith(prefix):
+                query = query[len(prefix) :]
+                break
+
+        # Limit query length
+        if len(query) > 200:
+            query = query[:200]
+
+        return query.strip()
+
+    def _create_web_search_tool_call(self, query: str) -> ToolCall:
+        """Create a web search tool call
+
+        Args:
+            query: The search query to use
+
+        Returns:
+            ToolCall: A properly formatted web search tool call
+        """
+        import json
+        import uuid
+
+        from app.schema import Function, ToolCall
+
+        # Default to 10 results if not specified
+        num_results = 10
+
+        # Extract number from query if specified
+        num_indicator_phrases = ["top ", "first ", " results", " links"]
+        for phrase in num_indicator_phrases:
+            if phrase in query.lower():
+                # Try to extract a number
+                try:
+                    import re
+
+                    numbers = re.findall(r"\d+", query)
+                    if numbers:
+                        potential_num = int(numbers[0])
+                        if 1 <= potential_num <= 50:  # Reasonable range
+                            num_results = potential_num
+                except:
+                    pass  # Keep default if extraction fails
+
+        # Create function arguments
+        args = {"query": query, "num_results": num_results}
+
+        # Create the tool call
+        return ToolCall(
+            id=str(uuid.uuid4()),
+            type="function",
+            function=Function(name="web_search", arguments=json.dumps(args)),
+        )
 
     def _is_special_tool(self, name: str) -> bool:
         """Check if tool name is in special tools list"""
