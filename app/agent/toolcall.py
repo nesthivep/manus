@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Any, List, Optional, Union
 
@@ -30,7 +31,7 @@ class ToolCallAgent(ReActAgent):
     special_tool_names: List[str] = Field(default_factory=lambda: [Terminate().name])
 
     tool_calls: List[ToolCall] = Field(default_factory=list)
-
+    pending_tasks: List[asyncio.Task] = Field(default_factory=list)
     max_steps: int = 30
     max_observe: Optional[Union[int, bool]] = None
 
@@ -163,7 +164,21 @@ class ToolCallAgent(ReActAgent):
 
             # Execute the tool
             logger.info(f"🔧 Activating tool: '{name}'...")
-            result = await self.available_tools.execute(name=name, tool_input=args)
+            if name == "terminate":
+                # Wait for all pending tasks to complete
+                if self.pending_tasks:
+                    await asyncio.gather(*self.pending_tasks)
+                result = await self.available_tools.execute(name=name, tool_input=args)
+            else:
+                # Create new task and add to pending list
+                task = asyncio.create_task(
+                    self.available_tools.execute(name=name, tool_input=args)
+                )
+                self.pending_tasks.append(task)
+                try:
+                    result = await task
+                finally:
+                    self.pending_tasks.remove(task)
 
             # Format result for display
             observation = (
