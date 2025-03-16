@@ -1,7 +1,7 @@
 [project]
 name = "openmanus"
 version = "0.1.0"
-description = "Add your description here"
+description = "OpenManus an Open-Source Implementation of Manus"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
