@@ -81,6 +81,28 @@ class LLM:
             else:
                 self.client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
 
+    async def test_connection_sync(self):
+        """Test the API connection synchronously."""
+        test_message = {"role": "user", "content": "Hey."}
+        params = {
+            "model": self.model,
+            "messages": [test_message],
+            "max_tokens": 5,
+            "temperature": 0,
+        }
+
+        try:
+            await self.client.chat.completions.create(**params)
+        except Exception as e:
+            logger.error(f"❌ LLM API connection test failed: {e}")
+            if isinstance(e, AuthenticationError):
+                logger.error("Authentication failed. Check your API key in config.toml")
+            elif "api_key" in str(e).lower():
+                logger.error(
+                    "API key issue detected. Verify your API key in config.toml"
+                )
+            raise
+
     def count_tokens(self, text: str) -> int:
         """Calculate the number of tokens in a text"""
         if not text:
