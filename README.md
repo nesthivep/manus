@@ -118,7 +118,7 @@ python run_flow.py
 ```
 uv:
 ```bash
-python run_flow.py
+uv run python run_flow.py
 ```
 
 ## How to contribute
