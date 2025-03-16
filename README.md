@@ -109,6 +109,25 @@ base_url = "https://api.openai.com/v1"
 api_key = "sk-..."  # Replace with your actual API key
 ```
 
+### Firecrawl Configuration (Optional)
+
+If you want to use the Firecrawl web scraping tool, you'll need to set up your Firecrawl API key:
+
+1. Get your API key from [Firecrawl](https://firecrawl.dev)
+2. Add it to your environment variables/config.toml
+
+```bash
+export FIRECRAWL_API_KEY="fc-YOUR_API_KEY"
+```
+
+Or add it to your `config.toml` file:
+
+```toml
+# Firecrawl configuration
+[tools.firecrawl]
+api_key = "fc-YOUR_API_KEY"
+```
+
 ## Quick Start
 
 One line for run OpenManus:
@@ -125,6 +144,20 @@ For unstable version, you also can run:
 python run_flow.py
 ```
 
+### Using Firecrawl Scrape
+
+You can use the Firecrawl scrape tool to extract content from websites. Here's an example prompt:
+
+```
+Scrape the website https://firecrawl.dev and summarize its main features.
+```
+
+You can also run the Firecrawl example:
+
+```bash
+python examples/firecrawl_example.py
+```
+
 ## How to contribute
 
 We welcome any friendly suggestions and helpful contributions! Just create issues or submit pull requests.
@@ -134,6 +167,7 @@ Or contact @mannaandpoem via 📧email: mannaandpoem@gmail.com
 **Note**: Before submitting a pull request, please use the pre-commit tool to check your changes. Run `pre-commit run --all-files` to execute the checks.
 
 ## Community Group
+
 Join our networking group on Feishu and share your experience with other developers!
 
 <div align="center" style="display: flex; gap: 20px;">
@@ -154,6 +188,7 @@ Additionally, we are grateful to [AAAJ](https://github.com/metauto-ai/agent-as-a
 OpenManus is built by contributors from MetaGPT. Huge thanks to this agent community!
 
 ## Cite
+
 ```bibtex
 @misc{openmanus2025,
   author = {Xinbin Liang and Jinyu Xiang and Zhaoyang Yu and Jiayi Zhang and Sirui Hong},
