@@ -32,18 +32,24 @@ The tool accepts content and a file path, and saves the content to that location
         "required": ["content", "file_path"],
     }
 
-    async def execute(self, content: str, file_path: str, mode: str = "w") -> str:
+    async def execute(self, content: str, file_path: str = None, filename: str = None, mode: str = "w") -> str:
         """
         Save content to a file at the specified path.
 
         Args:
             content (str): The content to save to the file.
-            file_path (str): The path where the file should be saved.
+            file_path (str, optional): The path where the file should be saved. Use this or filename.
+            filename (str, optional): Alternative parameter name for file_path.
             mode (str, optional): The file opening mode. Default is 'w' for write. Use 'a' for append.
 
         Returns:
             str: A message indicating the result of the operation.
         """
+        # Handle either file_path or filename parameter
+        if file_path is None and filename is not None:
+            file_path = filename
+        elif file_path is None and filename is None:
+            return "Error: No file path or filename provided"
         try:
             # Ensure the directory exists
             directory = os.path.dirname(file_path)

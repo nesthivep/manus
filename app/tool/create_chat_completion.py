@@ -1,7 +1,10 @@
+import re
 from typing import Any, List, Optional, Type, Union, get_args, get_origin
 
 from pydantic import BaseModel, Field
 
+from app.input_handler import is_break_command, process_break_command
+from app.logger import logger
 from app.tool import BaseTool
 
 
@@ -139,6 +142,11 @@ class CreateChatCompletion(BaseTool):
         """
         required = required or self.required
 
+        # Check if this is a user-facing chat completion that needs input
+        if self._is_user_prompt(**kwargs):
+            # Process the input with special command handling
+            return await self._handle_user_facing_completion(**kwargs)
+
         # Handle case when required is a list
         if isinstance(required, list) and len(required) > 0:
             if len(required) == 1:
@@ -167,3 +175,85 @@ class CreateChatCompletion(BaseTool):
             return self.response_type(result)
         except (ValueError, TypeError):
             return result
+
+    def _is_user_prompt(self, **kwargs) -> bool:
+        """Detect if this completion is asking the user for input.
+
+        Args:
+            **kwargs: The parameters of the chat completion
+
+        Returns:
+            bool: True if this is a user-facing prompt requiring input
+        """
+        response = kwargs.get("response", "")
+
+        # Skip if not a string (shouldn't happen with normal usage)
+        if not isinstance(response, str):
+            return False
+
+        # Check for common question patterns
+        question_indicators = [
+            r"\?$",  # Ends with question mark
+            r"(?:please|kindly|can you|could you)\s+(?:provide|specify|tell|enter)",
+            r"(?:what|how|which|when|where|who|why)\s+(?:would|do|is|are|should)",
+            r"(?:enter|type|input|give( me)?)\s+(?:your|the|a|an)",
+        ]
+
+        for pattern in question_indicators:
+            if re.search(pattern, response.lower()):
+                return True
+
+        return False
+
+    async def _handle_user_facing_completion(self, **kwargs) -> str:
+        """Handle a chat completion that is asking the user for input.
+
+        Displays the agent's request to the user and handles any special commands.
+
+        Args:
+            **kwargs: The parameters passed to the execute method
+
+        Returns:
+            str: The user's response or the result of a command
+        """
+        response = kwargs.get("response", "")
+
+        # Display the agent's question/request to the user
+        print(response)
+
+        # Get user input (allow empty input)
+        user_input = input().strip()
+
+        # If it's not a special command, return as is
+        if not is_break_command(user_input):
+            return user_input
+
+        # Process break command
+        success, message = process_break_command(user_input)
+
+        # If command was successful, send back a special response
+        # that the agent will recognize in its flow
+        if success:
+            logger.info(f"Break command processed: {message}")
+
+            # Determine what value to return based on common patterns in the question
+            if re.search(r"how many", response.lower()):
+                return "10"  # Default number for quantity questions
+            elif re.search(r"yes or no", response.lower()):
+                return "yes"  # Default positive for confirmation
+            elif re.search(r"select|choose|pick", response.lower()):
+                return "1"  # Default first option for selection
+            elif "continue" in user_input.lower():
+                # Generic default value with explanation
+                return "[DEFAULT VALUE - User selected to continue with defaults]"
+            elif "=" in user_input:
+                # Extract the value part from param=value format
+                value = user_input.split("=", 1)[1].strip()
+                return value
+            else:
+                # Just proceed with empty value
+                return ""  # Agent will need to handle this
+
+        # If command failed or wasn't recognized, return the error message
+        print(message)  # Show error to user
+        return user_input  # Return original input to let agent handle it
