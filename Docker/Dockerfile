@@ -75,7 +75,7 @@ if [ ! -f config/config.toml ]; then\n\
     cp config/config.example.toml config/config.toml\n\
 fi\n\
 \n\
-pip3 install -r requirements.txt\n\
+pip3 install --user -r requirements.txt\n\
 \n\
 if [ "$1" = "dev" ]; then\n\
     echo "Running in development mode..."\n\
