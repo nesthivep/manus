@@ -19,10 +19,10 @@
 2. Download the Dockerfile and docker-compose.yml:
    ```bash
    # Download Dockerfile
-   curl -O https://raw.githubusercontent.com/mannaandpoem/OpenManus/main/Dockerfile
+   curl -O https://raw.githubusercontent.com/mannaandpoem/OpenManus/refs/heads/main/Docker/Dockerfile
    
    # Download docker-compose.yml
-   curl -O https://raw.githubusercontent.com/mannaandpoem/OpenManus/main/docker-compose.yml
+   curl -O https://raw.githubusercontent.com/mannaandpoem/OpenManus/refs/heads/main/Docker/docker-compose.yml
    ```
 
 3. Create a `.env` file with your configuration:
