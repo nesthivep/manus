@@ -3,7 +3,7 @@ FROM debian:stable-slim
 LABEL version="1.0.0"
 LABEL description="OpenManus Docker Image"
 
-# Install required packages and Python 3.12
+# Download and install required packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     wget \
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     ca-certificates
 
-# Install Python 3.12
+# Download, Build and install Python 3.12
 RUN wget https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz \
     && tar -xf Python-3.12.0.tgz \
     && cd Python-3.12.0 \
