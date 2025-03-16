@@ -1,6 +1,6 @@
 # It's recommended to create a .env file in the same directory as docker-compose.yml to set environment variables like:
 # OPENMANUS_PATH=/path/to/your/openmanus/data
-# OPENMANUS_CONFIG=/path/to/your/openmanus/config/data
+# OPENMANUS_CONFIG=/path/to/your/openmanus/config
 # TZ=Your/Timezone
 
 services:
