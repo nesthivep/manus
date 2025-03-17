@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
-from typing import List, Optional
+from typing import Any, AsyncIterator, Callable, List, Optional, cast
 
 from pydantic import BaseModel, Field, model_validator
 
 from app.llm import LLM
 from app.logger import logger
-from app.schema import ROLE_TYPE, AgentState, Memory, Message
+from app.schema import ROLE_TYPE, AgentState, Memory, Message, Role
 
 
 class BaseAgent(BaseModel, ABC):
@@ -55,7 +55,7 @@ class BaseAgent(BaseModel, ABC):
         return self
 
     @asynccontextmanager
-    async def state_context(self, new_state: AgentState):
+    async def state_context(self, new_state: AgentState) -> AsyncIterator[None]:
         """Context manager for safe agent state transitions.
 
         Args:
@@ -82,9 +82,9 @@ class BaseAgent(BaseModel, ABC):
 
     def update_memory(
         self,
-        role: ROLE_TYPE,  # type: ignore
+        role: ROLE_TYPE,
         content: str,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Add a message to the agent's memory.
 
@@ -106,7 +106,7 @@ class BaseAgent(BaseModel, ABC):
         if role not in message_map:
             raise ValueError(f"Unsupported message role: {role}")
 
-        msg_factory = message_map[role]
+        msg_factory = cast(Callable[[str], Any], message_map[role])
         msg = msg_factory(content, **kwargs) if role == "tool" else msg_factory(content)
         self.memory.add_message(msg)
 
@@ -126,7 +126,7 @@ class BaseAgent(BaseModel, ABC):
             raise RuntimeError(f"Cannot run agent from state: {self.state}")
 
         if request:
-            self.update_memory("user", request)
+            self.update_memory(Role.USER, request)
 
         results: List[str] = []
         async with self.state_context(AgentState.RUNNING):
@@ -157,7 +157,7 @@ class BaseAgent(BaseModel, ABC):
         Must be implemented by subclasses to define specific behavior.
         """
 
-    def handle_stuck_state(self):
+    def handle_stuck_state(self) -> None:
         """Handle stuck state by adding a prompt to change strategy"""
         stuck_prompt = "\
         Observed duplicate responses. Consider new strategies and avoid repeating ineffective paths already attempted."
@@ -188,6 +188,6 @@ class BaseAgent(BaseModel, ABC):
         return self.memory.messages
 
     @messages.setter
-    def messages(self, value: List[Message]):
+    def messages(self, value: List[Message]) -> None:
         """Set the list of messages in the agent's memory."""
         self.memory.messages = value

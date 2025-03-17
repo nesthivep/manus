@@ -1,7 +1,7 @@
 import multiprocessing
 import sys
 from io import StringIO
-from typing import Dict
+from typing import Any, Dict
 
 from app.tool.base import BaseTool
 
@@ -11,7 +11,7 @@ class PythonExecute(BaseTool):
 
     name: str = "python_execute"
     description: str = "Executes Python code string. Note: Only print outputs are visible, function return values are not captured. Use print statements to see results."
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "code": {
@@ -22,7 +22,9 @@ class PythonExecute(BaseTool):
         "required": ["code"],
     }
 
-    def _run_code(self, code: str, result_dict: dict, safe_globals: dict) -> None:
+    def _run_code(
+        self, code: str, result_dict: Dict[str, Any], safe_globals: Dict[str, Any]
+    ) -> None:
         original_stdout = sys.stdout
         try:
             output_buffer = StringIO()
@@ -36,11 +38,7 @@ class PythonExecute(BaseTool):
         finally:
             sys.stdout = original_stdout
 
-    async def execute(
-        self,
-        code: str,
-        timeout: int = 5,
-    ) -> Dict:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Executes the provided Python code with a timeout.
 
@@ -49,13 +47,15 @@ class PythonExecute(BaseTool):
             timeout (int): Execution timeout in seconds.
 
         Returns:
-            Dict: Contains 'output' with execution output or error message and 'success' status.
+            Coroutine[Any, Any, Dict[str, Any]]: A coroutine that returns a dictionary containing 'observation' with execution output or error message and 'success' status.
         """
+        code: str = kwargs.get("code", "")
+        timeout: int = kwargs.get("timeout", 5)
 
         with multiprocessing.Manager() as manager:
             result = manager.dict({"observation": "", "success": False})
             if isinstance(__builtins__, dict):
-                safe_globals = {"__builtins__": __builtins__}
+                safe_globals: Dict[str, Any] = {"__builtins__": __builtins__}
             else:
                 safe_globals = {"__builtins__": __builtins__.__dict__.copy()}
             proc = multiprocessing.Process(

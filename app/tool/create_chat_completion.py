@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Type, Union, get_args, get_origin
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, get_args, get_origin
 
 from pydantic import BaseModel, Field
 
@@ -12,7 +12,7 @@ class CreateChatCompletion(BaseTool):
     )
 
     # Type mapping for JSON schema
-    type_mapping: dict = {
+    type_mapping: Dict[Type[Any], str] = {
         str: "string",
         int: "integer",
         float: "number",
@@ -20,16 +20,16 @@ class CreateChatCompletion(BaseTool):
         dict: "object",
         list: "array",
     }
-    response_type: Optional[Type] = None
+    response_type: Optional[Type[Any]] = None
     required: List[str] = Field(default_factory=lambda: ["response"])
 
-    def __init__(self, response_type: Optional[Type] = str):
+    def __init__(self, response_type: Optional[Type[Any]] = str) -> None:
         """Initialize with a specific response type."""
-        super().__init__()
+        super().__init__(name=self.name, description=self.description)
         self.response_type = response_type
         self.parameters = self._build_parameters()
 
-    def _build_parameters(self) -> dict:
+    def _build_parameters(self) -> Dict[str, Any]:
         """Build parameters schema based on response type."""
         if self.response_type == str:
             return {
@@ -53,9 +53,12 @@ class CreateChatCompletion(BaseTool):
                 "required": schema.get("required", self.required),
             }
 
-        return self._create_type_schema(self.response_type)
+        if self.response_type is not None:
+            return self._create_type_schema(self.response_type)
 
-    def _create_type_schema(self, type_hint: Type) -> dict:
+        raise ValueError("response_type cannot be None.")
+
+    def _create_type_schema(self, type_hint: Type[Any]) -> Dict[str, Any]:
         """Create a JSON schema for the given type."""
         origin = get_origin(type_hint)
         args = get_args(type_hint)
@@ -107,7 +110,7 @@ class CreateChatCompletion(BaseTool):
 
         return self._build_parameters()
 
-    def _get_type_info(self, type_hint: Type) -> dict:
+    def _get_type_info(self, type_hint: Type[Any]) -> Dict[str, Any]:
         """Get type information for a single type."""
         if isinstance(type_hint, type) and issubclass(type_hint, BaseModel):
             return type_hint.model_json_schema()
@@ -117,7 +120,7 @@ class CreateChatCompletion(BaseTool):
             "description": f"Value of type {getattr(type_hint, '__name__', 'any')}",
         }
 
-    def _create_union_schema(self, types: tuple) -> dict:
+    def _create_union_schema(self, types: Tuple[Type[Any], ...]) -> Dict[str, Any]:
         """Create schema for Union types."""
         return {
             "type": "object",
@@ -127,7 +130,7 @@ class CreateChatCompletion(BaseTool):
             "required": self.required,
         }
 
-    async def execute(self, required: list | None = None, **kwargs) -> Any:
+    async def execute(self, required: Optional[List[str]] = None, **kwargs: Any) -> Any:
         """Execute the chat completion with type conversion.
 
         Args:
@@ -164,6 +167,9 @@ class CreateChatCompletion(BaseTool):
             return result  # Assuming result is already in correct format
 
         try:
-            return self.response_type(result)
+            if callable(self.response_type):
+                return self.response_type(result)
+            else:
+                return result
         except (ValueError, TypeError):
             return result

@@ -1,5 +1,5 @@
 """Collection classes for managing multiple tools."""
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterator, List
 
 from app.exceptions import ToolError
 from app.tool.base import BaseTool, ToolFailure, ToolResult
@@ -8,19 +8,17 @@ from app.tool.base import BaseTool, ToolFailure, ToolResult
 class ToolCollection:
     """A collection of defined tools."""
 
-    def __init__(self, *tools: BaseTool):
+    def __init__(self, *tools: BaseTool) -> None:
         self.tools = tools
         self.tool_map = {tool.name: tool for tool in tools}
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[BaseTool]:
         return iter(self.tools)
 
     def to_params(self) -> List[Dict[str, Any]]:
         return [tool.to_param() for tool in self.tools]
 
-    async def execute(
-        self, *, name: str, tool_input: Dict[str, Any] = None
-    ) -> ToolResult:
+    async def execute(self, *, name: str, tool_input: Any = None) -> ToolResult:
         tool = self.tool_map.get(name)
         if not tool:
             return ToolFailure(error=f"Tool {name} is invalid")
@@ -42,14 +40,17 @@ class ToolCollection:
         return results
 
     def get_tool(self, name: str) -> BaseTool:
-        return self.tool_map.get(name)
+        tool = self.tool_map.get(name)
+        if tool is None:
+            raise ValueError(f"Tool '{name}' not found")
+        return tool
 
-    def add_tool(self, tool: BaseTool):
+    def add_tool(self, tool: BaseTool) -> "ToolCollection":
         self.tools += (tool,)
         self.tool_map[tool.name] = tool
         return self
 
-    def add_tools(self, *tools: BaseTool):
+    def add_tools(self, *tools: BaseTool) -> "ToolCollection":
         for tool in tools:
             self.add_tool(tool)
         return self

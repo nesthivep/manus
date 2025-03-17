@@ -7,20 +7,20 @@ from pydantic import BaseModel, Field
 class BaseTool(ABC, BaseModel):
     name: str
     description: str
-    parameters: Optional[dict] = None
+    parameters: Optional[Dict[str, Any]] = None
 
     class Config:
         arbitrary_types_allowed = True
 
-    async def __call__(self, **kwargs) -> Any:
+    async def __call__(self, **kwargs: Any) -> Any:
         """Execute the tool with given parameters."""
         return await self.execute(**kwargs)
 
     @abstractmethod
-    async def execute(self, **kwargs) -> Any:
+    async def execute(self, **kwargs: Any) -> Any:
         """Execute the tool with given parameters."""
 
-    def to_param(self) -> Dict:
+    def to_param(self) -> Dict[str, Any]:
         """Convert tool to function call format."""
         return {
             "type": "function",
@@ -42,13 +42,13 @@ class ToolResult(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return any(getattr(self, field) for field in self.__fields__)
 
-    def __add__(self, other: "ToolResult"):
+    def __add__(self, other: "ToolResult") -> "ToolResult":
         def combine_fields(
             field: Optional[str], other_field: Optional[str], concatenate: bool = True
-        ):
+        ) -> Optional[str]:
             if field and other_field:
                 if concatenate:
                     return field + other_field
@@ -61,12 +61,11 @@ class ToolResult(BaseModel):
             system=combine_fields(self.system, other.system),
         )
 
-    def __str__(self):
-        return f"Error: {self.error}" if self.error else self.output
+    def __str__(self) -> str:
+        return f"Error: {self.error}" if self.error else repr(self.output)
 
-    def replace(self, **kwargs):
+    def replace(self, **kwargs: Any) -> "ToolResult":
         """Returns a new ToolResult with the given fields replaced."""
-        # return self.copy(update=kwargs)
         return type(self)(**{**self.dict(), **kwargs})
 
 
@@ -79,4 +78,4 @@ class ToolFailure(ToolResult):
 
 
 class AgentAwareTool:
-    agent: Optional = None
+    agent: Optional[Any] = None

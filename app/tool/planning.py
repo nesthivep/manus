@@ -1,9 +1,12 @@
-# tool/planning.py
-from typing import Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from app.exceptions import ToolError
 from app.tool.base import BaseTool, ToolResult
 
+
+Command = Literal[
+    "create", "update", "list", "get", "set_active", "mark_step", "delete"
+]
 
 _PLANNING_TOOL_DESCRIPTION = """
 A planning tool that allows the agent to create and manage plans for solving complex tasks.
@@ -19,7 +22,7 @@ class PlanningTool(BaseTool):
 
     name: str = "planning"
     description: str = _PLANNING_TOOL_DESCRIPTION
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "command": {
@@ -66,25 +69,10 @@ class PlanningTool(BaseTool):
         "additionalProperties": False,
     }
 
-    plans: dict = {}  # Dictionary to store plans by plan_id
+    plans: Dict[str, Any] = {}  # Dictionary to store plans by plan_id
     _current_plan_id: Optional[str] = None  # Track the current active plan
 
-    async def execute(
-        self,
-        *,
-        command: Literal[
-            "create", "update", "list", "get", "set_active", "mark_step", "delete"
-        ],
-        plan_id: Optional[str] = None,
-        title: Optional[str] = None,
-        steps: Optional[List[str]] = None,
-        step_index: Optional[int] = None,
-        step_status: Optional[
-            Literal["not_started", "in_progress", "completed", "blocked"]
-        ] = None,
-        step_notes: Optional[str] = None,
-        **kwargs,
-    ):
+    async def execute(self, **kwargs: Any) -> ToolResult:
         """
         Execute the planning tool with the given command and parameters.
 
@@ -97,6 +85,15 @@ class PlanningTool(BaseTool):
         - step_status: Status to set for a step (used with mark_step command)
         - step_notes: Additional notes for a step (used with mark_step command)
         """
+        command: Command = kwargs.get("command", "list")
+        plan_id: Optional[str] = kwargs.get("plan_id")
+        title: Optional[str] = kwargs.get("title")
+        steps: Optional[List[str]] = kwargs.get("steps")
+        step_index: Optional[int] = kwargs.get("step_index")
+        step_status: Optional[
+            Literal["not_started", "in_progress", "completed", "blocked"]
+        ] = kwargs.get("step_status")
+        step_notes: Optional[str] = kwargs.get("step_notes")
 
         if command == "create":
             return self._create_plan(plan_id, title, steps)
@@ -142,7 +139,7 @@ class PlanningTool(BaseTool):
             )
 
         # Create a new plan with initialized step statuses
-        plan = {
+        plan: Dict[str, Any] = {
             "plan_id": plan_id,
             "title": title,
             "steps": steps,
@@ -319,7 +316,7 @@ class PlanningTool(BaseTool):
 
         return ToolResult(output=f"Plan '{plan_id}' has been deleted.")
 
-    def _format_plan(self, plan: Dict) -> str:
+    def _format_plan(self, plan: Dict[str, Any]) -> str:
         """Format a plan for display."""
         output = f"Plan: {plan['title']} (ID: {plan['plan_id']})\n"
         output += "=" * len(output) + "\n\n"

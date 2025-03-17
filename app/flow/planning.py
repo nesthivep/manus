@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -22,8 +22,10 @@ class PlanningFlow(BaseFlow):
     current_step_index: Optional[int] = None
 
     def __init__(
-        self, agents: Union[BaseAgent, List[BaseAgent], Dict[str, BaseAgent]], **data
-    ):
+        self,
+        agents: Union[BaseAgent, List[BaseAgent], Dict[str, BaseAgent]],
+        **data: Any,
+    ) -> None:
         # Set executor keys before super().__init__
         if "executors" in data:
             data["executor_keys"] = data.pop("executors")
@@ -59,12 +61,15 @@ class PlanningFlow(BaseFlow):
                 return self.agents[key]
 
         # Fallback to primary agent
-        return self.primary_agent
+        if self.primary_agent is not None:
+            return self.primary_agent
+        else:
+            raise ValueError("No executor agent found")
 
     async def execute(self, input_text: str) -> str:
         """Execute the planning flow with agents."""
         try:
-            if not self.primary_agent:
+            if self.primary_agent is None:
                 raise ValueError("No primary agent available")
 
             # Create initial plan if input provided
@@ -91,6 +96,8 @@ class PlanningFlow(BaseFlow):
                 # Execute current step with appropriate agent
                 step_type = step_info.get("type") if step_info else None
                 executor = self.get_executor(step_type)
+                if step_info is None:
+                    raise ValueError("step_info cannot be None")
                 step_result = await self._execute_step(executor, step_info)
                 result += step_result + "\n"
 
@@ -154,15 +161,15 @@ class PlanningFlow(BaseFlow):
 
         # Create default plan using the ToolCollection
         await self.planning_tool.execute(
-            **{
-                "command": "create",
-                "plan_id": self.active_plan_id,
-                "title": f"Plan for: {request[:50]}{'...' if len(request) > 50 else ''}",
-                "steps": ["Analyze request", "Execute task", "Verify results"],
-            }
+            command="create",
+            plan_id=self.active_plan_id,
+            title=f"Plan for: {request[:50]}{'...' if len(request) > 50 else ''}",
+            steps=["Analyze request", "Execute task", "Verify results"],
         )
 
-    async def _get_current_step_info(self) -> tuple[Optional[int], Optional[dict]]:
+    async def _get_current_step_info(
+        self,
+    ) -> tuple[Optional[int], Optional[Dict[str, Any]]]:
         """
         Parse the current plan to identify the first non-completed step's index and info.
         Returns (None, None) if no active step is found.
@@ -226,7 +233,9 @@ class PlanningFlow(BaseFlow):
             logger.warning(f"Error finding current step index: {e}")
             return None, None
 
-    async def _execute_step(self, executor: BaseAgent, step_info: dict) -> str:
+    async def _execute_step(
+        self, executor: BaseAgent, step_info: Dict[str, Any]
+    ) -> str:
         """Execute the current step with the specified agent using agent.run()."""
         # Prepare context for the agent with current plan status
         plan_status = await self._get_plan_text()
@@ -292,7 +301,7 @@ class PlanningFlow(BaseFlow):
             result = await self.planning_tool.execute(
                 command="get", plan_id=self.active_plan_id
             )
-            return result.output if hasattr(result, "output") else str(result)
+            return str(result.output) if hasattr(result, "output") else str(result)
         except Exception as e:
             logger.error(f"Error getting plan: {e}")
             return self._generate_plan_text_from_storage()
@@ -387,6 +396,8 @@ class PlanningFlow(BaseFlow):
 
                 Please provide a summary of what was accomplished and any final thoughts.
                 """
+                if agent is None:
+                    raise ValueError("Agent is not initialized")
                 summary = await agent.run(summary_prompt)
                 return f"Plan completed:\n\n{summary}"
             except Exception as e2:

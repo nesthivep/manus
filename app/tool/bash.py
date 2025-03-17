@@ -1,9 +1,9 @@
 import asyncio
 import os
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from app.exceptions import ToolError
-from app.tool.base import BaseTool, CLIResult, ToolResult
+from app.tool.base import BaseTool, CLIResult
 
 
 _BASH_DESCRIPTION = """Execute a bash command in the terminal.
@@ -24,17 +24,17 @@ class _BashSession:
     _timeout: float = 120.0  # seconds
     _sentinel: str = "<<exit>>"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._started = False
         self._timed_out = False
 
-    async def start(self):
+    async def start(self) -> None:
         if self._started:
             return
 
         self._process = await asyncio.create_subprocess_shell(
             self.command,
-            preexec_fn=os.setsid,
+            preexec_fn=os.setsid if hasattr(os, "setsid") else None,
             shell=True,
             bufsize=0,
             stdin=asyncio.subprocess.PIPE,
@@ -44,7 +44,7 @@ class _BashSession:
 
         self._started = True
 
-    def stop(self):
+    def stop(self) -> None:
         """Terminate the bash shell."""
         if not self._started:
             raise ToolError("Session has not started.")
@@ -52,12 +52,12 @@ class _BashSession:
             return
         self._process.terminate()
 
-    async def run(self, command: str):
+    async def run(self, command: str) -> CLIResult:
         """Execute a command in the bash shell."""
         if not self._started:
             raise ToolError("Session has not started.")
         if self._process.returncode is not None:
-            return ToolResult(
+            return CLIResult(
                 system="tool must be restarted",
                 error=f"bash has exited with returncode {self._process.returncode}",
             )
@@ -106,10 +106,6 @@ class _BashSession:
         if error.endswith("\n"):
             error = error[:-1]
 
-        # clear the buffers so that the next output can be read correctly
-        self._process.stdout._buffer.clear()  # pyright: ignore[reportAttributeAccessIssue]
-        self._process.stderr._buffer.clear()  # pyright: ignore[reportAttributeAccessIssue]
-
         return CLIResult(output=output, error=error)
 
 
@@ -118,7 +114,7 @@ class Bash(BaseTool):
 
     name: str = "bash"
     description: str = _BASH_DESCRIPTION
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "command": {
@@ -132,7 +128,7 @@ class Bash(BaseTool):
     _session: Optional[_BashSession] = None
 
     async def execute(
-        self, command: str | None = None, restart: bool = False, **kwargs
+        self, command: Optional[str] = None, restart: bool = False, **kwargs: Any
     ) -> CLIResult:
         if restart:
             if self._session:
@@ -140,7 +136,7 @@ class Bash(BaseTool):
             self._session = _BashSession()
             await self._session.start()
 
-            return ToolResult(system="tool has been restarted.")
+            return CLIResult(system="tool has been restarted.")
 
         if self._session is None:
             self._session = _BashSession()

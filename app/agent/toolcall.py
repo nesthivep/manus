@@ -26,7 +26,7 @@ class ToolCallAgent(ReActAgent):
     available_tools: ToolCollection = ToolCollection(
         CreateChatCompletion(), Terminate()
     )
-    tool_choices: TOOL_CHOICE_TYPE = ToolChoice.AUTO  # type: ignore
+    tool_choices: TOOL_CHOICE_TYPE = ToolChoice.AUTO
     special_tool_names: List[str] = Field(default_factory=lambda: [Terminate().name])
 
     tool_calls: List[ToolCall] = Field(default_factory=list)
@@ -42,6 +42,8 @@ class ToolCallAgent(ReActAgent):
 
         try:
             # Get response with tool options
+            if self.llm is None:
+                raise ValueError("LLM is not initialized")
             response = await self.llm.ask_tool(
                 messages=self.messages,
                 system_msgs=[Message.system_message(self.system_prompt)]
@@ -95,7 +97,8 @@ class ToolCallAgent(ReActAgent):
             # Create and add assistant message
             assistant_msg = (
                 Message.from_tool_calls(
-                    content=response.content, tool_calls=self.tool_calls
+                    content=response.content,
+                    tool_calls=[tool_call.dict() for tool_call in self.tool_calls],
                 )
                 if self.tool_calls
                 else Message.assistant_message(response.content)
@@ -187,7 +190,7 @@ class ToolCallAgent(ReActAgent):
             logger.error(error_msg)
             return f"Error: {error_msg}"
 
-    async def _handle_special_tool(self, name: str, result: Any, **kwargs):
+    async def _handle_special_tool(self, name: str, result: Any, **kwargs: Any) -> None:
         """Handle special tool execution and state changes"""
         if not self._is_special_tool(name):
             return
@@ -198,7 +201,7 @@ class ToolCallAgent(ReActAgent):
             self.state = AgentState.FINISHED
 
     @staticmethod
-    def _should_finish_execution(**kwargs) -> bool:
+    def _should_finish_execution(**kwargs: Any) -> bool:
         """Determine if tool execution should finish the agent"""
         return True
 

@@ -1,10 +1,10 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import Literal, get_args
+from typing import Any, Dict, List, Literal, get_args
 
 from app.exceptions import ToolError
 from app.tool import BaseTool
-from app.tool.base import CLIResult, ToolResult
+from app.tool.base import CLIResult
 from app.tool.run import run
 
 
@@ -35,7 +35,7 @@ Notes for using the `str_replace` command:
 """
 
 
-def maybe_truncate(content: str, truncate_after: int | None = MAX_RESPONSE_LEN):
+def maybe_truncate(content: str, truncate_after: int | None = MAX_RESPONSE_LEN) -> str:
     """Truncate content and append a notice if content exceeds the specified length."""
     return (
         content
@@ -49,7 +49,7 @@ class StrReplaceEditor(BaseTool):
 
     name: str = "str_replace_editor"
     description: str = _STR_REPLACE_EDITOR_DESCRIPTION
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "command": {
@@ -86,20 +86,17 @@ class StrReplaceEditor(BaseTool):
         "required": ["command", "path"],
     }
 
-    _file_history: list = defaultdict(list)
+    _file_history: defaultdict[Path, List[str]] = defaultdict(list)
 
-    async def execute(
-        self,
-        *,
-        command: Command,
-        path: str,
-        file_text: str | None = None,
-        view_range: list[int] | None = None,
-        old_str: str | None = None,
-        new_str: str | None = None,
-        insert_line: int | None = None,
-        **kwargs,
-    ) -> str:
+    async def execute(self, **kwargs: Any) -> str:
+        command: Any = kwargs.get("command")
+        path: Any = kwargs.get("path")
+        file_text: str | None = kwargs.get("file_text")
+        view_range: List[int] | None = kwargs.get("view_range")
+        old_str: str | None = kwargs.get("old_str")
+        new_str: str | None = kwargs.get("new_str")
+        insert_line: int | None = kwargs.get("insert_line")
+
         _path = Path(path)
         self.validate_path(command, _path)
         if command == "view":
@@ -109,7 +106,7 @@ class StrReplaceEditor(BaseTool):
                 raise ToolError("Parameter `file_text` is required for command: create")
             self.write_file(_path, file_text)
             self._file_history[_path].append(file_text)
-            result = ToolResult(output=f"File created successfully at: {_path}")
+            result = CLIResult(output=f"File created successfully at: {_path}")
         elif command == "str_replace":
             if old_str is None:
                 raise ToolError(
@@ -132,7 +129,7 @@ class StrReplaceEditor(BaseTool):
             )
         return str(result)
 
-    def validate_path(self, command: str, path: Path):
+    def validate_path(self, command: str, path: Path) -> None:
         """
         Check that the path/command combination is valid.
         """
@@ -158,7 +155,7 @@ class StrReplaceEditor(BaseTool):
                     f"The path {path} is a directory and only the `view` command can be used on directories"
                 )
 
-    async def view(self, path: Path, view_range: list[int] | None = None):
+    async def view(self, path: Path, view_range: List[int] | None = None) -> CLIResult:
         """Implement the view command"""
         if path.is_dir():
             if view_range:
@@ -205,7 +202,7 @@ class StrReplaceEditor(BaseTool):
             output=self._make_output(file_content, str(path), init_line=init_line)
         )
 
-    def str_replace(self, path: Path, old_str: str, new_str: str | None):
+    def str_replace(self, path: Path, old_str: str, new_str: str | None) -> CLIResult:
         """Implement the str_replace command, which replaces old_str with new_str in the file content"""
         # Read the file content
         file_content = self.read_file(path).expandtabs()
@@ -253,7 +250,7 @@ class StrReplaceEditor(BaseTool):
 
         return CLIResult(output=success_msg)
 
-    def insert(self, path: Path, insert_line: int, new_str: str):
+    def insert(self, path: Path, insert_line: int, new_str: str) -> CLIResult:
         """Implement the insert command, which inserts new_str at the specified line in the file content."""
         file_text = self.read_file(path).expandtabs()
         new_str = new_str.expandtabs()
@@ -292,7 +289,7 @@ class StrReplaceEditor(BaseTool):
         success_msg += "Review the changes and make sure they are as expected (correct indentation, no duplicate lines, etc). Edit the file again if necessary."
         return CLIResult(output=success_msg)
 
-    def undo_edit(self, path: Path):
+    def undo_edit(self, path: Path) -> CLIResult:
         """Implement the undo_edit command."""
         if not self._file_history[path]:
             raise ToolError(f"No edit history found for {path}.")
@@ -304,14 +301,14 @@ class StrReplaceEditor(BaseTool):
             output=f"Last edit to {path} undone successfully. {self._make_output(old_text, str(path))}"
         )
 
-    def read_file(self, path: Path):
+    def read_file(self, path: Path) -> str:
         """Read the content of a file from a given path; raise a ToolError if an error occurs."""
         try:
             return path.read_text()
         except Exception as e:
             raise ToolError(f"Ran into {e} while trying to read {path}") from None
 
-    def write_file(self, path: Path, file: str):
+    def write_file(self, path: Path, file: str) -> None:
         """Write the content of a file to a given path; raise a ToolError if an error occurs."""
         try:
             path.write_text(file)
@@ -324,7 +321,7 @@ class StrReplaceEditor(BaseTool):
         file_descriptor: str,
         init_line: int = 1,
         expand_tabs: bool = True,
-    ):
+    ) -> str:
         """Generate output for the CLI based on the content of a file."""
         file_content = maybe_truncate(file_content)
         if expand_tabs:

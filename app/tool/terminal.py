@@ -1,7 +1,7 @@
 import asyncio
 import os
 import shlex
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from app.tool.base import BaseTool, CLIResult
 
@@ -15,7 +15,7 @@ Prefer to execute complex CLI commands over creating executable scripts, as they
 Commands will be executed in the current working directory.
 Note: You MUST append a `sleep 0.05` to the end of the command for commands that will complete in under 50ms, as this will circumvent a known issue with the terminal tool where it will sometimes not return the output when the command completes too quickly.
 """
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "command": {
@@ -29,16 +29,17 @@ Note: You MUST append a `sleep 0.05` to the end of the command for commands that
     current_path: str = os.getcwd()
     lock: asyncio.Lock = asyncio.Lock()
 
-    async def execute(self, command: str) -> CLIResult:
+    async def execute(self, **kwargs: Any) -> CLIResult:
         """
         Execute a terminal command asynchronously with persistent context.
 
         Args:
-            command (str): The terminal command to execute.
+            **kwargs: The keyword arguments containing the command to execute.
 
         Returns:
-            str: The output, and error of the command execution.
+            CLIResult: The output and error of the command execution.
         """
+        command: str = kwargs.get("command", "")
         # Split the command by & to handle multiple commands
         commands = [cmd.strip() for cmd in command.split("&") if cmd.strip()]
         final_output = CLIResult(output="", error="")
@@ -60,8 +61,8 @@ Note: You MUST append a `sleep 0.05` to the end of the command for commands that
                         )
                         stdout, stderr = await self.process.communicate()
                         result = CLIResult(
-                            output=stdout.decode().strip(),
-                            error=stderr.decode().strip(),
+                            output=stdout.decode().strip() if stdout else "",
+                            error=stderr.decode().strip() if stderr else "",
                         )
                     except Exception as e:
                         result = CLIResult(output="", error=str(e))
@@ -70,37 +71,41 @@ Note: You MUST append a `sleep 0.05` to the end of the command for commands that
 
             # Combine outputs
             if result.output:
-                final_output.output += (
-                    (result.output + "\n") if final_output.output else result.output
-                )
+                final_output.output = (
+                    final_output.output + "\n" if final_output.output else ""
+                ) + result.output
+
             if result.error:
-                final_output.error += (
-                    (result.error + "\n") if final_output.error else result.error
-                )
+                final_output.error = (
+                    final_output.error + "\n" if final_output.error else ""
+                ) + result.error
 
         # Remove trailing newlines
-        final_output.output = final_output.output.rstrip()
-        final_output.error = final_output.error.rstrip()
+        final_output.output = (
+            final_output.output.rstrip() if final_output.output else ""
+        )
+        final_output.error = final_output.error.rstrip() if final_output.error else ""
         return final_output
 
-    async def execute_in_env(self, env_name: str, command: str) -> CLIResult:
+    async def execute_in_env(self, **kwargs: Any) -> CLIResult:
         """
         Execute a terminal command asynchronously within a specified Conda environment.
 
         Args:
-            env_name (str): The name of the Conda environment.
-            command (str): The terminal command to execute within the environment.
+            **kwargs: The keyword arguments containing the environment name and command to execute.
 
         Returns:
-            str: The output, and error of the command execution.
+            CLIResult: The output and error of the command execution.
         """
+        env_name: str = kwargs.get("env_name", "")
+        command: str = kwargs.get("command", "")
         sanitized_command = self._sanitize_command(command)
 
         # Construct the command to run within the Conda environment
         # Using 'conda run -n env_name command' to execute without activating
         conda_command = f"conda run -n {shlex.quote(env_name)} {sanitized_command}"
 
-        return await self.execute(conda_command)
+        return await self.execute(command=conda_command)
 
     async def _handle_cd_command(self, command: str) -> CLIResult:
         """
@@ -110,7 +115,7 @@ Note: You MUST append a `sleep 0.05` to the end of the command for commands that
             command (str): The 'cd' command to process.
 
         Returns:
-            TerminalOutput: The result of the 'cd' command.
+            CLIResult: The result of the 'cd' command.
         """
         try:
             parts = shlex.split(command)
@@ -145,6 +150,9 @@ Note: You MUST append a `sleep 0.05` to the end of the command for commands that
 
         Returns:
             str: The sanitized command.
+
+        Raises:
+            ValueError: If the command contains dangerous instructions.
         """
         # Example sanitization: restrict certain dangerous commands
         dangerous_commands = ["rm", "sudo", "shutdown", "reboot"]
@@ -160,7 +168,7 @@ Note: You MUST append a `sleep 0.05` to the end of the command for commands that
         # Additional sanitization logic can be added here
         return command
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the persistent shell process if it exists."""
         async with self.lock:
             if self.process:
@@ -173,10 +181,10 @@ Note: You MUST append a `sleep 0.05` to the end of the command for commands that
                 finally:
                     self.process = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "Terminal":
         """Enter the asynchronous context manager."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit the asynchronous context manager and close the process."""
         await self.close()

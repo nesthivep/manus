@@ -38,7 +38,7 @@ class Manus(ToolCallAgent):
         )
     )
 
-    async def _handle_special_tool(self, name: str, result: Any, **kwargs):
+    async def _handle_special_tool(self, name: str, result: Any, **kwargs: Any) -> None:
         if not self._is_special_tool(name):
             return
         else:

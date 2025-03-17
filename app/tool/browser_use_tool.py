@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Optional
+from typing import Any, Dict, Optional, Union
 
 from browser_use import Browser as BrowserUseBrowser
 from browser_use import BrowserConfig
@@ -37,7 +37,7 @@ content extraction, and tab management. Supported actions include:
 class BrowserUseTool(BaseTool):
     name: str = "browser_use"
     description: str = _BROWSER_DESCRIPTION
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "action": {
@@ -98,7 +98,9 @@ class BrowserUseTool(BaseTool):
     dom_service: Optional[DomService] = Field(default=None, exclude=True)
 
     @field_validator("parameters", mode="before")
-    def validate_parameters(cls, v: dict, info: ValidationInfo) -> dict:
+    def validate_parameters(
+        cls, v: Dict[str, Any], info: ValidationInfo
+    ) -> Dict[str, Any]:
         if not v:
             raise ValueError("Parameters cannot be empty")
         return v
@@ -106,7 +108,10 @@ class BrowserUseTool(BaseTool):
     async def _ensure_browser_initialized(self) -> BrowserContext:
         """Ensure browser and context are initialized."""
         if self.browser is None:
-            browser_config_kwargs = {"headless": False, "disable_security": True}
+            browser_config_kwargs: Dict[str, Union[bool, str, list[str]]] = {
+                "headless": False,
+                "disable_security": True,
+            }
 
             if config.browser_config:
                 from browser_use.browser.browser import ProxySettings
@@ -152,33 +157,24 @@ class BrowserUseTool(BaseTool):
 
         return self.context
 
-    async def execute(
-        self,
-        action: str,
-        url: Optional[str] = None,
-        index: Optional[int] = None,
-        text: Optional[str] = None,
-        script: Optional[str] = None,
-        scroll_amount: Optional[int] = None,
-        tab_id: Optional[int] = None,
-        **kwargs,
-    ) -> ToolResult:
+    async def execute(self, **kwargs: Any) -> ToolResult:
         """
         Execute a specified browser action.
 
         Args:
-            action: The browser action to perform
-            url: URL for navigation or new tab
-            index: Element index for click or input actions
-            text: Text for input action
-            script: JavaScript code for execution
-            scroll_amount: Pixels to scroll for scroll action
-            tab_id: Tab ID for switch_tab action
-            **kwargs: Additional arguments
+            **kwargs: The keyword arguments containing the action and other parameters.
 
         Returns:
             ToolResult with the action's output or error
         """
+        action: str = kwargs.get("action", "")
+        url: Optional[str] = kwargs.get("url")
+        index: Optional[int] = kwargs.get("index")
+        text: Optional[str] = kwargs.get("text")
+        script: Optional[str] = kwargs.get("script")
+        scroll_amount: Optional[int] = kwargs.get("scroll_amount")
+        tab_id: Optional[int] = kwargs.get("tab_id")
+
         async with self.lock:
             try:
                 context = await self._ensure_browser_initialized()
@@ -303,7 +299,7 @@ class BrowserUseTool(BaseTool):
             except Exception as e:
                 return ToolResult(error=f"Failed to get browser state: {str(e)}")
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Clean up browser resources."""
         async with self.lock:
             if self.context is not None:
@@ -314,7 +310,7 @@ class BrowserUseTool(BaseTool):
                 await self.browser.close()
                 self.browser = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Ensure cleanup when object is destroyed."""
         if self.browser is not None or self.context is not None:
             try:

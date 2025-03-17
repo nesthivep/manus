@@ -4,7 +4,7 @@ from app.agent.manus import Manus
 from app.logger import logger
 
 
-async def main():
+async def main() -> None:
     agent = Manus()
     try:
         prompt = input("Enter your prompt: ")
