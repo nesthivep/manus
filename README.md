@@ -53,6 +53,8 @@ pip install -r requirements.txt
 
 ### Method 2: Using uv (Recommended)
 
+#### Linux/macOS
+
 1. Install uv (A fast Python package installer and resolver):
 
 ```bash
@@ -71,8 +73,6 @@ cd OpenManus
 ```bash
 uv venv --python 3.12
 source .venv/bin/activate  # On Unix/macOS
-# Or on Windows:
-# .venv\Scripts\activate
 ```
 
 4. Install dependencies:
@@ -80,6 +80,50 @@ source .venv/bin/activate  # On Unix/macOS
 ```bash
 uv pip install -r requirements.txt
 ```
+
+#### Windows
+
+1. Install uv (A fast Python package installer and resolver):
+
+   **Method 1: Using PowerShell**
+
+   Open PowerShell (preferably as administrator) and run:
+
+   ```powershell
+   iwr -useb https://astral.sh/uv/install.ps1 | iex
+   ```
+
+   **Method 2: Using pip**
+
+   If you already have Python and pip installed, you can run:
+
+   ```
+   pip install uv
+   ```
+
+   **Method 3: Download from GitHub**
+
+   Visit the [uv releases page](https://github.com/astral-sh/uv/releases), download the latest Windows installer, and run it.
+
+2. Clone the repository:
+
+   ```
+   git clone https://github.com/mannaandpoem/OpenManus.git
+   cd OpenManus
+   ```
+
+3. Create a new virtual environment and activate it:
+
+   ```
+   uv venv --python 3.12
+   .venv\Scripts\activate
+   ```
+
+4. Install dependencies:
+
+   ```
+   uv pip install -r requirements.txt
+   ```
 
 ## Configuration
 

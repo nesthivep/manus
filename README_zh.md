@@ -54,6 +54,8 @@ pip install -r requirements.txt
 
 ### 方式二：使用 uv（推荐）
 
+#### Linux/macOS 系统
+
 1. 安装 uv（一个快速的 Python 包管理器）：
 
 ```bash
@@ -72,8 +74,6 @@ cd OpenManus
 ```bash
 uv venv --python 3.12
 source .venv/bin/activate  # Unix/macOS 系统
-# Windows 系统使用：
-# .venv\Scripts\activate
 ```
 
 4. 安装依赖：
@@ -81,6 +81,50 @@ source .venv/bin/activate  # Unix/macOS 系统
 ```bash
 uv pip install -r requirements.txt
 ```
+
+#### Windows 系统
+
+1. 安装 uv（一个快速的 Python 包管理器）：
+
+   **方法 1：使用 PowerShell**
+
+   打开 PowerShell（建议以管理员身份运行）并执行：
+
+   ```powershell
+   iwr -useb https://astral.sh/uv/install.ps1 | iex
+   ```
+
+   **方法 2：使用 pip**
+
+   如果已安装 Python 和 pip，可以直接执行：
+
+   ```
+   pip install uv
+   ```
+
+   **方法 3：从 GitHub 下载**
+
+   访问 [uv 发布页面](https://github.com/astral-sh/uv/releases)，下载最新的 Windows 安装包并运行。
+
+2. 克隆仓库：
+
+   ```
+   git clone https://github.com/mannaandpoem/OpenManus.git
+   cd OpenManus
+   ```
+
+3. 创建并激活虚拟环境：
+
+   ```
+   uv venv --python 3.12
+   .venv\Scripts\activate
+   ```
+
+4. 安装依赖：
+
+   ```
+   uv pip install -r requirements.txt
+   ```
 
 ## 配置说明
 

@@ -53,6 +53,8 @@ pip install -r requirements.txt
 
 ### 方法2：uvを使用（推奨）
 
+#### Linux/macOS
+
 1. uv（高速なPythonパッケージインストーラーと管理機能）をインストールします：
 
 ```bash
@@ -71,8 +73,6 @@ cd OpenManus
 ```bash
 uv venv --python 3.12
 source .venv/bin/activate  # Unix/macOSの場合
-# Windowsの場合：
-# .venv\Scripts\activate
 ```
 
 4. 依存関係をインストールします：
@@ -80,6 +80,50 @@ source .venv/bin/activate  # Unix/macOSの場合
 ```bash
 uv pip install -r requirements.txt
 ```
+
+#### Windows
+
+1. uv（高速なPythonパッケージインストーラーと管理機能）をインストールします：
+
+   **方法1：PowerShellを使用**
+
+   PowerShell（できれば管理者権限で）を開き、次を実行します：
+
+   ```powershell
+   iwr -useb https://astral.sh/uv/install.ps1 | iex
+   ```
+
+   **方法2：pipを使用**
+
+   すでにPythonとpipがインストールされている場合は、次を実行できます：
+
+   ```
+   pip install uv
+   ```
+
+   **方法3：GitHubからダウンロード**
+
+   [uvリリースページ](https://github.com/astral-sh/uv/releases)にアクセスし、最新のWindowsインストーラーをダウンロードして実行します。
+
+2. リポジトリをクローンします：
+
+   ```
+   git clone https://github.com/mannaandpoem/OpenManus.git
+   cd OpenManus
+   ```
+
+3. 新しい仮想環境を作成してアクティベートします：
+
+   ```
+   uv venv --python 3.12
+   .venv\Scripts\activate
+   ```
+
+4. 依存関係をインストールします：
+
+   ```
+   uv pip install -r requirements.txt
+   ```
 
 ## 設定
 
