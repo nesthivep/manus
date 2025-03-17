@@ -1,19 +1,26 @@
 :root {
-    --primary-color: #007bff;
-    --primary-hover: #0056b3;
-    --primary-color-light: #e6f2ff;
-    --success-color: #28a745;
-    --success-color-light: #e8f5e9;
-    --error-color: #dc3545;
-    --error-color-light: #ffe6e6;
-    --warning-color: #ff9800;
-    --warning-color-light: #fff8e6;
-    --info-color: #2196f3;
-    --info-color-light: #e3f2fd;
-    --text-color: #333;
-    --text-light: #666;
-    --bg-color: #f8f9fa;
-    --border-color: #ddd;
+    --primary-color: #00eeff;
+    --primary-hover: #00c8ff;
+    --primary-color-light: rgba(0, 238, 255, 0.1);
+    --success-color: #00ff9d;
+    --success-color-light: rgba(0, 255, 157, 0.1);
+    --error-color: #ff2a6d;
+    --error-color-light: rgba(255, 42, 109, 0.1);
+    --warning-color: #ffb627;
+    --warning-color-light: rgba(255, 182, 39, 0.1);
+    --info-color: #05d9e8;
+    --info-color-light: rgba(5, 217, 232, 0.1);
+    --text-color: rgba(255, 255, 255, 0.9);
+    --text-light: rgba(255, 255, 255, 0.6);
+    --bg-color: #0a0a1a;
+    --panel-bg: rgba(22, 24, 36, 0.9);
+    --border-color: rgba(0, 238, 255, 0.6);
+    --border-glow: 0 0 15px rgba(0, 238, 255, 0.6), 0 0 25px rgba(0, 238, 255, 0.3);
+    --neon-glow: 0 0 15px rgba(0, 238, 255, 0.7), 0 0 25px rgba(0, 238, 255, 0.4);
+    --neon-text-glow: 0 0 10px rgba(0, 238, 255, 0.7), 0 0 20px rgba(0, 238, 255, 0.4);
+    --secondary-glow: 0 0 12px rgba(255, 42, 109, 0.6), 0 0 20px rgba(255, 42, 109, 0.3);
+    --card-bg: rgba(22, 24, 36, 0.7);
+    --grid-color: rgba(0, 238, 255, 0.15);
 }
 
 * {
@@ -26,8 +33,14 @@ body {
     font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: var(--bg-color);
+    background-color: #000000;
     color: var(--text-color);
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    display: none;
 }
 
 .container {
@@ -40,8 +53,10 @@ body {
     gap: 10px;
     position: relative;
     transition: all 0.3s ease;
-    margin-top: 60px;  /* Top header height + spacing */
-    min-height: calc(100vh - 60px);
+    margin-top: 60px;
+    min-height: calc(100vh - 70px);
+    z-index: 1;
+    background-color: #000000;
 }
 
 .container.with-result {
@@ -52,32 +67,35 @@ body {
 }
 
 .card {
-    background-color: white;
+    background-color: var(--card-bg);
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 0 15px rgba(0, 238, 255, 0.2);
+    border: 1px solid var(--border-color);
 }
 
 .history-panel {
     width: 200px;
     flex-shrink: 0;
-    background-color: white;
+    background-color: var(--panel-bg);
     border-radius: 8px;
     padding: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    height: calc(100vh - 80px);  /* 减去标题栏高度和间距 */
+    box-shadow: 0 0 15px rgba(0, 238, 255, 0.2);
+    height: calc(100vh - 80px);
     overflow: auto;
+    border: 1px solid var(--border-color);
 }
 
 .steps-panel {
     width: 300px;
     flex-shrink: 0;
-    background-color: white;
+    background-color: var(--panel-bg);
     border-radius: 8px;
     padding: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    height: calc(100vh - 80px);  /* 减去标题栏高度和间距 */
+    box-shadow: 0 0 15px rgba(0, 238, 255, 0.2);
+    height: calc(100vh - 80px);
     overflow: auto;
+    border: 1px solid var(--border-color);
 }
 
 .steps-container {
@@ -92,10 +110,12 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    height: calc(100vh - 80px);  /* 减去标题栏高度和间距 */
+    height: calc(100vh - 80px);
     min-width: 400px;
     position: relative;
     transition: all 0.3s ease;
+    z-index: 2;
+    background-color: transparent;
 }
 
 .task-container {
@@ -106,31 +126,79 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background-color: white;
+    background-color: #000000;
     border-radius: 8px;
     padding: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.2);
     overflow: auto;
     transition: width 0.3s ease;
+    border: 2px solid transparent !important;
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.3) !important;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.task-container::before, .task-container::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    z-index: -1;
+    background: linear-gradient(90deg, 
+        var(--primary-color), 
+        var(--error-color), 
+        var(--primary-color));
+    background-size: 400% 100%;
+    animation: borderFlow 8s linear infinite;
+    border-radius: inherit;
+}
+
+.task-container::after {
+    background: var(--bg-color);
+    border-radius: inherit;
+    box-shadow: inset 0 0 20px rgba(0, 238, 255, 0.2), 
+                inset 0 0 10px rgba(255, 42, 109, 0.1);
+    pointer-events: none;
 }
 
 .result-panel {
-    width: 31%;  /* Slightly reduce result panel width */
-    min-width: 380px;  /* Reduce minimum width */
-    height: calc(100vh - 80px);  /* Subtract header height and spacing */
+    width: 31%;
+    min-width: 380px;
+    height: calc(100vh - 80px);
     position: fixed;
-    right: 10px; /* Restore right position */
-    top: 70px; /* Adjust to fully align with history panel */
-    background-color: rgba(22, 24, 36, 0.98);
-    border: 1px solid rgba(60, 80, 220, 0.2);
+    right: 10px;
+    top: 70px;
+    background-color: rgba(15, 15, 30, 0.95);
+    border: 2px solid transparent !important;
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.3) !important;
     border-radius: 8px;
     padding: 12px;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3), 0 0 40px rgba(60, 80, 220, 0.15);
+    box-shadow: 0 0 30px rgba(0, 238, 255, 0.2);
     overflow: auto;
     transition: transform 0.3s ease;
     z-index: 10;
     display: flex;
     flex-direction: column;
+}
+
+.result-panel::before, .result-panel::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    z-index: -1;
+    background: linear-gradient(90deg, 
+        var(--primary-color), 
+        var(--error-color), 
+        var(--primary-color));
+    background-size: 400% 100%;
+    animation: borderFlow 8s linear infinite;
+    border-radius: inherit;
 }
 
 .result-panel.hidden {
@@ -147,8 +215,8 @@ body {
     align-items: center;
     margin-bottom: 12px;
     padding-bottom: 12px;
-    border-bottom: 1px solid rgba(80, 80, 80, 0.3);
-    background: linear-gradient(90deg, rgba(20, 25, 30, 0.9), rgba(30, 35, 45, 0.9));
+    border-bottom: 1px solid rgba(0, 238, 255, 0.2);
+    background: linear-gradient(90deg, rgba(15, 15, 30, 0.9), rgba(20, 20, 40, 0.9));
     padding: 15px;
     border-radius: 8px 8px 0 0;
     position: relative;
@@ -164,22 +232,24 @@ body {
     height: 1px;
     background: linear-gradient(90deg, 
         transparent, 
-        rgba(0, 180, 255, 0.4), 
-        rgba(120, 0, 255, 0.6), 
-        rgba(0, 180, 255, 0.4), 
+        rgba(0, 238, 255, 0.4), 
+        rgba(255, 42, 109, 0.6), 
+        rgba(0, 238, 255, 0.4), 
         transparent
     );
 }
 
 .result-header h2 {
     font-size: 18px;
-    font-weight: 500;
-    color: #fff;
+    font-weight: 600;
+    color: var(--primary-color);
     margin: 0;
     position: relative;
-    text-shadow: 0 0 10px rgba(0, 140, 255, 0.3);
+    text-shadow: 0 0 10px rgba(0, 238, 255, 0.5);
     display: flex;
     align-items: center;
+    letter-spacing: 1px;
+    animation: none;
 }
 
 .result-header h2::before {
@@ -187,10 +257,10 @@ body {
     display: inline-block;
     width: 10px;
     height: 10px;
-    background-color: rgba(0, 180, 255, 0.8);
+    background-color: var(--primary-color);
     border-radius: 50%;
     margin-right: 10px;
-    box-shadow: 0 0 8px rgba(0, 180, 255, 0.8);
+    box-shadow: 0 0 8px var(--primary-color);
     animation: pulse-light 2s infinite;
 }
 
@@ -355,31 +425,53 @@ body {
     min-height: 400px;
     position: relative;
     margin: auto 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border: 2px solid transparent !important;
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.3) !important;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.welcome-message::before {
+    filter: blur(1px);
+    animation: borderFlow 12s linear infinite;
+}
+
+.welcome-message::after {
+    background: rgba(10, 10, 26, 0.7);
+    box-shadow: inset 0 0 30px rgba(0, 238, 255, 0.3), 
+                inset 0 0 15px rgba(255, 42, 109, 0.2);
+    animation: innerGlow 5s ease-in-out infinite alternate;
 }
 
 .welcome-message h1 {
     font-size: 2.5rem;
     margin-bottom: 20px;
-    color: #333;
+    color: var(--text-color);
     font-weight: 600;
+    text-shadow: var(--neon-text-glow);
 }
 
 .logo-animation {
     margin-bottom: 10px;
-    animation: pulse 2s infinite ease-in-out;
+    animation: none;
 }
 
 .welcome-logo {
     width: 320px;
     height: auto;
-    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.2));
+    filter: drop-shadow(0 0 15px rgba(0, 238, 255, 0.7));
     transition: all 0.3s ease;
     margin-bottom: 5px;
+    animation: none; /* 移除动画效果 */
 }
 
 .welcome-logo:hover {
-    transform: scale(1.05);
-    filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.3));
+    transform: none;
+    filter: drop-shadow(0 0 10px rgba(0, 238, 255, 0.6));
 }
 
 .animated-text {
@@ -389,11 +481,12 @@ body {
     animation: fadeIn 1s ease-in-out;
     animation-delay: 0.3s;
     animation-fill-mode: both;
+    text-shadow: var(--neon-text-glow);
 }
 
 .animated-subtext {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-light);
     animation: fadeIn 1s ease-in-out;
     animation-delay: 0.6s;
     animation-fill-mode: both;
@@ -410,9 +503,9 @@ body {
     height: 1px;
     background: linear-gradient(90deg, 
         transparent, 
-        rgba(0, 180, 255, 0.4), 
-        rgba(120, 0, 255, 0.6), 
-        rgba(0, 180, 255, 0.4), 
+        rgba(0, 238, 255, 0.4), 
+        rgba(255, 42, 109, 0.6), 
+        rgba(0, 238, 255, 0.4), 
         transparent
     );
     animation: shimmer 3s infinite;
@@ -429,6 +522,7 @@ body {
     }
     50% {
         transform: scale(1.05);
+        filter: drop-shadow(0 0 30px rgba(0, 238, 255, 0.8));
     }
     100% {
         transform: scale(1);
@@ -446,23 +540,23 @@ body {
     }
 }
 
-/* 高亮文本 - 亮色系蓝色渐变 */
+/* 高亮文本 - 霓虹蓝色渐变 */
 .highlight-text {
-    background: linear-gradient(135deg, #0575E6 0%, #0096FF 35%, #00B4FF 65%, #00D2FF 100%);
+    background: linear-gradient(135deg, #00eeff 0%, #01beff 50%, #0047e1 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 600;
     letter-spacing: 0.5px;
-    text-shadow: 0 0 8px rgba(5, 117, 230, 0.3), 0 0 15px rgba(0, 198, 251, 0.2);
+    text-shadow: 0 0 8px rgba(0, 238, 255, 0.6), 0 0 15px rgba(0, 71, 225, 0.4);
 }
 
-/* Login button - blue border color scheme */
+/* Login button - 霓虹蓝色按钮 */
 .login-btn {
-    background: linear-gradient(135deg, #0575E6, #0096FF);
+    background: linear-gradient(135deg, rgba(0, 238, 255, 0.8), rgba(0, 71, 225, 0.8));
     color: white;
     padding: 10px 24px;
-    border-radius: 30px;
+    border-radius: 4px;
     font-weight: 500;
     font-size: 14px;
     transition: all 0.25s ease;
@@ -489,46 +583,91 @@ body {
 /* Send button styles - blue border color scheme */
 .send-btn {
     padding: 12px 30px;
-    background: linear-gradient(135deg, #0575E6, #0096FF);
+    background: linear-gradient(135deg, rgba(0, 238, 255, 0.8), rgba(0, 71, 225, 0.8));
     color: white;
-    border: none;
-    border-radius: 30px;
+    border: 2px solid transparent;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 15px;
     font-weight: 500;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     transition: all 0.25s ease;
-    box-shadow: 0 4px 15px rgba(5, 117, 230, 0.2);
+    box-shadow: 0 0 15px rgba(0, 238, 255, 0.3);
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
 }
 
-.send-btn:hover {
-    background: linear-gradient(135deg, #0468C8, #0086E8);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(5, 117, 230, 0.3);
+.send-btn::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(90deg, 
+        var(--primary-color), 
+        var(--error-color), 
+        var(--primary-color));
+    background-size: 300% 100%;
+    z-index: -1;
+    animation: buttonGlow 6s linear infinite;
+    opacity: 0.9;
 }
 
-.send-btn:active {
-    transform: translateY(0px);
-    box-shadow: 0 2px 10px rgba(5, 117, 230, 0.15);
+.send-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -100%;
+    width: 70%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent);
+    transform: skewX(-25deg) translateY(-50%);
+    animation: buttonShine 4s infinite;
+}
+
+@keyframes buttonShine {
+    0% {
+        left: -100%;
+    }
+    20%, 100% {
+        left: 200%;
+    }
+}
+
+@keyframes buttonGlow {
+    0% {
+        background-position: 0% 0;
+    }
+    100% {
+        background-position: 300% 0;
+    }
 }
 
 .task-card {
-    background: #fff;
-    padding: 15px;
+    background: var(--card-bg);
+    padding: 12px 15px;
     margin-bottom: 10px;
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
+    border: 1px solid var(--border-color);
     transition: all 0.2s;
 }
 
 .task-card:hover {
-    transform: translateX(5px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(0, 238, 255, 0.2);
+    border-color: var(--primary-color);
 }
 
 .task-card.active {
-    border-left: 4px solid var(--primary-color);
-    background-color: var(--primary-color-light);
+    border-left: 3px solid var(--primary-color);
+    background-color: rgba(0, 238, 255, 0.05);
 }
 
 .status-pending {
@@ -550,16 +689,20 @@ body {
 .status-text {
     margin-left: 5px;
     position: relative;
-    color: rgba(255, 255, 255, 1); /* 确保文字是纯白色 */
-    font-weight: 500;
+    color: var(--primary-color) !important;
+    font-weight: 600;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    text-shadow: 0 0 5px rgba(0, 238, 255, 0.4);
+    letter-spacing: 0.5px;
 }
 
 .status-text::after {
     content: '|';
     position: absolute;
     right: -12px;
-    color: rgba(0, 140, 255, 0.9); /* 蓝色光标 */
+    color: var(--primary-color);
     animation: blink 1s infinite;
+    text-shadow: 0 0 8px rgba(0, 238, 255, 0.6);
 }
 
 @keyframes blink {
@@ -573,11 +716,11 @@ body {
 
 .step-item {
     padding: 0;
-    background: white;
-    border: 1px solid #eee;
-    border-radius: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
     width: 100%;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 0 10px rgba(0, 238, 255, 0.1);
     margin-bottom: 8px;
     opacity: 1;
     transform: none;
@@ -591,10 +734,10 @@ body {
     align-items: center;
     padding: 8px 12px;
     cursor: pointer;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #eee;
+    background-color: rgba(15, 15, 30, 0.8);
+    border-bottom: 1px solid var(--border-color);
     transition: all 0.3s ease;
-    color: #333;
+    color: var(--text-color);
     position: relative;
     overflow: hidden;
 }
@@ -607,21 +750,22 @@ body {
 }
 
 .log-prefix {
-    color: #444;
+    color: var(--text-color);
     display: flex;
     align-items: center;
     font-size: 0.9em;
     flex: 1;
-    min-width: 0; /* 允许flex项目收缩 */
+    min-width: 0;
 }
 
 /* 增强时间戳显示 */
 .log-prefix time {
     font-weight: 500;
-    color: #0575E6;
+    color: var(--primary-color);
     padding: 0 5px;
-    background-color: rgba(5, 117, 230, 0.05);
+    background-color: rgba(0, 238, 255, 0.1);
     border-radius: 3px;
+    box-shadow: 0 0 5px rgba(0, 238, 255, 0.2);
 }
 
 .content-preview {
@@ -630,23 +774,24 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 60%;
-    opacity: 0.8;
+    opacity: 0.9;
     font-size: 0.9em;
+    color: var(--text-color);
 }
 
 /* 步骤图标 */
 .log-prefix-icon {
     display: inline-flex;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     justify-content: center;
     align-items: center;
-    background: #f0f0f0;
+    background: rgba(0, 238, 255, 0.1);
     border-radius: 50%;
     margin-right: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border: 1px solid #eee;
-    color: #333;
+    box-shadow: 0 0 10px rgba(0, 238, 255, 0.2);
+    border: 1px solid var(--border-color);
+    color: var(--primary-color);
     flex-shrink: 0;
 }
 
@@ -660,80 +805,128 @@ body {
     height: 22px;
     justify-content: center;
     align-items: center;
-    background: #f0f0f0;
-    border: 1px solid #e0e0e0;
-    border-radius: 50%;
+    background: rgba(10, 10, 26, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
     cursor: pointer;
     user-select: none;
-    color: #555;
+    color: var(--primary-color);
     transition: all 0.2s;
     font-size: 12px;
 }
 
 .minimize-btn:hover {
-    background: #e0e0e0;
-    color: #333;
+    background: rgba(0, 238, 255, 0.1);
+    color: var(--text-color);
+    box-shadow: 0 0 8px rgba(0, 238, 255, 0.3);
 }
 
-/* 不同步骤类型的颜色 */
+.step-item .log-body {
+    display: none;
+    padding: 10px;
+    background-color: rgba(15, 15, 30, 0.6);
+    color: var(--text-color);
+    border-top: 1px solid var(--border-color);
+}
+
+/* 向 pre 元素添加终端风格 */
+.step-item pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.95em;
+    line-height: 1.5;
+    padding: 12px;
+    border-radius: 4px;
+    background: rgba(10, 10, 26, 0.7);
+    color: var(--text-color);
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    box-shadow: inset 0 0 10px rgba(0, 238, 255, 0.1);
+    border: 1px solid var(--border-color);
+}
+
+/* 步骤圆圈样式 */
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0, 238, 255, 0.8), rgba(0, 71, 225, 0.8));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    box-shadow: 0 0 15px rgba(0, 238, 255, 0.4);
+    z-index: 2;
+    flex-shrink: 0;
+    text-shadow: 0 0 5px rgba(0, 238, 255, 0.5);
+    border: 1px solid rgba(0, 238, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.step-circle::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 30% 30%, rgba(0, 238, 255, 0.4), transparent 70%);
+    z-index: -1;
+}
+
 .step-item.think .log-header {
-    background-color: var(--info-color-light);
+    background-color: rgba(5, 217, 232, 0.15);
     border-left: 3px solid var(--info-color);
 }
 
 .step-item.tool .log-header {
-    background-color: var(--warning-color-light);
+    background-color: rgba(255, 182, 39, 0.15);
     border-left: 3px solid var(--warning-color);
 }
 
 .step-item.act .log-header {
-    background-color: var(--primary-color-light);
+    background-color: rgba(0, 238, 255, 0.15);
     border-left: 3px solid var(--primary-color);
 }
 
 .step-item.log .log-header {
-    background-color: #f8f9fa;
-    border-left: 3px solid #ddd;
+    background-color: rgba(15, 15, 30, 0.5);
+    border-left: 3px solid var(--border-color);
 }
 
 .step-item.expanded .log-body {
     display: block; /* 展开时才显示详细内容 */
 }
 
-.step-item pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-size: 0.9em;
-    line-height: 1.4;
-    padding: 10px;
-    border-radius: 4px;
-    background: var(--bg-color);
-}
-
 .step-item pre.think {
-    background: var(--info-color-light);
+    background: rgba(5, 217, 232, 0.1);
     border-left: 4px solid var(--info-color);
+    color: var(--text-color);
 }
 
 .step-item pre.tool {
-    background: var(--warning-color-light);
+    background: rgba(255, 182, 39, 0.1);
     border-left: 4px solid var(--warning-color);
+    color: var(--text-color);
 }
 
 .step-item pre.act {
-    background: var(--primary-color-light);
+    background: rgba(0, 238, 255, 0.1);
     border-left: 4px solid var(--primary-color);
+    color: var(--text-color);
 }
 
 .step-item pre.result {
-    background: var(--success-color-light);
+    background: rgba(0, 255, 157, 0.1);
     border-left: 4px solid var(--success-color);
+    color: var(--text-color);
 }
 
 .step-item pre.error {
-    background: var(--error-color-light);
+    background: rgba(255, 42, 109, 0.1);
     border-left: 4px solid var(--error-color);
+    color: var(--text-color);
 }
 
 .loading {
@@ -1160,10 +1353,14 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    background-color: #000000;
     color: white;
     position: relative;
     overflow: hidden;
+}
+
+.home-container::before {
+    display: none;
 }
 
 .hero-section {
@@ -1173,6 +1370,9 @@ body {
     z-index: 1;
     max-width: 1000px;
     margin: 0 auto;
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 
 .floating-emojis {
@@ -1221,14 +1421,14 @@ body {
 }
 
 .step-info-box {
-    background: linear-gradient(90deg, rgba(28, 30, 44, 0.9), rgba(36, 38, 52, 0.9));
-    border: 1px solid rgba(60, 80, 220, 0.2);
+    background: linear-gradient(90deg, rgba(15, 15, 30, 0.9), rgba(20, 20, 40, 0.9));
+    border: 1px solid var(--border-color);
     padding: 10px 15px;
     margin-top: 8px;
-    border-radius: 8px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 10px rgba(0, 238, 255, 0.1);
     position: relative;
     overflow: hidden;
 }
@@ -1241,11 +1441,11 @@ body {
     width: 100%;
     height: 2px;
     background: linear-gradient(90deg, 
-        rgba(60, 80, 220, 0.1),
-        rgba(60, 80, 220, 0.3), 
-        rgba(120, 120, 220, 0.6),
-        rgba(60, 80, 220, 0.3),
-        rgba(60, 80, 220, 0.1)
+        transparent, 
+        rgba(0, 238, 255, 0.2), 
+        rgba(255, 42, 109, 0.4),
+        rgba(0, 238, 255, 0.2),
+        transparent
     );
 }
 
@@ -1317,15 +1517,17 @@ body {
     line-height: 1.5;
 }
 
-/* New top navigation bar design */
+/* 修复顶部导航栏样式 */
 .header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     height: 56px;
-    background-color: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    background-color: rgba(10, 10, 26, 0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 0 15px rgba(0, 238, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1351,27 +1553,27 @@ body {
 }
 
 .logo-img {
-    height: 44px;
-    width: auto;
-    transition: transform 0.3s ease;
-}
-
-.logo-img:hover {
-    transform: scale(1.05);
+    display: none;
 }
 
 .logo-text {
-    font-weight: 600;
+    font-weight: 700;
     font-size: 18px;
-    color: #333;
-    white-space: nowrap;
+    background: linear-gradient(90deg, var(--primary-color), var(--error-color));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-left: 0;
+    letter-spacing: 1px;
+    text-shadow: none;
+    text-transform: uppercase;
 }
 
-/* History button style reset - no visual effects */
+/* 修复历史按钮样式 */
 .history-toggle {
-    all: unset; /* Reset all CSS properties */
-    cursor: pointer; /* Only keep hand cursor */
-    color: #777;
+    all: unset;
+    cursor: pointer;
+    color: var(--primary-color);
     position: relative;
     margin: 0 15px 0 0;
     padding: 0;
@@ -1380,9 +1582,9 @@ body {
     display: inline-block;
 }
 
-/* Ensure icon style is simple */
 .history-toggle i {
     font-size: 18px;
+    text-shadow: 0 0 5px rgba(0, 238, 255, 0.5);
 }
 
 /* History count indicator - essential styles */
@@ -1434,7 +1636,10 @@ body {
 .history-title {
     font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px rgba(0, 238, 255, 0.3);
 }
 
 .history-actions {
@@ -1564,29 +1769,540 @@ button {
     transition: all 0.3s ease;
 }
 
+/* 修复输入容器样式 */
 .input-container {
     width: 100%;
-    background-color: white;
-    border-radius: 12px;
+    background-color: #000000;
+    border-radius: 8px;
     padding: 15px 20px;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0 15px rgba(0, 238, 255, 0.2);
     display: flex;
     gap: 15px;
     margin-top: auto;
+    border: 2px solid transparent !important;
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.3) !important;
+    position: relative;
+    z-index: 10;
+    overflow: hidden;
 }
 
+/* 修复输入框样式 */
 #prompt-input {
     flex: 1;
     padding: 14px 20px;
-    border: 1px solid #e0e0e0;
-    border-radius: 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
     font-size: 1rem;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    background-color: rgba(10, 10, 26, 0.7);
+    color: var(--text-color);
+    box-shadow: 0 0 10px rgba(0, 238, 255, 0.2);
 }
 
 #prompt-input:focus {
-    border-color: #0096FF;
-    box-shadow: 0 2px 12px rgba(0, 150, 255, 0.15);
-    outline: none;
+    animation: inputGlow 3s infinite alternate;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.4), 
+                0 0 10px rgba(255, 42, 109, 0.2);
 }
+
+#prompt-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* 添加赛博朋克风格的标题文本样式 */
+.title-text {
+    position: relative;
+    font-size: 4rem;
+    margin: 10px 0;
+    color: transparent;
+    letter-spacing: 2px;
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #fff, #fff 50%, #ff2a6d 50%, #ff2a6d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(0, 238, 255, 0.3));
+    animation: titleShadow 3s infinite;
+}
+
+/* 标题阴影闪烁而不是整体闪烁 */
+@keyframes titleShadow {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(0, 238, 255, 0.3));
+    }
+    50% {
+        filter: drop-shadow(0 0 12px rgba(255, 42, 109, 0.4));
+    }
+}
+
+.title-text::before, .title-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #fff, #fff 50%, #ff2a6d 50%, #ff2a6d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    mix-blend-mode: overlay;
+}
+
+.title-text::before {
+    left: -2px;
+    top: 0;
+    opacity: 0.3;
+    animation: glitchMove 3s infinite;
+    z-index: -1;
+}
+
+.title-text::after {
+    left: 2px;
+    top: 0;
+    opacity: 0.3;
+    animation: glitchMove 2s infinite reverse;
+    z-index: -2;
+}
+
+/* 新的故障移动动画，不使用clip-path */
+@keyframes glitchMove {
+    0%, 100% {
+        transform: translate(0);
+    }
+    25% {
+        transform: translate(-2px, 1px);
+    }
+    50% {
+        transform: translate(1px, -1px);
+    }
+    75% {
+        transform: translate(1px, 1px);
+    }
+}
+
+/* 闪烁装饰器，作为额外的元素添加闪烁效果 */
+.title-text::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    animation: textBlink 3s infinite;
+}
+
+@keyframes textBlink {
+    0%, 100% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.03;
+        background: rgba(0, 238, 255, 0.1);
+    }
+}
+
+/* 添加箭头图标样式 */
+.arrow-icon {
+    display: inline-block;
+    margin-left: 8px;
+    font-weight: 700;
+    animation: pulse-arrow 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-arrow {
+    0% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(5px);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* 添加赛博面板样式 */
+.cyber-panel {
+    position: relative;
+    border: 1px solid rgba(0, 238, 255, 0.2) !important;
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.2) !important;
+    overflow: hidden;
+    background-color: #000000 !important;
+}
+
+.cyber-panel::before {
+    content: none;
+}
+
+/* 修改历史面板标题 */
+.history-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px rgba(0, 238, 255, 0.3);
+}
+
+/* 添加脉动边框效果 */
+@keyframes borderPulse {
+    0% {
+        border-color: rgba(0, 238, 255, 0.3);
+        box-shadow: 0 0 15px rgba(0, 238, 255, 0.2);
+    }
+    50% {
+        border-color: rgba(255, 42, 109, 0.3);
+        box-shadow: 0 0 20px rgba(255, 42, 109, 0.2);
+    }
+    100% {
+        border-color: rgba(0, 238, 255, 0.3);
+        box-shadow: 0 0 15px rgba(0, 238, 255, 0.2);
+    }
+}
+
+/* 应用脉动边框效果到主要元素 */
+.cyber-panel, .result-panel, .input-container {
+    animation: borderPulse 4s infinite ease-in-out;
+}
+
+/* 改进logo样式 */
+.logo {
+    position: relative;
+    overflow: hidden;
+}
+
+.logo::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 238, 255, 0.2),
+        transparent
+    );
+    transform: skewX(-25deg);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% {
+        left: -100%;
+    }
+    20% {
+        left: 100%;
+    }
+    100% {
+        left: 100%;
+    }
+
+}
+
+/* 改进输入框样式 */
+#prompt-input {
+    position: relative;
+    background-color: rgba(10, 10, 26, 0.8);
+    color: var(--text-color);
+    caret-color: var(--primary-color);
+}
+
+#prompt-input:focus {
+    animation: borderPulse 4s infinite ease-in-out;
+}
+
+/* 改进按钮悬停效果 */
+.send-btn:hover, .login-btn:hover, .cta-button:hover {
+    background: linear-gradient(135deg, rgba(0, 238, 255, 1), rgba(0, 71, 225, 1));
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 0 25px rgba(0, 238, 255, 0.5), 0 0 5px rgba(255, 42, 109, 0.3);
+    letter-spacing: 1.5px;
+}
+
+/* 改进欢迎消息样式 */
+.welcome-message {
+    position: relative;
+}
+
+.welcome-message::before {
+    display: none;
+}
+
+.welcome-message::after {
+    display: none;
+}
+
+/* 改进步骤项悬停效果 */
+.step-item:hover .log-header {
+    background-color: rgba(0, 238, 255, 0.05);
+}
+
+/* 添加终端风格的状态文本 */
+.status-text {
+    font-family: 'Courier New', monospace;
+    color: var(--primary-color) !important;
+}
+
+.status-text::after {
+    content: '|';
+    color: var(--primary-color);
+}
+
+/* 全局文本选择样式 */
+::selection {
+    background: rgba(0, 238, 255, 0.2);
+    color: var(--primary-color);
+}
+
+/* 改进历史面板 */
+.history-panel {
+    background: linear-gradient(180deg, 
+        rgba(22, 24, 36, 0.95), 
+        rgba(15, 15, 30, 0.95)
+    );
+}
+
+/* 自动完成脉冲光点 */
+@keyframes pulse-light {
+    0% {
+        opacity: 0.5;
+        box-shadow: 0 0 5px var(--primary-color);
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 15px var(--primary-color), 0 0 5px var(--error-color);
+    }
+    100% {
+        opacity: 0.5;
+        box-shadow: 0 0 5px var(--primary-color);
+    }
+
+}
+
+/* 添加MANUS INTERFACE页面的样式 */
+.logo-text-large {
+    font-size: 2.8rem;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(0, 238, 255, 0.8);
+    margin: 5px 0;
+    font-weight: 500;
+}
+
+.subtitle-text {
+    font-size: 1.4rem;
+    letter-spacing: 4px;
+    color: #00eeff;
+    margin: 20px 0 20px;
+    font-weight: 500;
+    text-shadow: 0 0 15px rgba(0, 238, 255, 0.8);
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    animation: pulse-light 2s infinite;
+}
+
+.command-text {
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 15px 0;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    position: relative;
+    padding: 15px 0;
+    text-transform: uppercase;
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+.command-text::before, .command-text::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(0, 238, 255, 0.8), 
+        rgba(255, 42, 109, 0.8), 
+        rgba(0, 238, 255, 0.8), 
+        transparent);
+    animation: lineExpand 2.5s forwards;
+    background-size: 200% 100%;
+}
+
+.command-text::before {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.command-text::after {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+@keyframes lineExpand {
+    0% { width: 0; }
+    100% { width: 80%; }
+}
+
+.dash {
+    color: #00eeff;
+    animation: blinkDash 1.5s infinite;
+}
+
+@keyframes blinkDash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* 流动边框动画 */
+@keyframes borderFlow {
+    0% {
+        background-position: 0% 0;
+    }
+    100% {
+        background-position: 400% 0;
+    }
+}
+
+/* 内部发光动画 */
+@keyframes innerGlow {
+    0% {
+        box-shadow: inset 0 0 30px rgba(0, 238, 255, 0.3), 
+                    inset 0 0 15px rgba(255, 42, 109, 0.2);
+    }
+    100% {
+        box-shadow: inset 0 0 50px rgba(0, 238, 255, 0.5), 
+                    inset 0 0 25px rgba(255, 42, 109, 0.3);
+    }
+}
+
+/* 输入框效果增强 */
+#prompt-input {
+    border: 2px solid var(--border-color);
+    background-color: rgba(10, 10, 26, 0.7);
+    box-shadow: 0 0 10px rgba(0, 238, 255, 0.2);
+}
+
+#prompt-input:focus {
+    animation: inputGlow 3s infinite alternate;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.4), 
+                0 0 10px rgba(255, 42, 109, 0.2);
+}
+
+@keyframes inputGlow {
+    0% {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 15px rgba(0, 238, 255, 0.4);
+    }
+    100% {
+        border-color: var(--error-color);
+        box-shadow: 0 0 20px rgba(255, 42, 109, 0.5);
+    }
+}
+
+/* 添加Logo浮动效果 */
+@keyframes logoFloat {
+    0%, 100% {
+        transform: translateY(0);
+        filter: drop-shadow(0 0 15px rgba(0, 238, 255, 0.7));
+    }
+    50% {
+        transform: translateY(-10px);
+        filter: drop-shadow(0 0 25px rgba(0, 238, 255, 0.9)) 
+                drop-shadow(0 0 10px rgba(255, 42, 109, 0.5));
+    }
+}
+
+/* 增强副标题效果 */
+.subtitle-text {
+    text-shadow: 0 0 15px rgba(0, 238, 255, 0.8);
+    animation: subtitlePulse 3s infinite;
+    letter-spacing: 5px;
+}
+
+@keyframes subtitlePulse {
+    0%, 100% {
+        opacity: 0.9;
+        text-shadow: 0 0 15px rgba(0, 238, 255, 0.7);
+    }
+    50% {
+        opacity: 1;
+        text-shadow: 0 0 25px rgba(0, 238, 255, 0.9), 
+                    0 0 10px rgba(255, 42, 109, 0.6);
+        letter-spacing: 6px;
+    }
+}
+
+/* 修复发送按钮悬停效果 */
+.send-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 238, 255, 1), rgba(0, 71, 225, 1));
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 0 25px rgba(0, 238, 255, 0.5), 0 0 5px rgba(255, 42, 109, 0.3);
+    letter-spacing: 1.5px;
+}
+
+.send-btn:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 10px rgba(5, 117, 230, 0.15);
+}
+
+/* 修复输入容器的before/after效果 */
+.input-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    z-index: -1;
+    background: linear-gradient(90deg, 
+        var(--primary-color), 
+        var(--error-color), 
+        var(--success-color), 
+        var(--primary-color));
+    background-size: 400% 100%;
+    animation: borderFlow 8s linear infinite;
+    border-radius: inherit;
+}
+
+.input-container::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    background: var(--bg-color);
+    border-radius: inherit;
+    z-index: -1;
+    box-shadow: inset 0 0 20px rgba(0, 238, 255, 0.2), 
+                inset 0 0 10px rgba(255, 42, 109, 0.1);
+    pointer-events: none;
+}
+
+/* 修复结果面板的after效果 */
+.result-panel::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    background: rgba(15, 15, 30, 0.95);
+    border-radius: inherit;
+    z-index: -1;
+    box-shadow: inset 0 0 20px rgba(0, 238, 255, 0.2), 
+                inset 0 0 10px rgba(255, 42, 109, 0.1);
+    pointer-events: none;
+}
+
+
