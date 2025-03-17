@@ -19,9 +19,20 @@ function createTask() {
     const taskContainer = document.getElementById('task-container');
     const stepsContainer = document.getElementById('steps-container');
     const resultContainer = document.getElementById('result-container');
+    const container = document.querySelector('.container');
+    const resultPanel = document.getElementById('result-panel');
     
-    // Hide result panel
-    hideResultPanel();
+    // 重置容器布局
+    container.classList.remove('with-result');
+    if (window.innerWidth <= 1024) {
+        container.style.width = '98%';
+    }
+    
+    // 确保结果面板完全隐藏
+    if (resultPanel) {
+        resultPanel.classList.add('hidden');
+        resultPanel.style.display = 'none';
+    }
     
     // Hide welcome message, show step loading status
     const welcomeMessage = taskContainer.querySelector('.welcome-message');
@@ -509,8 +520,8 @@ function createStepElement(type, content, timestamp) {
         // Get content preview
         let contentPreview = "";
         if (type === 'think' && content.length > 0) {
-            // Extract the first 50 characters of the thinking content as preview
-            contentPreview = content.substring(0, 50) + (content.length > 50 ? "..." : "");
+            // Extract the first 30 characters of the thinking content as preview
+            contentPreview = content.substring(0, 30) + (content.length > 30 ? "..." : "");
         } else if (type === 'tool' && content.includes('selected')) {
             // Tool selection content remains as is
             contentPreview = content;
@@ -518,25 +529,23 @@ function createStepElement(type, content, timestamp) {
             // Log content remains as is, usually short
             contentPreview = content;
         } else {
-            // Other types take the first 30 characters
-            contentPreview = content.substring(0, 30) + (content.length > 30 ? "..." : "");
+            // Other types take the first 20 characters
+            contentPreview = content.substring(0, 20) + (content.length > 20 ? "..." : "");
         }
 
         step.className = `step-item ${type}`;
         step.dataset.type = type;
         step.dataset.timestamp = timestamp; // 存储时间戳为数据属性
         
-        // 增强时间戳显示格式
-        const formattedTimestamp = `<time>${timestamp}</time>`;
-        
-        // Use modified layout, remove arrow indicator
+        // 确保时间戳显示在log-prefix中，并将步骤类型标签包装在span标签中
         step.innerHTML = `
             <div class="log-header" onclick="toggleStepContent(this)">
                 <div class="log-prefix">
                     <span class="log-prefix-icon">${getEventIcon(type)}</span>
-                    [${formattedTimestamp}] ${getEventLabel(type)}
-                    <span class="content-preview">${contentPreview}</span>
+                    <span>${getEventLabel(type)}</span>
+                    <time>${timestamp}</time>
                 </div>
+                <div class="content-preview">${contentPreview}</div>
                 <div class="step-controls">
                     <span class="minimize-btn" onclick="minimizeStep(event, this)"></span>
                 </div>
@@ -548,16 +557,6 @@ function createStepElement(type, content, timestamp) {
             </div>
         `;
     }
-    
-    // Apply fade-in animation
-    step.style.opacity = '0';
-    step.style.transform = 'translateY(10px)';
-    
-    setTimeout(() => {
-        step.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-        step.style.opacity = '1';
-        step.style.transform = 'translateY(0)';
-    }, 10);
     
     return step;
 }
@@ -598,51 +597,105 @@ function minimizeStep(event, btn) {
 function toggleResultPanel() {
     const resultPanel = document.getElementById('result-panel');
     const container = document.querySelector('.container');
-    if (!resultPanel) return;
     
-    // If panel is already minimized, fully display
-    if (resultPanel.classList.contains('minimized')) {
-        resultPanel.classList.remove('minimized');
-        container.classList.add('with-result');
+    if (resultPanel.classList.contains('hidden')) {
+        showResultPanel();
     } else {
-        // Otherwise minimize panel
-        resultPanel.classList.add('minimized');
-        container.classList.remove('with-result');
+        hideResultPanel();
     }
 }
 
-// Hide result panel
 function hideResultPanel() {
     const resultPanel = document.getElementById('result-panel');
     const container = document.querySelector('.container');
-    if (resultPanel) {
-        resultPanel.classList.add('hidden');
-        resultPanel.classList.remove('minimized'); // Ensure minimized state is reset when hiding
-        container.classList.remove('with-result'); // Remove container style
+    
+    if (!resultPanel) return;
+    
+    resultPanel.classList.add('hidden');
+    container.classList.remove('with-result');
+    
+    // 在移动设备上，调整容器的样式
+    if (window.innerWidth <= 1024) {
+        container.style.width = '98%';
     }
+    
+    // 强制更新DOM以确保隐藏生效
+    setTimeout(() => {
+        resultPanel.style.display = 'none';
+    }, 50);
 }
 
-// Show result panel
 function showResultPanel() {
     const resultPanel = document.getElementById('result-panel');
     const container = document.querySelector('.container');
-    if (resultPanel) {
+    
+    if (!resultPanel) return;
+    
+    // 先设置为可见，然后移除hidden类
+    resultPanel.style.display = '';
+    
+    // 使用setTimeout确保DOM更新
+    setTimeout(() => {
         resultPanel.classList.remove('hidden');
-        resultPanel.classList.remove('minimized'); // Ensure not minimized when showing
-        container.classList.add('with-result'); // Add container style
-    }
+        container.classList.add('with-result');
+        
+        // 在移动设备上，调整容器的样式
+        if (window.innerWidth <= 1024) {
+            container.style.width = '98%';
+        }
+    }, 10);
 }
 
 function autoScroll(element) {
-    requestAnimationFrame(() => {
-        element.scrollTo({
-            top: element.scrollHeight,
-            behavior: 'smooth'
-        });
-    });
-    setTimeout(() => {
+    if (element) {
         element.scrollTop = element.scrollHeight;
-    }, 100);
+    }
+}
+
+// 窗口大小改变时调整布局
+window.addEventListener('resize', function() {
+    const resultPanel = document.getElementById('result-panel');
+    const container = document.querySelector('.container');
+    
+    // 如果不是在隐藏状态，则调整布局
+    if (resultPanel && !resultPanel.classList.contains('hidden')) {
+        if (window.innerWidth <= 1024) {
+            container.style.width = '98%';
+        } else {
+            container.style.width = '';
+            container.classList.add('with-result');
+        }
+    } else if (resultPanel) {
+        // 确保在隐藏状态下结果面板完全隐藏
+        resultPanel.classList.add('hidden');
+        resultPanel.style.display = 'none';
+    }
+    
+    // 调整已有的步骤项布局
+    adjustStepItemsLayout();
+});
+
+// 调整步骤项布局
+function adjustStepItemsLayout() {
+    const stepItems = document.querySelectorAll('.step-item');
+    const isMobile = window.innerWidth <= 768;
+    
+    stepItems.forEach(item => {
+        const logHeader = item.querySelector('.log-header');
+        const contentPreview = item.querySelector('.content-preview');
+        
+        if (isMobile) {
+            if (contentPreview) {
+                contentPreview.style.maxWidth = 'calc(100% - 40px)';
+                contentPreview.style.marginLeft = '34px';
+            }
+        } else {
+            if (contentPreview) {
+                contentPreview.style.maxWidth = '';
+                contentPreview.style.marginLeft = '';
+            }
+        }
+    });
 }
 
 function getEventIcon(type) {
@@ -897,4 +950,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+});
+
+// 页面加载完成时初始化布局
+document.addEventListener('DOMContentLoaded', function() {
+    // 设置初始布局
+    adjustStepItemsLayout();
+    
+    // 初始化历史面板状态
+    const historyPanel = document.querySelector('.history-panel');
+    if (historyPanel) {
+        historyPanel.classList.remove('show');
+    }
+    
+    // 确保结果面板初始隐藏
+    const resultPanel = document.getElementById('result-panel');
+    if (resultPanel) {
+        hideResultPanel();
+    }
+    
+    // 加载历史任务
+    loadHistory();
 });
