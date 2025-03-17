@@ -99,11 +99,11 @@ api_key = "sk-..."  # Replace with your actual API key
 
 One line for run OpenManus:
 
-conda:
+To use the OpenManus under Conda execute the following command:
 ```bash
 python main.py
 ```
-uv:
+To use the OpenManus with UV execute the following command:
 ```bash
 uv run python main.py
 ```
@@ -112,11 +112,11 @@ Then input your idea via terminal!
 
 For unstable version, you also can run:
 
-conda:
+To use the OpenManus under Conda execute the following command:
 ```bash
 python run_flow.py
 ```
-uv:
+To use the OpenManus with UV execute the following command:
 ```bash
 uv run python run_flow.py
 ```
