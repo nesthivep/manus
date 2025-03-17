@@ -25,7 +25,7 @@ class CreateChatCompletion(BaseTool):
 
     def __init__(self, response_type: Optional[Type[Any]] = str) -> None:
         """Initialize with a specific response type."""
-        super().__init__()
+        super().__init__(name=self.name, description=self.description)
         self.response_type = response_type
         self.parameters = self._build_parameters()
 
@@ -53,7 +53,10 @@ class CreateChatCompletion(BaseTool):
                 "required": schema.get("required", self.required),
             }
 
-        return self._create_type_schema(self.response_type)
+        if self.response_type is not None:
+            return self._create_type_schema(self.response_type)
+
+        raise ValueError("response_type cannot be None.")
 
     def _create_type_schema(self, type_hint: Type[Any]) -> Dict[str, Any]:
         """Create a JSON schema for the given type."""
@@ -164,6 +167,9 @@ class CreateChatCompletion(BaseTool):
             return result  # Assuming result is already in correct format
 
         try:
-            return self.response_type(result)
+            if callable(self.response_type):
+                return self.response_type(result)
+            else:
+                return result
         except (ValueError, TypeError):
             return result

@@ -1,7 +1,7 @@
 class ToolError(Exception):
     """Raised when a tool encounters an error."""
 
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = message
 
 

@@ -40,7 +40,10 @@ class ToolCollection:
         return results
 
     def get_tool(self, name: str) -> BaseTool:
-        return self.tool_map.get(name)
+        tool = self.tool_map.get(name)
+        if tool is None:
+            raise ValueError(f"Tool '{name}' not found")
+        return tool
 
     def add_tool(self, tool: BaseTool) -> "ToolCollection":
         self.tools += (tool,)

@@ -208,6 +208,8 @@ class PlanningAgent(ToolCallAgent):
             )
         ]
         self.memory.add_messages(messages)
+        if self.llm is None:
+            raise ValueError("LLM is not initialized")
         response = await self.llm.ask_tool(
             messages=messages,
             system_msgs=[Message.system_message(self.system_prompt)],

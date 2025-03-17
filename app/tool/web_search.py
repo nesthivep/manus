@@ -1,5 +1,5 @@
 import asyncio
-from typing import List
+from typing import Any, Dict, List
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -18,7 +18,7 @@ class WebSearch(BaseTool):
     description: str = """Perform a web search and return a list of relevant links.
     This function attempts to use the primary search engine API to get up-to-date results.
     If an error occurs, it falls back to an alternative search engine."""
-    parameters: dict = {
+    parameters: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "query": {
@@ -39,7 +39,7 @@ class WebSearch(BaseTool):
         "duckduckgo": DuckDuckGoSearchEngine(),
     }
 
-    async def execute(self, **kwargs: Any) -> Coroutine[Any, Any, List[str]]:
+    async def execute(self, **kwargs: Any) -> List[str]:
         """
         Execute a Web search and return a list of URLs.
 
@@ -48,8 +48,11 @@ class WebSearch(BaseTool):
             num_results (int, optional): The number of search results to return. Default is 10.
 
         Returns:
-            Coroutine[Any, Any, List[str]]: A coroutine that returns a list of URLs matching the search query.
+            List[str]: A list of URLs matching the search query.
         """
+        query: str = kwargs.get("query", "")
+        num_results: int = kwargs.get("num_results", 10)
+
         engine_order = self._get_engine_order()
         for engine_name in engine_order:
             engine = self._search_engine[engine_name]
@@ -94,6 +97,10 @@ class WebSearch(BaseTool):
         num_results: int,
     ) -> List[str]:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
+        results = await loop.run_in_executor(
             None, lambda: list(engine.perform_search(query, num_results=num_results))
         )
+        links: List[str] = [
+            result.get("url", "") for result in results if result.get("url")
+        ]
+        return links

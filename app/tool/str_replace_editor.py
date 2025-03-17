@@ -88,18 +88,15 @@ class StrReplaceEditor(BaseTool):
 
     _file_history: defaultdict[Path, List[str]] = defaultdict(list)
 
-    async def execute(
-        self,
-        *,
-        command: Command,
-        path: str,
-        file_text: str | None = None,
-        view_range: List[int] | None = None,
-        old_str: str | None = None,
-        new_str: str | None = None,
-        insert_line: int | None = None,
-        **kwargs: Any,
-    ) -> str:
+    async def execute(self, **kwargs: Any) -> str:
+        command: Any = kwargs.get("command")
+        path: Any = kwargs.get("path")
+        file_text: str | None = kwargs.get("file_text")
+        view_range: List[int] | None = kwargs.get("view_range")
+        old_str: str | None = kwargs.get("old_str")
+        new_str: str | None = kwargs.get("new_str")
+        insert_line: int | None = kwargs.get("insert_line")
+
         _path = Path(path)
         self.validate_path(command, _path)
         if command == "view":

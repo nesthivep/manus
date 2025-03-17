@@ -61,7 +61,10 @@ class PlanningFlow(BaseFlow):
                 return self.agents[key]
 
         # Fallback to primary agent
-        return self.primary_agent
+        if self.primary_agent is not None:
+            return self.primary_agent
+        else:
+            raise ValueError("No executor agent found")
 
     async def execute(self, input_text: str) -> str:
         """Execute the planning flow with agents."""
@@ -93,6 +96,8 @@ class PlanningFlow(BaseFlow):
                 # Execute current step with appropriate agent
                 step_type = step_info.get("type") if step_info else None
                 executor = self.get_executor(step_type)
+                if step_info is None:
+                    raise ValueError("step_info cannot be None")
                 step_result = await self._execute_step(executor, step_info)
                 result += step_result + "\n"
 
@@ -162,7 +167,9 @@ class PlanningFlow(BaseFlow):
             steps=["Analyze request", "Execute task", "Verify results"],
         )
 
-    async def _get_current_step_info(self) -> tuple[Optional[int], Optional[dict]]:
+    async def _get_current_step_info(
+        self,
+    ) -> tuple[Optional[int], Optional[Dict[str, Any]]]:
         """
         Parse the current plan to identify the first non-completed step's index and info.
         Returns (None, None) if no active step is found.
@@ -389,6 +396,8 @@ class PlanningFlow(BaseFlow):
 
                 Please provide a summary of what was accomplished and any final thoughts.
                 """
+                if agent is None:
+                    raise ValueError("Agent is not initialized")
                 summary = await agent.run(summary_prompt)
                 return f"Plan completed:\n\n{summary}"
             except Exception as e2:

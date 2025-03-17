@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Sequence, TypeVar, Union
+from typing import Any, Collection, Dict, List, Optional, Sequence, Union
 
 import tiktoken
 from openai import (
@@ -30,18 +30,13 @@ from app.schema import (
 
 REASONING_MODELS = ["o1", "o3-mini"]
 
-T = TypeVar("T", bound="LLM")
-
 
 class LLM:
     _instances: Dict[str, "LLM"] = {}
 
-    @classmethod
     def __new__(
-        cls: type[T],
-        config_name: str = "default",
-        llm_config: Optional[LLMSettings] = None,
-    ) -> T:
+        cls, config_name: str = "default", llm_config: Optional[LLMSettings] = None
+    ) -> "LLM":
         if config_name not in cls._instances:
             instance = super().__new__(cls)
             instance.__init__(config_name, llm_config)
@@ -52,22 +47,35 @@ class LLM:
         self, config_name: str = "default", llm_config: Optional[LLMSettings] = None
     ) -> None:
         if not hasattr(self, "client"):  # Only initialize if not already initialized
-            llm_config = llm_config or config.llm
-            llm_config = llm_config.get(config_name, llm_config["default"])
-            self.model = llm_config.model
-            self.max_tokens = llm_config.max_tokens
-            self.temperature = llm_config.temperature
-            self.api_type = llm_config.api_type
-            self.api_key = llm_config.api_key
-            self.api_version = llm_config.api_version
-            self.base_url = llm_config.base_url
+            if llm_config is None:
+                if isinstance(config.llm, dict):
+                    llm_config = config.llm.get(
+                        config_name
+                    )  # Extract LLMSettings for the given config_name
+                else:
+                    llm_config = config.llm
+            if isinstance(llm_config, LLMSettings):
+                llm_config_dict = llm_config.dict()
+                llm_config_dict = llm_config_dict.get(
+                    config_name, llm_config["default"]
+                )
+            else:
+                raise ValueError("llm_config must be an instance of LLMSettings")
+
+            self.model: str = llm_config_dict.get("model", "default_model")
+            self.max_tokens: int = llm_config_dict.get("max_tokens", 100)
+            self.temperature: float = llm_config_dict.get("temperature", 1.0)
+            self.api_type: str = llm_config_dict.get("api_type", "openai")
+            self.api_key: str = llm_config_dict.get("api_key", "")
+            self.api_version: str = llm_config_dict.get("api_version", "v1")
+            self.base_url: str = llm_config_dict.get(
+                "base_url", "https://api.openai.com"
+            )
 
             # Add token counting related attributes
-            self.total_input_tokens = 0
-            self.max_input_tokens = (
-                llm_config.max_input_tokens
-                if hasattr(llm_config, "max_input_tokens")
-                else None
+            self.total_input_tokens: int = 0
+            self.max_input_tokens: Optional[int] = llm_config_dict.get(
+                "max_input_tokens"
             )
 
             # Initialize tokenizer
@@ -92,7 +100,7 @@ class LLM:
             return 0
         return len(self.tokenizer.encode(text))
 
-    def count_message_tokens(self, messages: List[dict]) -> int:
+    def count_message_tokens(self, messages: List[Dict[str, Any]]) -> int:
         """Calculate the number of tokens in a message list"""
         token_count = 0
         for message in messages:
@@ -248,7 +256,7 @@ class LLM:
                 formatted_messages = self.format_messages(messages)
 
             # Calculate input token count
-            input_tokens = self.count_message_tokens(messages)
+            input_tokens = self.count_message_tokens(formatted_messages)
 
             # Check if token limits are exceeded
             if not self.check_token_limit(input_tokens):
@@ -256,7 +264,7 @@ class LLM:
                 # Raise a special exception that won't be retried
                 raise TokenLimitExceeded(error_message)
 
-            params = {
+            params: Dict[str, Union[int, float, bool, Sequence[Collection[str]]]] = {
                 "model": self.model,
                 "messages": formatted_messages,
             }
@@ -281,7 +289,7 @@ class LLM:
                 # Update token counts
                 self.update_token_count(response.usage.prompt_tokens)
 
-                return response.choices[0].message.content
+                return str(response.choices[0].message.content)
 
             # Streaming request, For streaming, update estimated token count before making the request
             self.update_token_count(input_tokens)
@@ -370,7 +378,10 @@ class LLM:
                 messages = self.format_messages(messages)
 
             # Calculate input token count
-            input_tokens = self.count_message_tokens(messages)
+            messages_list: List[Dict[str, Any]] = [
+                msg.dict() if isinstance(msg, Message) else msg for msg in messages
+            ]  # Convert messages Sequence to a list of dictionaries
+            input_tokens = self.count_message_tokens(messages_list)
 
             # If there are tools, calculate token count for tool descriptions
             tools_tokens = 0
@@ -395,7 +406,7 @@ class LLM:
             # Set up the completion request
             params: Dict[str, Any] = {
                 "model": self.model,
-                "messages": formatted_messages,
+                "messages": messages,
                 "tools": tools,
                 "tool_choice": tool_choice,
                 "timeout": timeout,

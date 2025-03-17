@@ -4,6 +4,10 @@ from app.exceptions import ToolError
 from app.tool.base import BaseTool, ToolResult
 
 
+Command = Literal[
+    "create", "update", "list", "get", "set_active", "mark_step", "delete"
+]
+
 _PLANNING_TOOL_DESCRIPTION = """
 A planning tool that allows the agent to create and manage plans for solving complex tasks.
 The tool provides functionality for creating plans, updating plan steps, and tracking progress.
@@ -81,9 +85,7 @@ class PlanningTool(BaseTool):
         - step_status: Status to set for a step (used with mark_step command)
         - step_notes: Additional notes for a step (used with mark_step command)
         """
-        command: Literal[
-            "create", "update", "list", "get", "set_active", "mark_step", "delete"
-        ] = kwargs.get("command")
+        command: Command = kwargs.get("command", "list")
         plan_id: Optional[str] = kwargs.get("plan_id")
         title: Optional[str] = kwargs.get("title")
         steps: Optional[List[str]] = kwargs.get("steps")

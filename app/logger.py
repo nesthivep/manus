@@ -12,8 +12,8 @@ _print_level: str = "INFO"
 
 def define_log_level(
     print_level: str = "INFO", logfile_level: str = "DEBUG", name: Optional[str] = None
-) -> None:
-    """Adjust the log level to above level"""
+) -> _logger:
+    """Adjust the log level to above level and return the logger."""
     global _print_level
     _print_level = print_level
 
@@ -26,6 +26,8 @@ def define_log_level(
     _logger.remove()
     _logger.add(sys.stderr, level=print_level)
     _logger.add(PROJECT_ROOT / f"logs/{log_name}.log", level=logfile_level)
+
+    return _logger
 
 
 logger = define_log_level()

@@ -42,6 +42,8 @@ class ToolCallAgent(ReActAgent):
 
         try:
             # Get response with tool options
+            if self.llm is None:
+                raise ValueError("LLM is not initialized")
             response = await self.llm.ask_tool(
                 messages=self.messages,
                 system_msgs=[Message.system_message(self.system_prompt)]
@@ -95,7 +97,8 @@ class ToolCallAgent(ReActAgent):
             # Create and add assistant message
             assistant_msg = (
                 Message.from_tool_calls(
-                    content=response.content, tool_calls=self.tool_calls
+                    content=response.content,
+                    tool_calls=[tool_call.dict() for tool_call in self.tool_calls],
                 )
                 if self.tool_calls
                 else Message.assistant_message(response.content)

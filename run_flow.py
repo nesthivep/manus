@@ -1,6 +1,6 @@
 import asyncio
 import time
-from typing import Mapping
+from typing import Dict
 
 from app.agent.base import BaseAgent
 from app.agent.manus import Manus
@@ -10,7 +10,7 @@ from app.logger import logger
 
 
 async def run_flow() -> None:
-    agents: Mapping[str, BaseAgent] = {
+    agents: Dict[str, BaseAgent] = {
         "manus": Manus(),
     }
 

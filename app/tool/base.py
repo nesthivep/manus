@@ -51,7 +51,7 @@ class ToolResult(BaseModel):
         ) -> Optional[str]:
             if field and other_field:
                 if concatenate:
-                    return field + other_field  # type: ignore
+                    return field + other_field
                 raise ValueError("Cannot combine tool results")
             return field or other_field
 

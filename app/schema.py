@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union, cast
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +14,7 @@ class Role(str, Enum):
 
 
 ROLE_VALUES = tuple(role.value for role in Role)
-ROLE_TYPE = Literal[ROLE_VALUES]  # type: ignore
+ROLE_TYPE = Literal[Role.SYSTEM, Role.USER, Role.ASSISTANT, Role.TOOL]
 
 
 class ToolChoice(str, Enum):
@@ -54,7 +54,7 @@ class ToolCall(BaseModel):
 class Message(BaseModel):
     """Represents a chat message in the conversation"""
 
-    role: ROLE_TYPE = Field(...)  # type: ignore
+    role: ROLE_TYPE = Field(...)
     content: Optional[str] = Field(default=None)
     tool_calls: Optional[List[ToolCall]] = Field(default=None)
     name: Optional[str] = Field(default=None)
@@ -82,7 +82,7 @@ class Message(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert message to dictionary format"""
-        message = {"role": self.role}
+        message: Dict[str, Any] = {"role": cast(str, self.role)}
         if self.content is not None:
             message["content"] = self.content
         if self.tool_calls is not None:
@@ -117,7 +117,10 @@ class Message(BaseModel):
 
     @classmethod
     def from_tool_calls(
-        cls, tool_calls: List[Any], content: Union[str, List[str]] = "", **kwargs: Any
+        cls,
+        tool_calls: List[Dict[str, Any]],
+        content: Union[str, List[str]] = "",
+        **kwargs: Any,
     ) -> "Message":
         """Create ToolCallsMessage from raw tool calls.
 
@@ -126,11 +129,14 @@ class Message(BaseModel):
             content: Optional message content
         """
         formatted_calls = [
-            {"id": call.id, "function": call.function.model_dump(), "type": "function"}
+            {"id": call["id"], "function": call["function"], "type": "function"}
             for call in tool_calls
         ]
         return cls(
-            role=Role.ASSISTANT, content=content, tool_calls=formatted_calls, **kwargs
+            role=Role.ASSISTANT,
+            content=content if isinstance(content, str) else "",
+            tool_calls=formatted_calls,
+            **kwargs,
         )
 
 

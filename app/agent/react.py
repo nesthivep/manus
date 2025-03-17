@@ -15,7 +15,7 @@ class ReActAgent(BaseAgent, ABC):
     system_prompt: Optional[str] = None
     next_step_prompt: Optional[str] = None
 
-    llm: Optional[LLM] = Field(default_factory=LLM)
+    llm: LLM = Field(default_factory=LLM)
     memory: Memory = Field(default_factory=Memory)
     state: AgentState = AgentState.IDLE
 
