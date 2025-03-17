@@ -10,7 +10,9 @@ class GoogleSearchEngine(WebSearchEngine):
             # Ensure num_results is an integer
             num_results_int = int(num_results)
             # Add default parameters to avoid errors
-            results = list(search(query, num_results=num_results_int, lang="fr", advanced=False))
+            results = list(
+                search(query, num_results=num_results_int, lang="fr", advanced=False)
+            )
             # Convert to expected format - list of dictionaries with at least a URL
             formatted_results = []
             for url in results:

@@ -52,17 +52,21 @@ class WebSearch(BaseTool):
         """
         engine_order = self._get_engine_order()
         all_errors = []
-        
+
         for engine_name in engine_order:
             engine = self._search_engine[engine_name]
             try:
                 # Ensure num_results is an integer
-                num_results_int = int(num_results) if not isinstance(num_results, int) else num_results
-                
+                num_results_int = (
+                    int(num_results)
+                    if not isinstance(num_results, int)
+                    else num_results
+                )
+
                 links = await self._perform_search_with_engine(
                     engine, query, num_results_int
                 )
-                
+
                 # Verify results are in the correct format
                 if links and isinstance(links, list):
                     # Extract URLs from results (which may be dictionaries)
@@ -72,18 +76,18 @@ class WebSearch(BaseTool):
                             urls.append(item["href"])
                         elif isinstance(item, str):
                             urls.append(item)
-                    
+
                     if urls:  # If we found URLs, return them
                         return urls
             except Exception as e:
                 error_msg = f"Search engine '{engine_name}' failed with error: {e}"
                 print(error_msg)
                 all_errors.append(error_msg)
-        
+
         # If all engines failed, display a detailed error message
         if all_errors:
             print(f"All search engines failed. Errors: {', '.join(all_errors)}")
-        
+
         return []
 
     def _get_engine_order(self) -> List[str]:
@@ -109,7 +113,7 @@ class WebSearch(BaseTool):
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        reraise=True
+        reraise=True,
     )
     async def _perform_search_with_engine(
         self,
@@ -119,8 +123,10 @@ class WebSearch(BaseTool):
     ) -> List[str]:
         try:
             # Ensure num_results is an integer to avoid type errors
-            num_results_int = int(num_results) if not isinstance(num_results, int) else num_results
-            
+            num_results_int = (
+                int(num_results) if not isinstance(num_results, int) else num_results
+            )
+
             # Define a function that handles all possible error types
             def safe_search():
                 try:
@@ -145,10 +151,10 @@ class WebSearch(BaseTool):
                 except Exception as e:
                     print(f"Error caught within safe_search: {str(e)}")
                     return []
-            
+
             loop = asyncio.get_event_loop()
             results = await loop.run_in_executor(None, safe_search)
-            
+
             return results
         except Exception as e:
             # Capture and propagate all other exceptions
