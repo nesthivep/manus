@@ -51,16 +51,39 @@ class WebSearch(BaseTool):
             List[str]: A list of URLs matching the search query.
         """
         engine_order = self._get_engine_order()
+        all_errors = []
+        
         for engine_name in engine_order:
             engine = self._search_engine[engine_name]
             try:
+                # S'assurer que num_results est un entier
+                num_results_int = int(num_results) if not isinstance(num_results, int) else num_results
+                
                 links = await self._perform_search_with_engine(
-                    engine, query, num_results
+                    engine, query, num_results_int
                 )
-                if links:
-                    return links
+                
+                # Vérifier que les résultats sont au bon format
+                if links and isinstance(links, list):
+                    # Extraire les URLs des résultats (qui peuvent être des dictionnaires)
+                    urls = []
+                    for item in links:
+                        if isinstance(item, dict) and "href" in item:
+                            urls.append(item["href"])
+                        elif isinstance(item, str):
+                            urls.append(item)
+                    
+                    if urls:  # Si nous avons trouvé des URLs, les retourner
+                        return urls
             except Exception as e:
-                print(f"Search engine '{engine_name}' failed with error: {e}")
+                error_msg = f"Search engine '{engine_name}' failed with error: {e}"
+                print(error_msg)
+                all_errors.append(error_msg)
+        
+        # Si tous les moteurs ont échoué, afficher un message d'erreur détaillé
+        if all_errors:
+            print(f"All search engines failed. Errors: {', '.join(all_errors)}")
+        
         return []
 
     def _get_engine_order(self) -> List[str]:
@@ -86,6 +109,7 @@ class WebSearch(BaseTool):
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
+        reraise=True
     )
     async def _perform_search_with_engine(
         self,
@@ -93,7 +117,40 @@ class WebSearch(BaseTool):
         query: str,
         num_results: int,
     ) -> List[str]:
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, lambda: list(engine.perform_search(query, num_results=num_results))
-        )
+        try:
+            # S'assurer que num_results est un entier pour éviter les erreurs de type
+            num_results_int = int(num_results) if not isinstance(num_results, int) else num_results
+            
+            # Définir une fonction qui gère tous les types d'erreurs possibles
+            def safe_search():
+                try:
+                    results = engine.perform_search(query, num_results=num_results_int)
+                    # Vérifier si les résultats sont itérables avant de tenter de les convertir en liste
+                    if results is None:
+                        return []
+                    if isinstance(results, (list, tuple)):
+                        return list(results)
+                    try:
+                        # Si c'est un itérable mais pas une liste/tuple, essayer de le convertir
+                        return list(results)
+                    except:
+                        # Si la conversion a échoué, retourner les résultats tels quels s'ils semblent valides
+                        if results:
+                            return [results]
+                        return []
+                except TypeError as e:
+                    # Gérer explicitement les erreurs de type sans les propager
+                    print(f"Type error caught within safe_search: {str(e)}")
+                    return []
+                except Exception as e:
+                    print(f"Error caught within safe_search: {str(e)}")
+                    return []
+            
+            loop = asyncio.get_event_loop()
+            results = await loop.run_in_executor(None, safe_search)
+            
+            return results
+        except Exception as e:
+            # Capturer et propager toutes les autres exceptions
+            print(f"Unexpected error in _perform_search_with_engine: {str(e)}")
+            raise
