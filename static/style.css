@@ -615,6 +615,15 @@ body {
     min-width: 0; /* 允许flex项目收缩 */
 }
 
+/* 增强时间戳显示 */
+.log-prefix time {
+    font-weight: 500;
+    color: #0575E6;
+    padding: 0 5px;
+    background-color: rgba(5, 117, 230, 0.05);
+    border-radius: 3px;
+}
+
 .content-preview {
     margin-left: 10px;
     white-space: nowrap;

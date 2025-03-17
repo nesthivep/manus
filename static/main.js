@@ -69,6 +69,7 @@ function setupSSE(taskId) {
     const maxRetries = 3;
     const retryDelay = 2000;
     let lastResultContent = '';
+    let stepsData = [];
 
     const stepsContainer = document.getElementById('steps-container');
     const resultContainer = document.getElementById('result-container');
@@ -104,21 +105,36 @@ function setupSSE(taskId) {
                 const loadingDiv = stepsContainer.querySelector('.loading');
                 if (loadingDiv) loadingDiv.remove();
 
-                const { formattedContent, timestamp } = formatStepContent(data, type);
-                const step = createStepElement(type, formattedContent, timestamp);
-
-                // Remove active status from other steps
+                const { formattedContent, timestamp, isoTimestamp } = formatStepContent(data, type);
+                
+                stepsData.push({
+                    type: type,
+                    content: formattedContent,
+                    timestamp: timestamp,
+                    isoTimestamp: isoTimestamp,
+                    element: createStepElement(type, formattedContent, timestamp)
+                });
+                
+                stepsData.sort((a, b) => {
+                    return new Date(a.isoTimestamp) - new Date(b.isoTimestamp);
+                });
+                
+                stepsContainer.innerHTML = '';
+                stepsData.forEach(step => {
+                    stepsContainer.appendChild(step.element);
+                });
+                
                 document.querySelectorAll('.step-item').forEach(item => {
                     item.classList.remove('active');
                 });
                 
-                // Add active status to current step
-                step.classList.add('active');
+                const latestStep = stepsData[stepsData.length - 1];
+                if (latestStep && latestStep.element) {
+                    latestStep.element.classList.add('active');
+                }
                 
-                stepsContainer.appendChild(step);
                 autoScroll(stepsContainer);
                 
-                // Update result panel and show (but only for certain types of steps)
                 if (type === 'tool' || type === 'act' || type === 'result') {
                     updateResultPanel(data, type);
                     showResultPanel();
@@ -394,26 +410,57 @@ function loadTask(taskId) {
             
             stepsContainer.innerHTML = '';
             if (task.steps && task.steps.length > 0) {
+                // 存储步骤集合
+                let taskSteps = [];
+                
                 task.steps.forEach((step, index) => {
+                    const stepTimestamp = new Date(step.created_at || task.created_at).toLocaleTimeString();
                     const stepElement = createStepElement(
                         step.type, 
                         step.result, 
-                        new Date(task.created_at).toLocaleTimeString()
+                        stepTimestamp
                     );
                     
-                    // All steps are collapsed by default
-                    // Only the last step is set to expanded state
-                    if (index === task.steps.length - 1) {
-                        // Expand the last step
-                        stepElement.classList.add('expanded');
-                        stepElement.classList.add('active');
+                    // 将步骤添加到集合而非直接添加到DOM
+                    taskSteps.push({
+                        index: index,
+                        timestamp: stepTimestamp,
+                        element: stepElement,
+                        step: step
+                    });
+                });
+                
+                // 根据时间戳和索引排序步骤
+                taskSteps.sort((a, b) => {
+                    // 尝试使用ISO时间戳进行比较
+                    try {
+                        // 如果步骤数据中包含created_at字段，使用它来排序
+                        if (a.step.created_at && b.step.created_at) {
+                            return new Date(a.step.created_at) - new Date(b.step.created_at);
+                        }
+                    } catch (e) {
+                        console.error('Error sorting by ISO timestamp:', e);
                     }
                     
-                    stepsContainer.appendChild(stepElement);
+                    // 首先按时间戳排序
+                    const timeCompare = new Date(a.timestamp) - new Date(b.timestamp);
+                    // 如果时间相同，按索引排序
+                    return timeCompare !== 0 ? timeCompare : a.index - b.index;
+                });
+                
+                // 将排序后的步骤添加到容器
+                taskSteps.forEach((stepData, index) => {
+                    // 只将最后一个步骤设为展开状态
+                    if (index === taskSteps.length - 1) {
+                        stepData.element.classList.add('expanded');
+                        stepData.element.classList.add('active');
+                    }
                     
-                    // Show the result of the last step
-                    if (index === task.steps.length - 1) {
-                        updateResultPanel({result: step.result}, step.type);
+                    stepsContainer.appendChild(stepData.element);
+                    
+                    // 显示最后一个步骤的结果
+                    if (index === taskSteps.length - 1) {
+                        updateResultPanel({result: stepData.step.result}, stepData.step.type);
                         showResultPanel();
                     }
                 });
@@ -430,9 +477,15 @@ function loadTask(taskId) {
 }
 
 function formatStepContent(data, eventType) {
+    // 创建具有ISO格式的时间戳，确保排序一致性
+    const now = new Date();
+    const isoTimestamp = now.toISOString();
+    const localTime = now.toLocaleTimeString();
+    
     return {
         formattedContent: data.result || (data.message || JSON.stringify(data)),
-        timestamp: new Date().toLocaleTimeString()
+        timestamp: localTime,
+        isoTimestamp: isoTimestamp // 添加ISO格式时间戳，用于排序
     };
 }
 
@@ -471,13 +524,17 @@ function createStepElement(type, content, timestamp) {
 
         step.className = `step-item ${type}`;
         step.dataset.type = type;
+        step.dataset.timestamp = timestamp; // 存储时间戳为数据属性
+        
+        // 增强时间戳显示格式
+        const formattedTimestamp = `<time>${timestamp}</time>`;
         
         // Use modified layout, remove arrow indicator
         step.innerHTML = `
             <div class="log-header" onclick="toggleStepContent(this)">
                 <div class="log-prefix">
                     <span class="log-prefix-icon">${getEventIcon(type)}</span>
-                    [${timestamp}] ${getEventLabel(type)}
+                    [${formattedTimestamp}] ${getEventLabel(type)}
                     <span class="content-preview">${contentPreview}</span>
                 </div>
                 <div class="step-controls">
