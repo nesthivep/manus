@@ -56,16 +56,16 @@ class WebSearch(BaseTool):
         for engine_name in engine_order:
             engine = self._search_engine[engine_name]
             try:
-                # S'assurer que num_results est un entier
+                # Ensure num_results is an integer
                 num_results_int = int(num_results) if not isinstance(num_results, int) else num_results
                 
                 links = await self._perform_search_with_engine(
                     engine, query, num_results_int
                 )
                 
-                # Vérifier que les résultats sont au bon format
+                # Verify results are in the correct format
                 if links and isinstance(links, list):
-                    # Extraire les URLs des résultats (qui peuvent être des dictionnaires)
+                    # Extract URLs from results (which may be dictionaries)
                     urls = []
                     for item in links:
                         if isinstance(item, dict) and "href" in item:
@@ -73,14 +73,14 @@ class WebSearch(BaseTool):
                         elif isinstance(item, str):
                             urls.append(item)
                     
-                    if urls:  # Si nous avons trouvé des URLs, les retourner
+                    if urls:  # If we found URLs, return them
                         return urls
             except Exception as e:
                 error_msg = f"Search engine '{engine_name}' failed with error: {e}"
                 print(error_msg)
                 all_errors.append(error_msg)
         
-        # Si tous les moteurs ont échoué, afficher un message d'erreur détaillé
+        # If all engines failed, display a detailed error message
         if all_errors:
             print(f"All search engines failed. Errors: {', '.join(all_errors)}")
         
@@ -118,28 +118,28 @@ class WebSearch(BaseTool):
         num_results: int,
     ) -> List[str]:
         try:
-            # S'assurer que num_results est un entier pour éviter les erreurs de type
+            # Ensure num_results is an integer to avoid type errors
             num_results_int = int(num_results) if not isinstance(num_results, int) else num_results
             
-            # Définir une fonction qui gère tous les types d'erreurs possibles
+            # Define a function that handles all possible error types
             def safe_search():
                 try:
                     results = engine.perform_search(query, num_results=num_results_int)
-                    # Vérifier si les résultats sont itérables avant de tenter de les convertir en liste
+                    # Check if results are iterable before attempting to convert to list
                     if results is None:
                         return []
                     if isinstance(results, (list, tuple)):
                         return list(results)
                     try:
-                        # Si c'est un itérable mais pas une liste/tuple, essayer de le convertir
+                        # If it's iterable but not a list/tuple, try to convert it
                         return list(results)
                     except:
-                        # Si la conversion a échoué, retourner les résultats tels quels s'ils semblent valides
+                        # If conversion failed, return results as-is if they seem valid
                         if results:
                             return [results]
                         return []
                 except TypeError as e:
-                    # Gérer explicitement les erreurs de type sans les propager
+                    # Explicitly handle type errors without propagating them
                     print(f"Type error caught within safe_search: {str(e)}")
                     return []
                 except Exception as e:
@@ -151,6 +151,6 @@ class WebSearch(BaseTool):
             
             return results
         except Exception as e:
-            # Capturer et propager toutes les autres exceptions
+            # Capture and propagate all other exceptions
             print(f"Unexpected error in _perform_search_with_engine: {str(e)}")
             raise

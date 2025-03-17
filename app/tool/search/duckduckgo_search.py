@@ -7,11 +7,11 @@ class DuckDuckGoSearchEngine(WebSearchEngine):
     def perform_search(self, query, num_results=10, *args, **kwargs):
         """DuckDuckGo search engine."""
         try:
-            # Convertir num_results en entier pour éviter les problèmes de type
+            # Convert num_results to integer to avoid type problems
             max_results = int(num_results)
             
             with DDGS() as ddgs:
-                # Utiliser les paramètres de base et s'assurer que max_results est un entier
+                # Use basic parameters and ensure max_results is an integer
                 results = list(ddgs.text(
                     keywords=query,
                     region="fr-fr",
@@ -19,7 +19,7 @@ class DuckDuckGoSearchEngine(WebSearchEngine):
                     max_results=max_results
                 ))
                 
-                # Formater les résultats correctement
+                # Format results correctly
                 formatted_results = []
                 for result in results:
                     if isinstance(result, dict) and "href" in result:

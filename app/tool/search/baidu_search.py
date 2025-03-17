@@ -5,18 +5,18 @@ class BaiduSearchEngine(WebSearchEngine):
     def perform_search(self, query, num_results=10, *args, **kwargs):
         """Baidu search engine."""
         try:
-            # Importer baidusearch seulement si nécessaire
-            # car le package peut ne pas être installé
+            # Import baidusearch only if necessary
+            # because the package might not be installed
             from baidusearch.baidusearch import search
             
-            # Convertir num_results en entier pour éviter les problèmes de type
+            # Convert num_results to integer to avoid type problems
             num_results_int = int(num_results)
             
-            # Contourner le problème de type en utilisant une implémentation simplifiée
-            # Au lieu d'utiliser directement l'API qui peut avoir des problèmes de type
+            # Work around the type problem using a simplified implementation
+            # Instead of directly using the API which may have type problems
             formatted_results = []
             try:
-                # Essayer d'utiliser l'API malgré tout
+                # Try to use the API anyway
                 results = search(query, num_results=num_results_int)
                 for result in results:
                     if isinstance(result, str):
@@ -24,8 +24,8 @@ class BaiduSearchEngine(WebSearchEngine):
                     elif isinstance(result, dict) and "url" in result:
                         formatted_results.append({"href": result["url"], "title": result.get("title", result["url"])})
             except TypeError:
-                # Si ça échoue, simuler un résultat vide
-                # Ce bloc est exécuté quand l'erreur '<' not supported between instances of 'int' and 'str' se produit
+                # If it fails, simulate an empty result
+                # This block is executed when the error '<' not supported between instances of 'int' and 'str' occurs
                 print("Baidu search returned a TypeError, returning empty results")
             
             return formatted_results
