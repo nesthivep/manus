@@ -24,8 +24,8 @@ async def main():
 if __name__ == "__main__":
     # Fix for Windows asyncio pipe issues
     if sys.platform == 'win32':
-        # Use the selector event loop policy on Windows to avoid pipe errors
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        # Use the Proactor event loop policy on Windows to avoid pipe errors
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
     
     try:
         asyncio.run(main())
