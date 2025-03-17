@@ -99,6 +99,11 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+@app.get("/chat", response_class=HTMLResponse)
+async def chat(request: Request):
+    return templates.TemplateResponse("chat.html", {"request": request})
+
+
 @app.get("/download")
 async def download_file(file_path: str):
     if not os.path.exists(file_path):

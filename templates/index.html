@@ -3,37 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenManus Local Version</title>
+    <title>OpenManus - Autonomous AI Agent</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="history-panel">
-            <h2>History Tasks</h2>
-            <div id="task-list" class="task-list"></div>
-        </div>
-
-        <div class="main-panel">
-            <div id="task-container" class="task-container">
-                <div class="welcome-message">
-                    <h1>Welcome to OpenManus Local Version</h1>
-                    <p>Please enter a task prompt to start a new task</p>
-                </div>
-                <div id="log-container" class="step-container"></div>
+    <div class="home-container">
+        <div class="hero-section">
+            <div class="floating-emojis">
+                <span class="emoji" style="--delay: 0s">🤖</span>
+                <span class="emoji" style="--delay: 2s">🧠</span>
+                <span class="emoji" style="--delay: 4s">⚡</span>
+                <span class="emoji" style="--delay: 6s">🔮</span>
+                <span class="emoji" style="--delay: 8s">🎯</span>
             </div>
-
-            <div id="input-container" class="input-container">
-                <input
-                    type="text"
-                    id="prompt-input"
-                    placeholder="Enter task prompt..."
-                    onkeypress="if(event.keyCode === 13) createTask()"
-                >
-                <button onclick="createTask()">Create Task</button>
-            </div>
+            <h1 class="title">OpenManus</h1>
+            <p class="subtitle">Your Autonomous AI Agent</p>
+            <p class="description">Powered by advanced LLMs and equipped with diverse tools.<br>OpenManus autonomously solves complex tasks through reasoning.</p>
+            <a href="/chat" class="cta-button">START</a>
         </div>
     </div>
-
     <script src="/static/main.js"></script>
 </body>
-</html>
+</html> 
