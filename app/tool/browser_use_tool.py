@@ -51,6 +51,7 @@ class BrowserUseTool(BaseTool):
                     "screenshot",
                     "get_html",
                     "get_text",
+                    "read_links",
                     "execute_js",
                     "scroll",
                     "switch_tab",
@@ -239,7 +240,7 @@ class BrowserUseTool(BaseTool):
 
                 elif action == "read_links":
                     links = await context.execute_javascript(
-                        "document.querySelectorAll('a[href]').forEach((elem) => {if (elem.innerText) {console.log(elem.innerText, elem.href)}})"
+                        "Array.from(document.querySelectorAll('a[href]')).filter(el => el.innerText).map(el => `${el.innerText.trim()}: ${el.href}`).join('\\n')"
                     )
                     return ToolResult(output=links)
 
