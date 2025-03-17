@@ -5,10 +5,10 @@ base_url = "https://api.anthropic.com/v1/"  # API endpoint URL
 api_key = "YOUR_API_KEY"                    # Your API key
 max_tokens = 8192                           # Maximum number of tokens in the response
 temperature = 0.0                           # Controls randomness
-# rpm_limit = 10                            # Optional: Maximum requests per minute (e.g., 10 RPM)
-# tpm_limit = 4000000                       # Optional: Maximum tokens per minute (e.g., 4M TPM)
-# itpm_limit = 2000000                      # Optional: Maximum input tokens per minute (e.g., 2M ITPM)
-# otpm_limit = 2000000                      # Optional: Maximum output tokens per minute (e.g., 2M OTPM)
+rpm_limit = 50                            # Optional: Maximum requests per minute (e.g., 10 RPM)
+# tpm_limit = 4000000                       # Optional: Maximum tokens per minute (Claude doesn't have this)
+itpm_limit = 20000                      # Optional: Maximum input tokens per minute (e.g., 20k ITPM)
+otpm_limit = 8000                      # Optional: Maximum output tokens per minute (e.g., 8k OTPM)
 
 # [llm] #AZURE OPENAI:
 # api_type= 'azure'
