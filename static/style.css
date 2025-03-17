@@ -130,12 +130,11 @@ body::before {
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 0 20px rgba(0, 238, 255, 0.2);
-    overflow: auto;
+    overflow: auto; /* 确保可以滚动 */
     transition: width 0.3s ease;
     border: 2px solid transparent !important;
     box-shadow: 0 0 20px rgba(0, 238, 255, 0.3) !important;
     position: relative;
-    overflow: hidden;
     z-index: 1;
 }
 
@@ -176,11 +175,12 @@ body::before {
     box-shadow: 0 0 20px rgba(0, 238, 255, 0.3) !important;
     border-radius: 8px;
     padding: 12px;
-    overflow: hidden; /* 保持为hidden */
-    transition: transform 0.3s ease;
+    overflow: hidden; /* 外层保持hidden，防止边界溢出 */
+    transition: transform 0.3s ease, opacity 0.3s ease;
     z-index: 10;
     display: flex;
     flex-direction: column;
+    opacity: 1;
 }
 
 .result-panel::before, .result-panel::after {
@@ -202,7 +202,8 @@ body::before {
 
 .result-panel.hidden {
     transform: translateX(calc(100% + 10px)); /* Restore slide-out effect to the right */
-    display: none !important; /* 确保在所有设备上都隐藏 */
+    opacity: 0;
+    pointer-events: none;
 }
 
 .result-panel.minimized {
@@ -319,12 +320,14 @@ body::before {
 .result-container {
     width: 100%;
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     margin-top: 0;
     padding: 5px;
     font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
     background-color: transparent;
     color: rgba(255, 255, 255, 0.85);
+    max-height: calc(100vh - 200px); /* 确保有最大高度限制 */
 }
 
 .result-container p,
@@ -2571,6 +2574,37 @@ button {
     border: 1px solid var(--border-color);
     color: var(--primary-color);
     flex-shrink: 0;
+}
+
+/* 自定义滚动条样式 */
+.steps-container::-webkit-scrollbar,
+.result-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.steps-container::-webkit-scrollbar-track,
+.result-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.steps-container::-webkit-scrollbar-thumb,
+.result-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 238, 255, 0.3);
+    border-radius: 3px;
+}
+
+.steps-container::-webkit-scrollbar-thumb:hover,
+.result-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 238, 255, 0.5);
+}
+
+.step-item .log-content {
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 500px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
 }
 
 

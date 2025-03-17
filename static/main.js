@@ -34,6 +34,9 @@ function createTask() {
         resultPanel.style.display = 'none';
     }
     
+    // 触发布局调整
+    handleResponsiveLayout();
+    
     // Hide welcome message, show step loading status
     const welcomeMessage = taskContainer.querySelector('.welcome-message');
     if (welcomeMessage) {
@@ -292,11 +295,12 @@ function updateResultPanel(data, type) {
     
     // Clear and build new UI
     currentStep.innerHTML = '';
+    currentStep.setAttribute('data-type', type); // 添加类型属性
     
     // Add icon
     const iconSpan = document.createElement('span');
     iconSpan.className = 'emoji-icon';
-    iconSpan.textContent = icon;
+    iconSpan.innerHTML = icon; // 使用innerHTML而不是textContent以支持HTML标签
     currentStep.appendChild(iconSpan);
     
     // Create status text element, add typewriter effect
@@ -537,11 +541,14 @@ function createStepElement(type, content, timestamp) {
         step.dataset.type = type;
         step.dataset.timestamp = timestamp; // 存储时间戳为数据属性
         
+        // 获取图标HTML
+        const iconHtml = getEventIcon(type);
+        
         // 确保时间戳显示在log-prefix中，并将步骤类型标签包装在span标签中
         step.innerHTML = `
             <div class="log-header" onclick="toggleStepContent(this)">
                 <div class="log-prefix">
-                    <span class="log-prefix-icon">${getEventIcon(type)}</span>
+                    <span class="log-prefix-icon">${iconHtml}</span>
                     <span>${getEventLabel(type)}</span>
                     <time>${timestamp}</time>
                 </div>
@@ -569,7 +576,18 @@ function toggleStepContent(header) {
     const logBody = stepItem.querySelector('.log-body');
     if (!logBody) return;
     
+    // 先关闭所有其他展开的步骤
+    document.querySelectorAll('.step-item.expanded').forEach(item => {
+        if (item !== stepItem) {
+            item.classList.remove('expanded');
+        }
+    });
+    
+    // 切换当前步骤的展开状态
     stepItem.classList.toggle('expanded');
+    
+    // 强制触发一次窗口大小调整事件，确保布局正确
+    handleResponsiveLayout();
     
     // Highlight current step
     highlightStep(stepItem);
@@ -578,8 +596,16 @@ function toggleStepContent(header) {
     if (stepItem.classList.contains('expanded')) {
         const type = stepItem.dataset.type;
         const content = stepItem.querySelector('pre')?.textContent || '';
+        
+        // 确保结果面板正确显示
         updateResultPanel({result: content}, type);
-        showResultPanel();
+        
+        // 延迟显示结果面板，确保DOM已更新
+        setTimeout(() => {
+            showResultPanel();
+            // 二次触发布局调整，确保响应式布局正确应用
+            handleResponsiveLayout();
+        }, 50);
     }
 }
 
@@ -611,39 +637,65 @@ function hideResultPanel() {
     
     if (!resultPanel) return;
     
+    // 先添加hidden类，触发CSS动画
     resultPanel.classList.add('hidden');
     container.classList.remove('with-result');
     
-    // 在移动设备上，调整容器的样式
+    // 调整容器样式
     if (window.innerWidth <= 1024) {
+        container.style.width = '98%';
+    } else {
         container.style.width = '98%';
     }
     
-    // 强制更新DOM以确保隐藏生效
-    setTimeout(() => {
-        resultPanel.style.display = 'none';
-    }, 50);
+    // 延迟触发布局调整，确保CSS过渡完成
+    setTimeout(function() {
+        handleResponsiveLayout();
+    }, 300);
 }
 
 function showResultPanel() {
     const resultPanel = document.getElementById('result-panel');
     const container = document.querySelector('.container');
+    const resultContainer = document.getElementById('result-container');
     
     if (!resultPanel) return;
     
     // 先设置为可见，然后移除hidden类
-    resultPanel.style.display = '';
+    resultPanel.style.display = 'block';
+    
+    // 确保结果容器可滚动
+    if (resultContainer) {
+        resultContainer.style.overflowY = 'auto';
+        resultContainer.style.overflowX = 'hidden';
+        resultContainer.style.maxHeight = 'calc(100vh - 200px)';
+    }
     
     // 使用setTimeout确保DOM更新
     setTimeout(() => {
         resultPanel.classList.remove('hidden');
         container.classList.add('with-result');
         
-        // 在移动设备上，调整容器的样式
+        // 调整容器宽度和样式
         if (window.innerWidth <= 1024) {
             container.style.width = '98%';
+        } else {
+            container.style.width = 'calc(68% - 10px)';
         }
-    }, 10);
+        
+        // 强制重排和重绘布局
+        resultPanel.offsetHeight; // 触发重排
+        
+        // 确保结果面板的视觉效果正确显示
+        if (window.innerWidth > 1024) {
+            resultPanel.style.transform = 'translateX(0)';
+        }
+        
+        // 延迟触发布局调整，确保过渡动画完成
+        setTimeout(function() {
+            handleResponsiveLayout();
+        }, 300);
+    }, 50);
 }
 
 function autoScroll(element) {
@@ -652,28 +704,54 @@ function autoScroll(element) {
     }
 }
 
-// 窗口大小改变时调整布局
-window.addEventListener('resize', function() {
-    const resultPanel = document.getElementById('result-panel');
+// 综合处理响应式布局的函数
+function handleResponsiveLayout() {
     const container = document.querySelector('.container');
+    const resultPanel = document.getElementById('result-panel');
+    const stepsContainer = document.getElementById('steps-container');
+    const resultContainer = document.getElementById('result-container');
+    const isMobile = window.innerWidth <= 768;
     
-    // 如果不是在隐藏状态，则调整布局
-    if (resultPanel && !resultPanel.classList.contains('hidden')) {
-        if (window.innerWidth <= 1024) {
-            container.style.width = '98%';
-        } else {
-            container.style.width = '';
-            container.classList.add('with-result');
-        }
-    } else if (resultPanel) {
-        // 确保在隐藏状态下结果面板完全隐藏
-        resultPanel.classList.add('hidden');
-        resultPanel.style.display = 'none';
+    // 确保滚动容器始终可滚动
+    if (stepsContainer) {
+        stepsContainer.style.overflowY = 'auto';
+        stepsContainer.style.overflowX = 'hidden';
     }
     
-    // 调整已有的步骤项布局
+    if (resultContainer) {
+        resultContainer.style.overflowY = 'auto';
+        resultContainer.style.overflowX = 'hidden';
+    }
+    
+    // 调整步骤项布局
     adjustStepItemsLayout();
-});
+    
+    // 根据屏幕尺寸调整容器宽度
+    if (window.innerWidth <= 1024) {
+        if (resultPanel && !resultPanel.classList.contains('hidden')) {
+            container.style.width = '98%';
+        } else {
+            container.style.width = '98%';
+        }
+    } else {
+        if (resultPanel && !resultPanel.classList.contains('hidden')) {
+            container.style.width = 'calc(68% - 10px)';
+            container.classList.add('with-result');
+        } else {
+            container.style.width = '98%';
+            container.classList.remove('with-result');
+        }
+    }
+    
+    // 根据屏幕尺寸确定历史面板显示
+    if (historyVisible) {
+        if (window.innerWidth > 768) {
+            container.classList.add('with-history');
+        } else {
+            container.classList.remove('with-history');
+        }
+    }
+}
 
 // 调整步骤项布局
 function adjustStepItemsLayout() {
@@ -700,15 +778,15 @@ function adjustStepItemsLayout() {
 
 function getEventIcon(type) {
     switch (type) {
-        case 'think': return '🤔';
-        case 'tool': return '🛠️';
-        case 'act': return '🚀';
-        case 'log': return '📝';
-        case 'run': return '▶️';
-        case 'message': return '💬';
-        case 'complete': return '✅';
-        case 'error': return '❌';
-        default: return '📌';
+        case 'think': return '<i class="fas fa-brain"></i>';
+        case 'tool': return '<i class="fas fa-cog"></i>';
+        case 'act': return '<i class="fas fa-wave-square"></i>';
+        case 'log': return '<i class="fas fa-file-alt"></i>';
+        case 'run': return '<i class="fas fa-play"></i>';
+        case 'message': return '<i class="fas fa-comment"></i>';
+        case 'complete': return '<i class="fas fa-check"></i>';
+        case 'error': return '<i class="fas fa-times"></i>';
+        default: return '<i class="fas fa-thumbtack"></i>';
     }
 }
 
@@ -969,6 +1047,25 @@ document.addEventListener('DOMContentLoaded', function() {
         hideResultPanel();
     }
     
+    // 手动触发一次响应式布局
+    handleResponsiveLayout();
+    
     // 加载历史任务
     loadHistory();
 });
+
+// 窗口大小改变时调整布局
+window.addEventListener('resize', function() {
+    // 调用综合处理函数
+    handleResponsiveLayout();
+});
+
+// 添加屏幕方向变化监听器
+window.addEventListener('orientationchange', function() {
+    // 延迟执行以确保方向变化完成
+    setTimeout(function() {
+        handleResponsiveLayout();
+    }, 300);
+});
+
+
