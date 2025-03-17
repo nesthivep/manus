@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any,List
 
 from pydantic import Field
 
@@ -37,6 +37,9 @@ class Manus(ToolCallAgent):
             PythonExecute(), WebSearch(), BrowserUseTool(), FileSaver(), Terminate()
         )
     )
+
+    # Add special_tool_names for this agent
+    special_tool_names: List[str] = [Terminate().name]
 
     async def _handle_special_tool(self, name: str, result: Any, **kwargs):
         if not self._is_special_tool(name):
