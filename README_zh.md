@@ -97,14 +97,14 @@ api_key = "sk-..."  # 替换为真实 API 密钥
 
 ## 快速启动
 
-一行命令运行 OpenManus：
+若要在 Conda 中使用 OpenManus，請執行下列指令：
 
 conda:
 ```bash
 python main.py
 ```
 
-uv:
+若要在 UV 中使用 OpenManus，請執行下列指令：
 ```bash
 uv run python main.py
 ```
@@ -113,12 +113,12 @@ uv run python main.py
 
 如需体验开发中版本，可运行：
 
-conda:
+若要在 Conda 中使用 OpenManus，請執行下列指令：
 ```bash
 python run_flow.py
 ```
 
-uv:
+若要在 UV 中使用 OpenManus，請執行下列指令：
 ```bash
 uv run python run_flow.py
 ```
