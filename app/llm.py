@@ -196,6 +196,9 @@ class LLM:
 
             # Add token counting related attributes
             self.total_input_tokens = 0
+            self.total_output_tokens = 0
+            self.total_cost = 0.0  # Track approximate cost if needed later
+            self.interaction_count = 0
             self.max_input_tokens = (
                 llm_config.max_input_tokens
                 if hasattr(llm_config, "max_input_tokens")
@@ -230,12 +233,39 @@ class LLM:
         return self.token_counter.count_message_tokens(messages)
 
     def update_token_count(self, input_tokens: int) -> None:
-        """Update token counts"""
-        # Only track tokens if max_input_tokens is set
+        """Update input token counts and log usage"""
         self.total_input_tokens += input_tokens
-        logger.info(
-            f"Token usage: Input={input_tokens}, Cumulative Input={self.total_input_tokens}"
-        )
+        
+        # Log token usage with a more visible format
+        log_message = f"""
+╔════════════════════════════════════════════════════════════════════════════════
+║ TOKEN USAGE - INPUT
+║ Current Request: {input_tokens} tokens
+║ Cumulative Input: {self.total_input_tokens} tokens
+╚════════════════════════════════════════════════════════════════════════════════
+"""
+        # Log to both console and file
+        print(log_message)
+        logger.info(f"Token usage: Input={input_tokens}, Cumulative Input={self.total_input_tokens}")
+
+    def update_completion_tokens(self, completion_tokens: int) -> None:
+        """Update completion token counts and log usage"""
+        self.total_output_tokens += completion_tokens
+        self.interaction_count += 1
+        
+        # Log token usage with a more visible format
+        log_message = f"""
+╔════════════════════════════════════════════════════════════════════════════════
+║ TOKEN USAGE - COMPLETION
+║ Current Response: {completion_tokens} tokens
+║ Cumulative Output: {self.total_output_tokens} tokens
+║ Total Interactions: {self.interaction_count}
+║ Total Tokens (Input+Output): {self.total_input_tokens + self.total_output_tokens} tokens
+╚════════════════════════════════════════════════════════════════════════════════
+"""
+        # Log to both console and file
+        print(log_message)
+        logger.info(f"Token usage: Output={completion_tokens}, Cumulative Output={self.total_output_tokens}")
 
     def check_token_limit(self, input_tokens: int) -> bool:
         """Check if token limits are exceeded"""
@@ -408,6 +438,7 @@ class LLM:
 
                 # Update token counts
                 self.update_token_count(response.usage.prompt_tokens)
+                self.update_completion_tokens(response.usage.completion_tokens)
 
                 return response.choices[0].message.content
 
@@ -427,6 +458,10 @@ class LLM:
             full_response = "".join(collected_messages).strip()
             if not full_response:
                 raise ValueError("Empty response from streaming LLM")
+                
+            # For streaming, estimate completion tokens based on the response
+            completion_tokens = self.count_tokens(full_response)
+            self.update_completion_tokens(completion_tokens)
 
             return full_response
 
@@ -695,6 +730,7 @@ class LLM:
 
             # Update token counts
             self.update_token_count(response.usage.prompt_tokens)
+            self.update_completion_tokens(response.usage.completion_tokens)
 
             return response.choices[0].message
 
