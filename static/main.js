@@ -520,6 +520,94 @@ function createStepElement(type, content, timestamp) {
             <div class="step-line"></div>
             <div class="step-info">${currentStep}/${totalSteps}</div>
         `;
+    } else if (type === 'act') {
+        // Check if it contains information about file saving
+        const saveRegex = /Content successfully saved to (.+)/;
+        const match = content.match(saveRegex);
+
+        step.className = `step-item ${type}`;
+        step.dataset.type = type;
+        step.dataset.timestamp = timestamp; // 存储时间戳为数据属性
+
+        // 获取图标HTML
+        const iconHtml = getEventIcon(type);
+
+        if (match && match[1]) {
+            const filePath = match[1].trim();
+            const fileName = filePath.split('/').pop();
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+
+            // Handling different types of files
+            let fileInteractionHtml = '';
+
+            if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(fileExtension)) {
+                fileInteractionHtml = `
+                    <div class="file-interaction image-preview">
+                        <img src="${filePath}" alt="${fileName}" class="preview-image" onclick="showFullImage('${filePath}')">
+                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载图片</a>
+                    </div>
+                `;
+            } else if (['mp3', 'wav', 'ogg'].includes(fileExtension)) {
+                fileInteractionHtml = `
+                    <div class="file-interaction audio-player">
+                        <audio controls src="${filePath}"></audio>
+                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载音频</a>
+                    </div>
+                `;
+            } else if (['html', 'js', 'py'].includes(fileExtension)) {
+                fileInteractionHtml = `
+                    <div class="file-interaction code-file">
+                        <button onclick="simulateRunPython('${filePath}')" class="run-button">▶️ 模拟运行</button>
+                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载文件</a>
+                    </div>
+                `;
+            } else {
+                fileInteractionHtml = `
+                    <div class="file-interaction">
+                        <a href="/download?file_path=${filePath}" download="${fileName}" class="download-link">⬇️ 下载文件: ${fileName}</a>
+                    </div>
+                `;
+            }
+
+            step.innerHTML = `
+                <div class="log-header" onclick="toggleStepContent(this)">
+                    <div class="log-prefix">
+                        <span class="log-prefix-icon">${iconHtml}</span>
+                        <span>${getEventLabel(type)}</span>
+                        <time>${timestamp}</time>
+                    </div>
+                    <div class="content-preview">${content.substring(0, 20) + (content.length > 20 ? "..." : "")}</div>
+                    <div class="step-controls">
+                        <span class="minimize-btn" onclick="minimizeStep(event, this)"></span>
+                    </div>
+                </div>
+                <div class="log-body">
+                    <div class="log-content">
+                        <pre>${content}</pre>
+                        ${fileInteractionHtml}
+                    </div>
+                </div>
+            `;
+        } else {
+            step.innerHTML = `
+                <div class="log-header" onclick="toggleStepContent(this)">
+                    <div class="log-prefix">
+                        <span class="log-prefix-icon">${iconHtml}</span>
+                        <span>${getEventLabel(type)}</span>
+                        <time>${timestamp}</time>
+                    </div>
+                    <div class="content-preview">${content.substring(0, 20) + (content.length > 20 ? "..." : "")}</div>
+                    <div class="step-controls">
+                        <span class="minimize-btn" onclick="minimizeStep(event, this)"></span>
+                    </div>
+                </div>
+                <div class="log-body">
+                    <div class="log-content">
+                        <pre>${content}</pre>
+                    </div>
+                </div>
+            `;
+        }
     } else {
         // Get content preview
         let contentPreview = "";
