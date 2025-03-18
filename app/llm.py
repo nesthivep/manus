@@ -1,5 +1,5 @@
-import math
 import asyncio
+import math
 import time
 from collections import deque
 from typing import Dict, List, Optional, Union
@@ -882,7 +882,6 @@ class LLM:
             if not response.choices or not response.choices[0].message:
                 print(response)
                 raise ValueError("Invalid or empty response from LLM")
-
 
             self.update_token_count(response.usage.prompt_tokens)
             self.update_rate_limit_trackers(
