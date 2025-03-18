@@ -205,7 +205,9 @@ class ToolCallAgent(ReActAgent):
             return False
 
         # Get the original user request
-        original_request = next((msg.content for msg in self.memory.messages if msg.role == "user"), None)
+        original_request = next(
+            (msg.content for msg in self.memory.messages if msg.role == "user"), None
+        )
         if not original_request:
             return True
 
@@ -213,27 +215,37 @@ class ToolCallAgent(ReActAgent):
         completion_check = self._evaluate_task_completion(original_request, result)
         if not completion_check.get("is_complete", True):
             # Add a reflection message to reconsider approach
-            reflection = completion_check.get("reflection", "Let's try a different approach to complete this task.")
+            reflection = completion_check.get(
+                "reflection", "Let's try a different approach to complete this task."
+            )
             self.update_memory("system", reflection)
             return False
 
         return True
 
-    async def _evaluate_task_completion(self, original_request: str, result: str) -> dict:
+    async def _evaluate_task_completion(
+        self, original_request: str, result: str
+    ) -> dict:
         """Evaluate if the task is truly complete based on the original request"""
         # First summarize the recent conversation context
         recent_messages = self.memory.messages[-10:]
 
         # Get a summary of what's been done so far
         try:
-            context_msgs = [msg for msg in recent_messages if msg.content and hasattr(msg, 'role')]
+            context_msgs = [
+                msg for msg in recent_messages if msg.content and hasattr(msg, "role")
+            ]
             if context_msgs:
                 summary_prompt = f"""Summarize the key actions and findings from this conversation in 2-3 sentences.
                 Focus on what tools were used and what was discovered or accomplished."""
 
                 summary_response = await self.llm.ask(
                     messages=context_msgs + [Message.user_message(summary_prompt)],
-                    system_msgs=[Message.system_message("You create concise summaries of conversations.")],
+                    system_msgs=[
+                        Message.system_message(
+                            "You create concise summaries of conversations."
+                        )
+                    ],
                 )
                 context_summary = summary_response.content
             else:
@@ -260,7 +272,11 @@ class ToolCallAgent(ReActAgent):
         try:
             response = await self.llm.ask(
                 messages=[Message.user_message(evaluation_prompt)],
-                system_msgs=[Message.system_message("You are a critical evaluator determining if a task is truly complete.")],
+                system_msgs=[
+                    Message.system_message(
+                        "You are a critical evaluator determining if a task is truly complete."
+                    )
+                ],
             )
 
             # Parse the JSON response
@@ -268,7 +284,7 @@ class ToolCallAgent(ReActAgent):
             import re
 
             # Extract JSON from response in case it's embedded in text
-            json_match = re.search(r'\{.*\}', response.content, re.DOTALL)
+            json_match = re.search(r"\{.*\}", response.content, re.DOTALL)
             if json_match:
                 result_json = json.loads(json_match.group(0))
                 return result_json
