@@ -3,37 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenManus Local Version</title>
+    <title>OpenManus - Autonomous AI Agent</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <div class="history-panel">
-            <h2>History Tasks</h2>
-            <div id="task-list" class="task-list"></div>
-        </div>
-
-        <div class="main-panel">
-            <div id="task-container" class="task-container">
-                <div class="welcome-message">
-                    <h1>Welcome to OpenManus Local Version</h1>
-                    <p>Please enter a task prompt to start a new task</p>
+    <div class="home-container">
+        <div class="hero-section">
+            <div class="particle-container">
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+            </div>
+            
+            <div class="tech-circuit">
+                <div class="circuit-line"></div>
+                <div class="circuit-line"></div>
+                <div class="circuit-line"></div>
+                <div class="circuit-line"></div>
+                <div class="circuit-vertical"></div>
+                <div class="circuit-vertical"></div>
+                <div class="circuit-vertical"></div>
+                <div class="circuit-vertical"></div>
+                <div class="circuit-node"></div>
+                <div class="circuit-node"></div>
+                <div class="circuit-node"></div>
+                <div class="circuit-node"></div>
+                <div class="circuit-node circuit-node-small"></div>
+                <div class="circuit-node circuit-node-small"></div>
+                <div class="circuit-node circuit-node-small"></div>
+                <div class="circuit-node circuit-node-small"></div>
+                <div class="circuit-node circuit-node-small"></div>
+                <div class="circuit-node circuit-node-small"></div>
+                <div class="circuit-diagonal"></div>
+                <div class="circuit-diagonal"></div>
+                <div class="circuit-diagonal circuit-diagonal-reverse"></div>
+                <div class="circuit-diagonal circuit-diagonal-reverse"></div>
+            </div>
+            
+            <h1 class="title">OPENMANUS</h1>
+            <p class="subtitle">Your Autonomous AI Agent</p>
+            <p class="description"><span class="powered-text">Powered by</span> <span>LLMs</span> and <span>diverse tools</span>.<br>OpenManus solves tasks through <span>AI reasoning</span>.</p>
+            
+            <div class="theme-selector">
+                <p class="theme-label">选择主题</p>
+                <div class="theme-options">
+                    {% for theme in themes %}
+                    <a href="/chat?theme={{ theme.id }}" class="theme-option" data-animation="{{ loop.index }}" title="{{ theme.description }}">
+                        <div class="theme-icon-container">
+                            {% if theme.id == "cyberpunk" %}
+                            <i class="fas fa-robot theme-icon"></i>
+                            {% elif theme.id == "Normal" %}
+                            <i class="fas fa-desktop theme-icon"></i>
+                            {% else %}
+                            <i class="fas fa-palette theme-icon"></i>
+                            {% endif %}
+                        </div>
+                        <span class="theme-name">{{ theme.name }}</span>
+                    </a>
+                    {% endfor %}
                 </div>
-                <div id="log-container" class="step-container"></div>
             </div>
-
-            <div id="input-container" class="input-container">
-                <input
-                    type="text"
-                    id="prompt-input"
-                    placeholder="Enter task prompt..."
-                    onkeypress="if(event.keyCode === 13) createTask()"
-                >
-                <button onclick="createTask()">Create Task</button>
-            </div>
+            
+            <a href="/chat?theme=Normal" class="cta-button">START <span class="arrow-icon">→</span></a>
         </div>
     </div>
-
     <script src="/static/main.js"></script>
 </body>
 </html>
