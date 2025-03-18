@@ -240,6 +240,11 @@ class Config:
     @property
     def agent_config(self) -> Optional[AgentSettings]:
         return self._config.agent_config
+    
+    @property
+    def workspace_root(self) -> Path:
+        """Get the workspace root directory"""
+        return WORKSPACE_ROOT
 
 
 config = Config()
