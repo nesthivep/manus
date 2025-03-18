@@ -1,7 +1,6 @@
 import asyncio
 import time
 from collections import deque
-from typing import Dict, List, Optional, Union
 
 import tiktoken
 from openai import (
@@ -169,15 +168,14 @@ class LLM:
 
         return "Token limit exceeded"
 
-    async def enforce_rate_limits(
-        self, input_tokens: int, max_output_tokens: int
-    ) -> None:
+    async def enforce_rate_limits(self, input_tokens: int, max_output_tokens: int) -> None:
         """
         Apply rate limits (RPM, TPM, ITPM, OTPM) before making API calls.
         Waits as needed to comply with configured limits.
         """
+        current_time = time.time()
         async with self.rate_limit_lock:  # Prevent concurrent access
-            current_time = time.time()
+
 
             # Enforce RPM limit
             if self.rpm_limit:
@@ -192,7 +190,10 @@ class LLM:
 
             # Helper function to enforce token-based limits
             async def enforce_token_limit(
-                tracker: deque, token_limit: int, new_tokens: int, limit_name: str
+                tracker: deque,
+                token_limit: int,
+                new_tokens: int,
+                limit_name: str
             ):
                 while True:
                     # Prune old entries
@@ -212,9 +213,7 @@ class LLM:
                     oldest_time = tracker[0][0]
                     wait_time = (oldest_time + 60) - current_time
                     if wait_time > 0:
-                        logger.info(
-                            f"Waiting {wait_time:.2f}s for {limit_name} rate limit to clear."
-                        )
+                        logger.info(f"Waiting {wait_time:.2f}s for {limit_name} rate limit to clear.")
                         await asyncio.sleep(wait_time)
                         current_time = time.time()  # Update after waiting
 
@@ -224,7 +223,7 @@ class LLM:
                     self.token_tracker,
                     self.tpm_limit,
                     input_tokens + max_output_tokens,
-                    "Tokens per minute (TPM)",
+                    "Tokens per minute (TPM)"
                 )
 
             # Enforce ITPM (input tokens)
@@ -233,7 +232,7 @@ class LLM:
                     self.input_token_tracker,
                     self.itpm_limit,
                     input_tokens,
-                    "Input tokens per minute (ITPM)",
+                    "Input tokens per minute (ITPM)"
                 )
 
             # Enforce OTPM (output tokens)
@@ -242,7 +241,7 @@ class LLM:
                     self.output_token_tracker,
                     self.otpm_limit,
                     max_output_tokens,
-                    "Output tokens per minute (OTPM)",
+                    "Output tokens per minute (OTPM)"
                 )
 
             self.last_request_time = current_time  # Update after all checks
@@ -381,6 +380,7 @@ class LLM:
                 params["temperature"] = (
                     temperature if temperature is not None else self.temperature
                 )
+
 
             if not stream:
                 # Non-streaming request
