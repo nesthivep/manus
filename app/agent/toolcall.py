@@ -202,7 +202,7 @@ class ToolCallAgent(ReActAgent):
     def _should_finish_execution(self, name: str, result: Any, **kwargs) -> bool:
         """Determine if tool execution should finish the agent"""
         # Only terminate if explicitly called and task is truly complete
-        if name.lower() != "terminate":
+        if name.lower() not in ("terminate", "finish"):
             return False
 
         # Get the original user request
