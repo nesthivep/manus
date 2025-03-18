@@ -1,6 +1,7 @@
 import asyncio
 import time
 from collections import deque
+from typing import List, Optional, Union, Dict
 
 import tiktoken
 from openai import (
@@ -173,9 +174,9 @@ class LLM:
         Apply rate limits (RPM, TPM, ITPM, OTPM) before making API calls.
         Waits as needed to comply with configured limits.
         """
-        current_time = time.time()
-        async with self.rate_limit_lock:  # Prevent concurrent access
 
+        async with self.rate_limit_lock:  # Prevent concurrent access
+            current_time = time.time()
 
             # Enforce RPM limit
             if self.rpm_limit:
@@ -195,6 +196,7 @@ class LLM:
                 new_tokens: int,
                 limit_name: str
             ):
+                nonlocal current_time
                 while True:
                     # Prune old entries
                     while tracker and tracker[0][0] < current_time - 60:
