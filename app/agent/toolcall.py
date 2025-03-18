@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Any, List, Optional, Union
 
 from pydantic import Field
@@ -278,10 +279,6 @@ class ToolCallAgent(ReActAgent):
                     )
                 ],
             )
-
-            # Parse the JSON response
-            import json
-            import re
 
             # Extract JSON from response in case it's embedded in text
             json_match = re.search(r"\{.*\}", response.content, re.DOTALL)
