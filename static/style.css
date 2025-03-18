@@ -146,9 +146,9 @@ body::before {
     right: -2px;
     bottom: -2px;
     z-index: -1;
-    background: linear-gradient(90deg, 
-        var(--primary-color), 
-        var(--error-color), 
+    background: linear-gradient(90deg,
+        var(--primary-color),
+        var(--error-color),
         var(--primary-color));
     background-size: 400% 100%;
     animation: borderFlow 8s linear infinite;
@@ -158,7 +158,7 @@ body::before {
 .task-container::after {
     background: var(--bg-color);
     border-radius: inherit;
-    box-shadow: inset 0 0 20px rgba(0, 238, 255, 0.2), 
+    box-shadow: inset 0 0 20px rgba(0, 238, 255, 0.2),
                 inset 0 0 10px rgba(255, 42, 109, 0.1);
     pointer-events: none;
 }
@@ -191,9 +191,9 @@ body::before {
     right: -2px;
     bottom: -2px;
     z-index: -1;
-    background: linear-gradient(90deg, 
-        var(--primary-color), 
-        var(--error-color), 
+    background: linear-gradient(90deg,
+        var(--primary-color),
+        var(--error-color),
         var(--primary-color));
     background-size: 400% 100%;
     animation: borderFlow 8s linear infinite;
@@ -231,11 +231,11 @@ body::before {
     left: 0;
     width: 100%;
     height: 1px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(0, 238, 255, 0.4), 
-        rgba(255, 42, 109, 0.6), 
-        rgba(0, 238, 255, 0.4), 
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 238, 255, 0.4),
+        rgba(255, 42, 109, 0.6),
+        rgba(0, 238, 255, 0.4),
         transparent
     );
 }
@@ -445,7 +445,7 @@ body::before {
 
 .welcome-message::after {
     background: rgba(10, 10, 26, 0.7);
-    box-shadow: inset 0 0 30px rgba(0, 238, 255, 0.3), 
+    box-shadow: inset 0 0 30px rgba(0, 238, 255, 0.3),
                 inset 0 0 15px rgba(255, 42, 109, 0.2);
     animation: innerGlow 5s ease-in-out infinite alternate;
 }
@@ -504,11 +504,11 @@ body::before {
     left: 0;
     width: 100%;
     height: 1px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(0, 238, 255, 0.4), 
-        rgba(255, 42, 109, 0.6), 
-        rgba(0, 238, 255, 0.4), 
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 238, 255, 0.4),
+        rgba(255, 42, 109, 0.6),
+        rgba(0, 238, 255, 0.4),
         transparent
     );
     animation: shimmer 3s infinite;
@@ -609,9 +609,9 @@ body::before {
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(90deg, 
-        var(--primary-color), 
-        var(--error-color), 
+    background: linear-gradient(90deg,
+        var(--primary-color),
+        var(--error-color),
         var(--primary-color));
     background-size: 300% 100%;
     z-index: -1;
@@ -626,7 +626,7 @@ body::before {
     left: -100%;
     width: 70%;
     height: 100%;
-    background: linear-gradient(90deg, 
+    background: linear-gradient(90deg,
         transparent,
         rgba(255, 255, 255, 0.2),
         transparent);
@@ -1363,7 +1363,7 @@ body::before {
     .title {
         font-size: 6rem;
     }
-    
+
     .hero-section {
         padding: 2rem 1.5rem;
         max-width: 800px;
@@ -1375,23 +1375,23 @@ body::before {
         font-size: 2.5rem;
         letter-spacing: 2px;
     }
-    
+
     .subtitle {
         font-size: 1.2rem;
         margin-bottom: 20px;
     }
-    
+
     .description {
         font-size: 1rem;
         line-height: 1.5;
         margin-bottom: 30px;
     }
-    
+
     .cta-button {
         font-size: 0.9rem;
         padding: 10px 20px;
     }
-    
+
     .emoji {
         font-size: 2rem;
     }
@@ -1437,28 +1437,28 @@ body::before {
         font-size: 3.5rem;
         margin-bottom: 0.8rem;
     }
-    
+
     .subtitle {
         font-size: 1.3rem;
         margin-bottom: 1rem;
     }
-    
+
     .description {
         font-size: 0.9rem;
         line-height: 1.6;
         margin-bottom: 2rem;
     }
-    
+
     .cta-button {
         padding: 0.7rem 2rem;
         font-size: 0.9rem;
         border-radius: 20px;
     }
-    
+
     .emoji {
         font-size: 1.5rem;
     }
-    
+
     .hero-section {
         padding: 1.5rem 1rem;
     }
@@ -1468,15 +1468,15 @@ body::before {
     .title {
         font-size: 3rem;
     }
-    
+
     .subtitle {
         font-size: 1.1rem;
     }
-    
+
     .description {
         font-size: 0.85rem;
     }
-    
+
     .cta-button {
         padding: 0.6rem 1.8rem;
         font-size: 0.85rem;
@@ -1488,7 +1488,7 @@ body::before {
     .hero-section {
         padding: 1rem;
     }
-    
+
     .description {
         margin-bottom: 2rem;
     }
@@ -1499,26 +1499,26 @@ body::before {
     .hero-section {
         padding: 1rem;
     }
-    
+
     .title {
         font-size: 3.5rem;
         margin-bottom: 0.5rem;
     }
-    
+
     .subtitle {
         font-size: 1.2rem;
         margin-bottom: 0.8rem;
     }
-    
+
     .description {
         font-size: 0.9rem;
         margin-bottom: 1.5rem;
     }
-    
+
     .cta-button {
         padding: 0.8rem 2.5rem;
     }
-    
+
     .emoji {
         display: none;
     }
@@ -1617,9 +1617,9 @@ body::before {
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(0, 238, 255, 0.2), 
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 238, 255, 0.2),
         rgba(255, 42, 109, 0.4),
         rgba(0, 238, 255, 0.2),
         transparent
@@ -1980,7 +1980,7 @@ button {
 #prompt-input:focus {
     animation: inputGlow 3s infinite alternate;
     border-color: var(--primary-color);
-    box-shadow: 0 0 20px rgba(0, 238, 255, 0.4), 
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.4),
                 0 0 10px rgba(255, 42, 109, 0.2);
 }
 
@@ -2243,8 +2243,8 @@ button {
 
 /* 改进历史面板 */
 .history-panel {
-    background: linear-gradient(180deg, 
-        rgba(22, 24, 36, 0.95), 
+    background: linear-gradient(180deg,
+        rgba(22, 24, 36, 0.95),
         rgba(15, 15, 30, 0.95)
     );
 }
@@ -2303,11 +2303,11 @@ button {
     position: absolute;
     width: 0;
     height: 2px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(0, 238, 255, 0.8), 
-        rgba(255, 42, 109, 0.8), 
-        rgba(0, 238, 255, 0.8), 
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 238, 255, 0.8),
+        rgba(255, 42, 109, 0.8),
+        rgba(0, 238, 255, 0.8),
         transparent);
     animation: lineExpand 2.5s forwards;
     background-size: 200% 100%;
@@ -2353,11 +2353,11 @@ button {
 /* 内部发光动画 */
 @keyframes innerGlow {
     0% {
-        box-shadow: inset 0 0 30px rgba(0, 238, 255, 0.3), 
+        box-shadow: inset 0 0 30px rgba(0, 238, 255, 0.3),
                     inset 0 0 15px rgba(255, 42, 109, 0.2);
     }
     100% {
-        box-shadow: inset 0 0 50px rgba(0, 238, 255, 0.5), 
+        box-shadow: inset 0 0 50px rgba(0, 238, 255, 0.5),
                     inset 0 0 25px rgba(255, 42, 109, 0.3);
     }
 }
@@ -2372,7 +2372,7 @@ button {
 #prompt-input:focus {
     animation: inputGlow 3s infinite alternate;
     border-color: var(--primary-color);
-    box-shadow: 0 0 20px rgba(0, 238, 255, 0.4), 
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.4),
                 0 0 10px rgba(255, 42, 109, 0.2);
 }
 
@@ -2395,7 +2395,7 @@ button {
     }
     50% {
         transform: translateY(-10px);
-        filter: drop-shadow(0 0 25px rgba(0, 238, 255, 0.9)) 
+        filter: drop-shadow(0 0 25px rgba(0, 238, 255, 0.9))
                 drop-shadow(0 0 10px rgba(255, 42, 109, 0.5));
     }
 }
@@ -2414,7 +2414,7 @@ button {
     }
     50% {
         opacity: 1;
-        text-shadow: 0 0 25px rgba(0, 238, 255, 0.9), 
+        text-shadow: 0 0 25px rgba(0, 238, 255, 0.9),
                     0 0 10px rgba(255, 42, 109, 0.6);
         letter-spacing: 6px;
     }
@@ -2442,10 +2442,10 @@ button {
     right: -2px;
     bottom: -2px;
     z-index: -1;
-    background: linear-gradient(90deg, 
-        var(--primary-color), 
-        var(--error-color), 
-        var(--success-color), 
+    background: linear-gradient(90deg,
+        var(--primary-color),
+        var(--error-color),
+        var(--success-color),
         var(--primary-color));
     background-size: 400% 100%;
     animation: borderFlow 8s linear infinite;
@@ -2462,7 +2462,7 @@ button {
     background: var(--bg-color);
     border-radius: inherit;
     z-index: -1;
-    box-shadow: inset 0 0 20px rgba(0, 238, 255, 0.2), 
+    box-shadow: inset 0 0 20px rgba(0, 238, 255, 0.2),
                 inset 0 0 10px rgba(255, 42, 109, 0.1);
     pointer-events: none;
 }
@@ -2478,7 +2478,7 @@ button {
     background: rgba(15, 15, 30, 0.95);
     border-radius: inherit;
     z-index: -1;
-    box-shadow: inset 0 0 20px rgba(0, 238, 255, 0.2), 
+    box-shadow: inset 0 0 20px rgba(0, 238, 255, 0.2),
                 inset 0 0 10px rgba(255, 42, 109, 0.1);
     pointer-events: none;
 }
@@ -2506,7 +2506,7 @@ button {
         margin-right: auto;
         margin-left: auto;
     }
-    
+
     .result-panel {
         width: 80%;
         min-width: 300px;
@@ -2517,7 +2517,7 @@ button {
         top: 25vh;
         margin: 0 auto;
     }
-    
+
     .result-panel.hidden {
         transform: translateY(calc(100% + 20px));
         display: none !important; /* 确保在移动设备上也隐藏 */
@@ -2531,17 +2531,17 @@ button {
         right: 5%;
         left: 5%;
     }
-    
+
     /* 调整步骤项在小屏幕上的布局 */
     .step-item .log-header {
         padding: 8px;
     }
-    
+
     .log-prefix time {
         font-size: 0.8em;
         padding: 2px 4px;
     }
-    
+
     .log-prefix-icon {
         width: 22px;
         height: 22px;
@@ -2606,5 +2606,3 @@ button {
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 5px;
 }
-
-

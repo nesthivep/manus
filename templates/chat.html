@@ -28,7 +28,7 @@
             </a>
         </div>
     </header>
-    
+
     <!-- History panel -->
     <aside class="history-panel">
         <div class="history-header">
@@ -43,10 +43,10 @@
             <!-- Task list will be dynamically loaded through JavaScript -->
         </div>
     </aside>
-    
+
     <!-- Background overlay -->
     <div class="overlay"></div>
-    
+
     <!-- Main container -->
     <div class="container">
         <div class="main-panel">
@@ -55,7 +55,7 @@
                     <div class="logo-animation">
                         <img src="/static/logo-white.png" alt="OpenManus Logo" class="welcome-logo">
                     </div>
-                    
+
                     <h2 class="title-text" data-text="MANUS INTERFACE">MANUS INTERFACE</h2>
                     <div class="title-glitch-overlay"></div>
                     <div class="subtitle-text">AUTONOMOUS INTELLIGENCE</div>
@@ -63,7 +63,7 @@
                 </div>
                 <div id="steps-container" class="steps-container"></div>
             </div>
-            
+
             <div id="result-panel" class="result-panel hidden">
                 <div class="result-header">
                     <h2>MANUS INTERFACE</h2>
@@ -71,23 +71,23 @@
                         <div class="minimize-result" onclick="toggleResultPanel()"></div>
                     </div>
                 </div>
-                
+
                 <div class="step-info-container">
                     <div id="current-step" class="step-info-box">
                         <!-- Step information will be dynamically populated by JavaScript -->
                     </div>
                 </div>
-                
+
                 <div id="result-container" class="result-container"></div>
             </div>
-            
+
             <div class="input-container">
                 <input type="text" id="prompt-input" placeholder="输入指令...">
                 <button onclick="createTask()" class="send-btn">EXECUTE</button>
             </div>
         </div>
     </div>
-    
+
     <script src="/static/main.js"></script>
 </body>
 </html>
