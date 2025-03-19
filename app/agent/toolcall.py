@@ -1,6 +1,9 @@
 import json
-from typing import Any, List, Optional, Union
+from typing import Any, Sequence, TypeAlias
 
+from openai.types.chat.chat_completion_message_tool_call import (
+    ChatCompletionMessageToolCall,
+)
 from pydantic import Field
 
 from app.agent.react import ReActAgent
@@ -11,6 +14,8 @@ from app.schema import TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoi
 from app.tool import CreateChatCompletion, Terminate, ToolCollection
 
 
+CompatibleToolCallObject: TypeAlias = ChatCompletionMessageToolCall
+
 TOOL_CALL_REQUIRED = "Tool calls required but none provided"
 
 
@@ -18,22 +23,24 @@ class ToolCallAgent(ReActAgent):
     """Base agent class for handling tool/function calls with enhanced abstraction"""
 
     name: str = "toolcall"
-    description: str = "an agent that can execute tool calls."
+    description: str | None = "an agent that can execute tool calls."
 
-    system_prompt: str = SYSTEM_PROMPT
-    next_step_prompt: str = NEXT_STEP_PROMPT
+    system_prompt: str | None = SYSTEM_PROMPT
+    next_step_prompt: str | None = NEXT_STEP_PROMPT
 
     available_tools: ToolCollection = ToolCollection(
         CreateChatCompletion(), Terminate()
     )
     tool_choices: TOOL_CHOICE_TYPE = ToolChoice.AUTO  # type: ignore
-    special_tool_names: List[str] = Field(default_factory=lambda: [Terminate().name])
+    special_tool_names: list[str] = Field(default_factory=lambda: [Terminate().name])
 
-    tool_calls: List[ToolCall] = Field(default_factory=list)
-    _current_base64_image: Optional[str] = None
+    tool_calls: Sequence[ToolCall | CompatibleToolCallObject] = Field(
+        default_factory=list
+    )
+    _current_base64_image: str | None = None
 
     max_steps: int = 30
-    max_observe: Optional[Union[int, bool]] = None
+    max_observe: int | None = None
 
     async def think(self) -> bool:
         """Process current state and decide next actions using tools"""
@@ -44,7 +51,7 @@ class ToolCallAgent(ReActAgent):
         try:
             # Get response with tool options
             response = await self.llm.ask_tool(
-                messages=self.messages,
+                messages=list(self.messages),
                 system_msgs=(
                     [Message.system_message(self.system_prompt)]
                     if self.system_prompt
@@ -162,7 +169,7 @@ class ToolCallAgent(ReActAgent):
 
         return "\n\n".join(results)
 
-    async def execute_tool(self, command: ToolCall) -> str:
+    async def execute_tool(self, command: ToolCall | CompatibleToolCallObject) -> str:
         """Execute a single tool call with robust error handling"""
         if not command or not command.function or not command.function.name:
             return "Error: Invalid command format"

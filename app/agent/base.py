@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
-from typing import List, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -19,13 +18,13 @@ class BaseAgent(BaseModel, ABC):
 
     # Core attributes
     name: str = Field(..., description="Unique name of the agent")
-    description: Optional[str] = Field(None, description="Optional agent description")
+    description: str | None = Field(None, description="Optional agent description")
 
     # Prompts
-    system_prompt: Optional[str] = Field(
+    system_prompt: str | None = Field(
         None, description="System-level instruction prompt"
     )
-    next_step_prompt: Optional[str] = Field(
+    next_step_prompt: str | None = Field(
         None, description="Prompt for determining next action"
     )
 
@@ -85,7 +84,7 @@ class BaseAgent(BaseModel, ABC):
         self,
         role: ROLE_TYPE,  # type: ignore
         content: str,
-        base64_image: Optional[str] = None,
+        base64_image: str | None = None,
         **kwargs,
     ) -> None:
         """Add a message to the agent's memory.
@@ -113,7 +112,7 @@ class BaseAgent(BaseModel, ABC):
         kwargs = {"base64_image": base64_image, **(kwargs if role == "tool" else {})}
         self.memory.add_message(message_map[role](content, **kwargs))
 
-    async def run(self, request: Optional[str] = None) -> str:
+    async def run(self, request: str | None = None) -> str:
         """Execute the agent's main loop asynchronously.
 
         Args:
@@ -131,7 +130,7 @@ class BaseAgent(BaseModel, ABC):
         if request:
             self.update_memory("user", request)
 
-        results: List[str] = []
+        results: list[str] = []
         async with self.state_context(AgentState.RUNNING):
             while (
                 self.current_step < self.max_steps and self.state != AgentState.FINISHED
@@ -186,11 +185,11 @@ class BaseAgent(BaseModel, ABC):
         return duplicate_count >= self.duplicate_threshold
 
     @property
-    def messages(self) -> List[Message]:
+    def messages(self) -> list[Message]:
         """Retrieve a list of messages from the agent's memory."""
         return self.memory.messages
 
     @messages.setter
-    def messages(self, value: List[Message]):
+    def messages(self, value: list[Message]):
         """Set the list of messages in the agent's memory."""
         self.memory.messages = value

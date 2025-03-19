@@ -1,6 +1,9 @@
 from enum import Enum
-from typing import Any, List, Literal, Optional, Union
+from typing import Literal
 
+from openai.types.chat.chat_completion_message_tool_call import (
+    ChatCompletionMessageToolCall,
+)
 from pydantic import BaseModel, Field
 
 
@@ -55,16 +58,16 @@ class Message(BaseModel):
     """Represents a chat message in the conversation"""
 
     role: ROLE_TYPE = Field(...)  # type: ignore
-    content: Optional[str] = Field(default=None)
-    tool_calls: Optional[List[ToolCall]] = Field(default=None)
-    name: Optional[str] = Field(default=None)
-    tool_call_id: Optional[str] = Field(default=None)
-    base64_image: Optional[str] = Field(default=None)
+    content: str | None = Field(default=None)
+    tool_calls: list[ToolCall] | None = Field(default=None)
+    name: str | None = Field(default=None)
+    tool_call_id: str | None = Field(default=None)
+    base64_image: str | None = Field(default=None)
 
-    def __add__(self, other) -> List["Message"]:
+    def __add__(self, other) -> list["Message"]:
         """支持 Message + list 或 Message + Message 的操作"""
         if isinstance(other, list):
-            return [self] + other
+            return list([self] + other)
         elif isinstance(other, Message):
             return [self, other]
         else:
@@ -72,7 +75,7 @@ class Message(BaseModel):
                 f"unsupported operand type(s) for +: '{type(self).__name__}' and '{type(other).__name__}'"
             )
 
-    def __radd__(self, other) -> List["Message"]:
+    def __radd__(self, other) -> list["Message"]:
         """支持 list + Message 的操作"""
         if isinstance(other, list):
             return other + [self]
@@ -97,9 +100,7 @@ class Message(BaseModel):
         return message
 
     @classmethod
-    def user_message(
-        cls, content: str, base64_image: Optional[str] = None
-    ) -> "Message":
+    def user_message(cls, content: str, base64_image: str | None = None) -> "Message":
         """Create a user message"""
         return cls(role=Role.USER, content=content, base64_image=base64_image)
 
@@ -110,14 +111,14 @@ class Message(BaseModel):
 
     @classmethod
     def assistant_message(
-        cls, content: Optional[str] = None, base64_image: Optional[str] = None
+        cls, content: str | None = None, base64_image: str | None = None
     ) -> "Message":
         """Create an assistant message"""
         return cls(role=Role.ASSISTANT, content=content, base64_image=base64_image)
 
     @classmethod
     def tool_message(
-        cls, content: str, name, tool_call_id: str, base64_image: Optional[str] = None
+        cls, content: str, name, tool_call_id: str, base64_image: str | None = None
     ) -> "Message":
         """Create a tool message"""
         return cls(
@@ -131,9 +132,9 @@ class Message(BaseModel):
     @classmethod
     def from_tool_calls(
         cls,
-        tool_calls: List[Any],
-        content: Union[str, List[str]] = "",
-        base64_image: Optional[str] = None,
+        tool_calls: list[ChatCompletionMessageToolCall],
+        content: str = "",
+        base64_image: str | None = None,
         **kwargs,
     ):
         """Create ToolCallsMessage from raw tool calls.
@@ -144,7 +145,12 @@ class Message(BaseModel):
             base64_image: Optional base64 encoded image
         """
         formatted_calls = [
-            {"id": call.id, "function": call.function.model_dump(), "type": "function"}
+            ToolCall(
+                id=call.id,
+                function=Function(
+                    name=call.function.name, arguments=call.function.arguments
+                ),
+            )
             for call in tool_calls
         ]
         return cls(
@@ -157,7 +163,7 @@ class Message(BaseModel):
 
 
 class Memory(BaseModel):
-    messages: List[Message] = Field(default_factory=list)
+    messages: list[Message] = Field(default_factory=list)
     max_messages: int = Field(default=100)
 
     def add_message(self, message: Message) -> None:
@@ -167,7 +173,7 @@ class Memory(BaseModel):
         if len(self.messages) > self.max_messages:
             self.messages = self.messages[-self.max_messages :]
 
-    def add_messages(self, messages: List[Message]) -> None:
+    def add_messages(self, messages: list[Message]) -> None:
         """Add multiple messages to memory"""
         self.messages.extend(messages)
 
@@ -175,10 +181,10 @@ class Memory(BaseModel):
         """Clear all messages"""
         self.messages.clear()
 
-    def get_recent_messages(self, n: int) -> List[Message]:
+    def get_recent_messages(self, n: int) -> list[Message]:
         """Get n most recent messages"""
         return self.messages[-n:]
 
-    def to_dict_list(self) -> List[dict]:
+    def to_dict_list(self) -> list[dict]:
         """Convert messages to list of dicts"""
         return [msg.to_dict() for msg in self.messages]

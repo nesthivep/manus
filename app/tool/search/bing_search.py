@@ -1,7 +1,7 @@
-from typing import List
+from typing import Any, cast
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from app.logger import logger
 from app.tool.search.base import WebSearchEngine
@@ -36,7 +36,7 @@ BING_SEARCH_URL = "https://www.bing.com/search?q="
 
 
 class BingSearchEngine(WebSearchEngine):
-    session: requests.Session = None
+    session: requests.Session
 
     def __init__(self, **data):
         """Initialize the BingSearch tool with a requests session."""
@@ -44,7 +44,7 @@ class BingSearchEngine(WebSearchEngine):
         self.session = requests.Session()
         self.session.headers.update(HEADERS)
 
-    def _search_sync(self, query: str, num_results: int = 10) -> List[str]:
+    def _search_sync(self, query: str, num_results: int = 10) -> list[str]:
         """
         Synchronous Bing search implementation to retrieve a list of URLs matching a query.
 
@@ -53,7 +53,7 @@ class BingSearchEngine(WebSearchEngine):
             num_results (int, optional): The maximum number of URLs to return. Defaults to 10.
 
         Returns:
-            List[str]: A list of URLs from the search results, capped at `num_results`.
+            list[str]: A list of URLs from the search results, capped at `num_results`.
                        Returns an empty list if the query is empty or no results are found.
 
         Notes:
@@ -98,19 +98,23 @@ class BingSearchEngine(WebSearchEngine):
             root = BeautifulSoup(res.text, "lxml")
 
             list_data = []
-            ol_results = root.find("ol", id="b_results")
-            if not ol_results:
+            ol_result = root.find("ol", id="b_results")
+            if not ol_result or not isinstance(ol_result, Tag):
                 return [], None
 
-            for li in ol_results.find_all("li", class_="b_algo"):
+            for li in ol_result.find_all("li", class_="b_algo"):
+                if not isinstance(li, Tag):
+                    continue
                 title = ""
                 url = ""
                 abstract = ""
                 try:
                     h2 = li.find("h2")
-                    if h2:
+                    if h2 and isinstance(h2, Tag):
                         title = h2.text.strip()
-                        url = h2.a["href"].strip()
+                        a = h2.a
+                        if a:
+                            url = str(a["href"]).strip()
 
                     p = li.find("p")
                     if p:
@@ -132,10 +136,14 @@ class BingSearchEngine(WebSearchEngine):
                     continue
 
             next_btn = root.find("a", title="Next page")
-            if not next_btn:
+            if not next_btn or not isinstance(next_btn, Tag):
                 return list_data, None
 
-            next_url = BING_HOST_URL + next_btn["href"]
+            href = next_btn["href"]
+            if isinstance(href, list):
+                href = href[0]
+
+            next_url = BING_HOST_URL + href
             return list_data, next_url
         except Exception as e:
             logger.warning(f"Error parsing HTML: {e}")
@@ -143,4 +151,4 @@ class BingSearchEngine(WebSearchEngine):
 
     def perform_search(self, query, num_results=10, *args, **kwargs):
         """Bing search engine."""
-        return self._search_sync(query, num_results=num_results)
+        return cast(list[Any], list(self._search_sync(query, num_results=num_results)))

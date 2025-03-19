@@ -1,5 +1,5 @@
 import math
-from typing import Dict, List, Optional, Union
+from typing import Any, cast
 
 import tiktoken
 from openai import (
@@ -10,6 +10,7 @@ from openai import (
     OpenAIError,
     RateLimitError,
 )
+from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_message import ChatCompletionMessage
 from tenacity import (
     retry,
@@ -121,7 +122,7 @@ class TokenCounter:
             total_tiles * self.HIGH_DETAIL_TILE_TOKENS
         ) + self.LOW_DETAIL_IMAGE_TOKENS
 
-    def count_content(self, content: Union[str, List[Union[str, dict]]]) -> int:
+    def count_content(self, content: str | list[str | dict]) -> int:
         """Calculate tokens for message content"""
         if not content:
             return 0
@@ -140,7 +141,7 @@ class TokenCounter:
                     token_count += self.count_image(item)
         return token_count
 
-    def count_tool_calls(self, tool_calls: List[dict]) -> int:
+    def count_tool_calls(self, tool_calls: list[dict]) -> int:
         """Calculate tokens for tool calls"""
         token_count = 0
         for tool_call in tool_calls:
@@ -150,7 +151,7 @@ class TokenCounter:
                 token_count += self.count_text(function.get("arguments", ""))
         return token_count
 
-    def count_message_tokens(self, messages: List[dict]) -> int:
+    def count_message_tokens(self, messages: list[dict]) -> int:
         """Calculate the total number of tokens in a message list"""
         total_tokens = self.FORMAT_TOKENS  # Base format tokens
 
@@ -178,10 +179,10 @@ class TokenCounter:
 
 
 class LLM:
-    _instances: Dict[str, "LLM"] = {}
+    _instances: dict[str, "LLM"] = {}
 
     def __new__(
-        cls, config_name: str = "default", llm_config: Optional[LLMSettings] = None
+        cls, config_name: str = "default", llm_config: LLMSettings | None = None
     ):
         if config_name not in cls._instances:
             instance = super().__new__(cls)
@@ -190,11 +191,15 @@ class LLM:
         return cls._instances[config_name]
 
     def __init__(
-        self, config_name: str = "default", llm_config: Optional[LLMSettings] = None
+        self, config_name: str = "default", llm_config: LLMSettings | None = None
     ):
         if not hasattr(self, "client"):  # Only initialize if not already initialized
-            llm_config = llm_config or config.llm
-            llm_config = llm_config.get(config_name, llm_config["default"])
+            llm_cfg_src = llm_config or config.llm
+            if isinstance(llm_cfg_src, dict):
+                llm_config = llm_cfg_src.get(config_name, llm_cfg_src["default"])
+            else:
+                llm_config = llm_cfg_src
+
             self.model = llm_config.model
             self.max_tokens = llm_config.max_tokens
             self.temperature = llm_config.temperature
@@ -236,7 +241,7 @@ class LLM:
             return 0
         return len(self.tokenizer.encode(text))
 
-    def count_message_tokens(self, messages: List[dict]) -> int:
+    def count_message_tokens(self, messages: list[dict]) -> int:
         return self.token_counter.count_message_tokens(messages)
 
     def update_token_count(self, input_tokens: int, completion_tokens: int = 0) -> None:
@@ -269,17 +274,17 @@ class LLM:
 
     @staticmethod
     def format_messages(
-        messages: List[Union[dict, Message]], supports_images: bool = False
-    ) -> List[dict]:
+        messages: list[dict | Message], supports_images: bool = False
+    ) -> list[dict]:
         """
         Format messages for LLM by converting them to OpenAI message format.
 
         Args:
-            messages: List of messages that can be either dict or Message objects
+            messages: list of messages that can be either dict or Message objects
             supports_images: Flag indicating if the target model supports image inputs
 
         Returns:
-            List[dict]: List of formatted messages in OpenAI format
+            list[dict]: list of formatted messages in OpenAI format
 
         Raises:
             ValueError: If messages are invalid or missing required fields
@@ -326,7 +331,7 @@ class LLM:
                         ]
 
                     # Add the image to content
-                    message["content"].append(
+                    cast(list[dict[str, Any]], message["content"]).append(
                         {
                             "type": "image_url",
                             "image_url": {
@@ -364,16 +369,16 @@ class LLM:
     )
     async def ask(
         self,
-        messages: List[Union[dict, Message]],
-        system_msgs: Optional[List[Union[dict, Message]]] = None,
+        messages: list[dict | Message],
+        system_msgs: list[dict | Message] | None = None,
         stream: bool = True,
-        temperature: Optional[float] = None,
+        temperature: float | None = None,
     ) -> str:
         """
         Send a prompt to the LLM and get the response.
 
         Args:
-            messages: List of conversation messages
+            messages: list of conversation messages
             system_msgs: Optional system messages to prepend
             stream (bool): Whether to stream the response
             temperature (float): Sampling temperature for the response
@@ -393,13 +398,20 @@ class LLM:
 
             # Format system and user messages with image support check
             if system_msgs:
-                system_msgs = self.format_messages(system_msgs, supports_images)
+                system_msgs = list(self.format_messages(system_msgs, supports_images))
                 messages = system_msgs + self.format_messages(messages, supports_images)
             else:
-                messages = self.format_messages(messages, supports_images)
+                messages = list(self.format_messages(messages, supports_images))
 
             # Calculate input token count
-            input_tokens = self.count_message_tokens(messages)
+            input_tokens = self.count_message_tokens(
+                list(
+                    map(
+                        lambda x: x.model_dump() if not isinstance(x, dict) else x,
+                        messages,
+                    )
+                )
+            )
 
             # Check if token limits are exceeded
             if not self.check_token_limit(input_tokens):
@@ -430,9 +442,10 @@ class LLM:
                     raise ValueError("Empty or invalid response from LLM")
 
                 # Update token counts
-                self.update_token_count(
-                    response.usage.prompt_tokens, response.usage.completion_tokens
-                )
+                if response.usage is not None:
+                    self.update_token_count(
+                        response.usage.prompt_tokens, response.usage.completion_tokens
+                    )
 
                 return response.choices[0].message.content
 
@@ -491,18 +504,18 @@ class LLM:
     )
     async def ask_with_images(
         self,
-        messages: List[Union[dict, Message]],
-        images: List[Union[str, dict]],
-        system_msgs: Optional[List[Union[dict, Message]]] = None,
+        messages: list[dict | Message],
+        images: list[str | dict],
+        system_msgs: list[dict | Message] | None = None,
         stream: bool = False,
-        temperature: Optional[float] = None,
+        temperature: float | None = None,
     ) -> str:
         """
         Send a prompt with images to the LLM and get the response.
 
         Args:
-            messages: List of conversation messages
-            images: List of image URLs or image data dictionaries
+            messages: list of conversation messages
+            images: list of image URLs or image data dictionaries
             system_msgs: Optional system messages to prepend
             stream (bool): Whether to stream the response
             temperature (float): Sampling temperature for the response
@@ -538,7 +551,7 @@ class LLM:
 
             # Convert content to multimodal format if needed
             content = last_message["content"]
-            multimodal_content = (
+            multimodal_content: list[dict[str, Any]] = (
                 [{"type": "text", "text": content}]
                 if isinstance(content, str)
                 else content
@@ -647,22 +660,22 @@ class LLM:
     )
     async def ask_tool(
         self,
-        messages: List[Union[dict, Message]],
-        system_msgs: Optional[List[Union[dict, Message]]] = None,
+        messages: list[dict | Message],
+        system_msgs: list[dict | Message] | None = None,
         timeout: int = 300,
-        tools: Optional[List[dict]] = None,
+        tools: list[dict] | None = None,
         tool_choice: TOOL_CHOICE_TYPE = ToolChoice.AUTO,  # type: ignore
-        temperature: Optional[float] = None,
+        temperature: float | None = None,
         **kwargs,
     ) -> ChatCompletionMessage | None:
         """
         Ask LLM using functions/tools and return the response.
 
         Args:
-            messages: List of conversation messages
+            messages: list of conversation messages
             system_msgs: Optional system messages to prepend
             timeout: Request timeout in seconds
-            tools: List of tools to use
+            tools: list of tools to use
             tool_choice: Tool choice strategy
             temperature: Sampling temperature for the response
             **kwargs: Additional completion arguments
@@ -686,13 +699,20 @@ class LLM:
 
             # Format messages
             if system_msgs:
-                system_msgs = self.format_messages(system_msgs, supports_images)
+                system_msgs = list(self.format_messages(system_msgs, supports_images))
                 messages = system_msgs + self.format_messages(messages, supports_images)
             else:
-                messages = self.format_messages(messages, supports_images)
+                messages = list(self.format_messages(messages, supports_images))
 
             # Calculate input token count
-            input_tokens = self.count_message_tokens(messages)
+            input_tokens = self.count_message_tokens(
+                list(
+                    map(
+                        lambda x: x.model_dump() if not isinstance(x, dict) else x,
+                        messages,
+                    )
+                )
+            )
 
             # If there are tools, calculate token count for tool descriptions
             tools_tokens = 0
@@ -743,9 +763,10 @@ class LLM:
                 return None
 
             # Update token counts
-            self.update_token_count(
-                response.usage.prompt_tokens, response.usage.completion_tokens
-            )
+            if response.usage is not None:
+                self.update_token_count(
+                    response.usage.prompt_tokens, response.usage.completion_tokens
+                )
 
             return response.choices[0].message
 

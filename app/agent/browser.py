@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import Field
 
@@ -19,12 +19,14 @@ class BrowserAgent(ToolCallAgent):
     """
 
     name: str = "browser"
-    description: str = "A browser agent that can control a browser to accomplish tasks"
+    description: str | None = (
+        "A browser agent that can control a browser to accomplish tasks"
+    )
 
-    system_prompt: str = SYSTEM_PROMPT
-    next_step_prompt: str = NEXT_STEP_PROMPT
+    system_prompt: str | None = SYSTEM_PROMPT
+    next_step_prompt: str | None = NEXT_STEP_PROMPT
 
-    max_observe: int = 10000
+    max_observe: int | None = 10000
     max_steps: int = 20
 
     # Configure the available tools
@@ -36,18 +38,18 @@ class BrowserAgent(ToolCallAgent):
     tool_choices: ToolChoice = ToolChoice.AUTO
     special_tool_names: list[str] = Field(default_factory=lambda: [Terminate().name])
 
-    _current_base64_image: Optional[str] = None
+    _current_base64_image: str | None = None
 
     async def _handle_special_tool(self, name: str, result: Any, **kwargs):
         if not self._is_special_tool(name):
             return
         else:
-            await self.available_tools.get_tool(BrowserUseTool().name).cleanup()
+            await self.available_tools.get_tool(BrowserUseTool).cleanup()
             await super()._handle_special_tool(name, result, **kwargs)
 
-    async def get_browser_state(self) -> Optional[dict]:
+    async def get_browser_state(self) -> dict | None:
         """Get the current browser state for context in next steps."""
-        browser_tool = self.available_tools.get_tool(BrowserUseTool().name)
+        browser_tool = self.available_tools.get_tool(BrowserUseTool)
         if not browser_tool:
             return None
 

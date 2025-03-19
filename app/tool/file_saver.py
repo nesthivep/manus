@@ -1,9 +1,13 @@
 import os
+from typing import Literal, TypeAlias
 
 import aiofiles
 
 from app.config import WORKSPACE_ROOT
 from app.tool.base import BaseTool
+
+
+FileOpenTextMode: TypeAlias = Literal["r", "w", "a", "x"]
 
 
 class FileSaver(BaseTool):
@@ -33,7 +37,9 @@ The tool accepts content and a file path, and saves the content to that location
         "required": ["content", "file_path"],
     }
 
-    async def execute(self, content: str, file_path: str, mode: str = "w") -> str:
+    async def execute(
+        self, content: str, file_path: str, mode: FileOpenTextMode = "w"
+    ) -> str:
         """
         Save content to a file at the specified path.
 

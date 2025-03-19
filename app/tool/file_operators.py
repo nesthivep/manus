@@ -2,14 +2,14 @@
 
 import asyncio
 from pathlib import Path
-from typing import Optional, Protocol, Tuple, Union, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from app.config import SandboxSettings
 from app.exceptions import ToolError
 from app.sandbox.client import SANDBOX_CLIENT
 
 
-PathLike = Union[str, Path]
+PathLike = str | Path
 
 
 @runtime_checkable
@@ -33,8 +33,8 @@ class FileOperator(Protocol):
         ...
 
     async def run_command(
-        self, cmd: str, timeout: Optional[float] = 120.0
-    ) -> Tuple[int, str, str]:
+        self, cmd: str, timeout: float | None = 120.0
+    ) -> tuple[int, str, str]:
         """Run a shell command and return (return_code, stdout, stderr)."""
         ...
 
@@ -67,8 +67,8 @@ class LocalFileOperator(FileOperator):
         return Path(path).exists()
 
     async def run_command(
-        self, cmd: str, timeout: Optional[float] = 120.0
-    ) -> Tuple[int, str, str]:
+        self, cmd: str, timeout: float | None = 120.0
+    ) -> tuple[int, str, str]:
         """Run a shell command locally."""
         process = await asyncio.create_subprocess_shell(
             cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
@@ -102,7 +102,7 @@ class SandboxFileOperator(FileOperator):
     async def _ensure_sandbox_initialized(self):
         """Ensure sandbox is initialized."""
         if not self.sandbox_client.sandbox:
-            await self.sandbox_client.create(config=SandboxSettings())
+            await self.sandbox_client.create(config=SandboxSettings.model_construct())
 
     async def read_file(self, path: PathLike) -> str:
         """Read content from a file in sandbox."""
@@ -137,8 +137,8 @@ class SandboxFileOperator(FileOperator):
         return result.strip() == "true"
 
     async def run_command(
-        self, cmd: str, timeout: Optional[float] = 120.0
-    ) -> Tuple[int, str, str]:
+        self, cmd: str, timeout: float | None = 120.0
+    ) -> tuple[int, str, str]:
         """Run a command in sandbox environment."""
         await self._ensure_sandbox_initialized()
         try:

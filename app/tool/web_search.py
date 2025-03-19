@@ -1,5 +1,4 @@
 import asyncio
-from typing import List
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -41,7 +40,7 @@ class WebSearch(BaseTool):
         "bing": BingSearchEngine(),
     }
 
-    async def execute(self, query: str, num_results: int = 10) -> List[str]:
+    async def execute(self, query: str, num_results: int = 10) -> list[dict | str]:
         """
         Execute a Web search and return a list of URLs.
 
@@ -50,7 +49,7 @@ class WebSearch(BaseTool):
             num_results (int, optional): The number of search results to return. Default is 10.
 
         Returns:
-            List[str]: A list of URLs matching the search query.
+            list[dict | str]: A list of URLs matching the search query.
         """
         engine_order = self._get_engine_order()
         for engine_name in engine_order:
@@ -60,18 +59,18 @@ class WebSearch(BaseTool):
                     engine, query, num_results
                 )
                 if links:
-                    return links
+                    return list(links)
             except Exception as e:
                 print(f"Search engine '{engine_name}' failed with error: {e}")
         return []
 
-    def _get_engine_order(self) -> List[str]:
+    def _get_engine_order(self) -> list[str]:
         """
         Determines the order in which to try search engines.
         Preferred engine is first (based on configuration), followed by the remaining engines.
 
         Returns:
-            List[str]: Ordered list of search engine names.
+            list[str]: Ordered list of search engine names.
         """
         preferred = "google"
         if config.search_config and config.search_config.engine:
@@ -94,7 +93,7 @@ class WebSearch(BaseTool):
         engine: WebSearchEngine,
         query: str,
         num_results: int,
-    ) -> List[str]:
+    ) -> list[dict | str]:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None, lambda: list(engine.perform_search(query, num_results=num_results))

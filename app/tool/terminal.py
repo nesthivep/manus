@@ -1,7 +1,6 @@
 import asyncio
 import os
 import shlex
-from typing import Optional
 
 from app.tool.base import BaseTool, CLIResult
 
@@ -25,7 +24,7 @@ Note: You MUST append a `sleep 0.05` to the end of the command for commands that
         },
         "required": ["command"],
     }
-    process: Optional[asyncio.subprocess.Process] = None
+    process: asyncio.subprocess.Process | None = None
     current_path: str = os.getcwd()
     lock: asyncio.Lock = asyncio.Lock()
 
@@ -74,13 +73,15 @@ Note: You MUST append a `sleep 0.05` to the end of the command for commands that
                     (result.output + "\n") if final_output.output else result.output
                 )
             if result.error:
+                if final_output.error is None:
+                    final_output.error = ""
                 final_output.error += (
                     (result.error + "\n") if final_output.error else result.error
                 )
 
         # Remove trailing newlines
         final_output.output = final_output.output.rstrip()
-        final_output.error = final_output.error.rstrip()
+        final_output.error = (final_output.error or "").rstrip()
         return final_output
 
     async def execute_in_env(self, env_name: str, command: str) -> CLIResult:

@@ -1,4 +1,5 @@
-from typing import Any, List, Optional, Type, Union, get_args, get_origin
+from types import NoneType
+from typing import Any, Type, Union, cast, get_args, get_origin
 
 from pydantic import BaseModel, Field
 
@@ -20,12 +21,12 @@ class CreateChatCompletion(BaseTool):
         dict: "object",
         list: "array",
     }
-    response_type: Optional[Type] = None
-    required: List[str] = Field(default_factory=lambda: ["response"])
+    response_type: Type | None = None
+    required: list[str] = Field(default_factory=lambda: ["response"])
 
-    def __init__(self, response_type: Optional[Type] = str):
+    def __init__(self, response_type: Type | None = str):
         """Initialize with a specific response type."""
-        super().__init__()
+        cast(Any, super().__init__)()
         self.response_type = response_type
         self.parameters = self._build_parameters()
 
@@ -53,7 +54,7 @@ class CreateChatCompletion(BaseTool):
                 "required": schema.get("required", self.required),
             }
 
-        return self._create_type_schema(self.response_type)
+        return self._create_type_schema(self.response_type or NoneType)
 
     def _create_type_schema(self, type_hint: Type) -> dict:
         """Create a JSON schema for the given type."""
@@ -73,9 +74,9 @@ class CreateChatCompletion(BaseTool):
                 "required": self.required,
             }
 
-        # Handle List type
+        # Handle list type
         if origin is list:
-            item_type = args[0] if args else Any
+            item_type = args[0] if args else Type[Any]
             return {
                 "type": "object",
                 "properties": {
@@ -87,9 +88,9 @@ class CreateChatCompletion(BaseTool):
                 "required": self.required,
             }
 
-        # Handle Dict type
+        # Handle dict type
         if origin is dict:
-            value_type = args[1] if len(args) > 1 else Any
+            value_type = args[1] if len(args) > 1 else Type[Any]
             return {
                 "type": "object",
                 "properties": {
@@ -131,7 +132,7 @@ class CreateChatCompletion(BaseTool):
         """Execute the chat completion with type conversion.
 
         Args:
-            required: List of required field names or None
+            required: list of required field names or None
             **kwargs: Response data
 
         Returns:
@@ -164,6 +165,8 @@ class CreateChatCompletion(BaseTool):
             return result  # Assuming result is already in correct format
 
         try:
+            if self.response_type is NoneType or self.response_type is None:
+                return None
             return self.response_type(result)
         except (ValueError, TypeError):
             return result

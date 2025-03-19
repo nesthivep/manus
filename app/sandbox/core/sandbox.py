@@ -4,10 +4,9 @@ import os
 import tarfile
 import tempfile
 import uuid
-from typing import Dict, Optional
 
 import docker
-from docker.errors import NotFound
+import docker.errors
 from docker.models.containers import Container
 
 from app.config import SandboxSettings
@@ -31,8 +30,8 @@ class DockerSandbox:
 
     def __init__(
         self,
-        config: Optional[SandboxSettings] = None,
-        volume_bindings: Optional[Dict[str, str]] = None,
+        config: SandboxSettings | None = None,
+        volume_bindings: dict[str, str] | None = None,
     ):
         """Initializes a sandbox instance.
 
@@ -40,11 +39,11 @@ class DockerSandbox:
             config: Sandbox configuration. Default configuration used if None.
             volume_bindings: Volume mappings in {host_path: container_path} format.
         """
-        self.config = config or SandboxSettings()
+        self.config = config or SandboxSettings.model_construct()
         self.volume_bindings = volume_bindings or {}
         self.client = docker.from_env()
-        self.container: Optional[Container] = None
-        self.terminal: Optional[AsyncDockerizedTerminal] = None
+        self.container: Container | None = None
+        self.terminal: AsyncDockerizedTerminal | None = None
 
     async def create(self) -> "DockerSandbox":
         """Creates and starts the sandbox container.
@@ -91,7 +90,7 @@ class DockerSandbox:
             self.terminal = AsyncDockerizedTerminal(
                 container["Id"],
                 self.config.work_dir,
-                env_vars={"PYTHONUNBUFFERED": "1"}
+                env_vars={"PYTHONUNBUFFERED": "1"},
                 # Ensure Python output is not buffered
             )
             await self.terminal.init()
@@ -102,7 +101,7 @@ class DockerSandbox:
             await self.cleanup()  # Ensure resources are cleaned up
             raise RuntimeError(f"Failed to create sandbox: {e}") from e
 
-    def _prepare_volume_bindings(self) -> Dict[str, Dict[str, str]]:
+    def _prepare_volume_bindings(self) -> dict[str, dict[str, str]]:
         """Prepares volume binding configuration.
 
         Returns:
@@ -137,7 +136,7 @@ class DockerSandbox:
         os.makedirs(host_path, exist_ok=True)
         return host_path
 
-    async def run_command(self, cmd: str, timeout: Optional[int] = None) -> str:
+    async def run_command(self, cmd: str, timeout: int | None = None) -> str:
         """Runs a command in the sandbox.
 
         Args:
@@ -190,7 +189,7 @@ class DockerSandbox:
             content = await self._read_from_tar(tar_stream)
             return content.decode("utf-8")
 
-        except NotFound:
+        except docker.errors.NotFound:
             raise FileNotFoundError(f"File not found: {path}")
         except Exception as e:
             raise RuntimeError(f"Failed to read file: {e}")
@@ -271,6 +270,7 @@ class DockerSandbox:
 
             # Get file stream
             resolved_src = self._safe_resolve_path(src_path)
+            assert self.container is not None, "Sandbox not initialized"
             stream, stat = await asyncio.to_thread(
                 self.container.get_archive, resolved_src
             )
@@ -357,6 +357,7 @@ class DockerSandbox:
                     data = f.read()
 
                 # Upload to container
+                assert self.container is not None, "Sandbox not initialized"
                 await asyncio.to_thread(
                     self.container.put_archive,
                     os.path.dirname(resolved_dst) or "/",

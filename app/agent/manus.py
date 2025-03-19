@@ -20,14 +20,14 @@ class Manus(BrowserAgent):
     """
 
     name: str = "Manus"
-    description: str = (
+    description: str | None = (
         "A versatile agent that can solve various tasks using multiple tools"
     )
 
-    system_prompt: str = SYSTEM_PROMPT.format(directory=config.workspace_root)
-    next_step_prompt: str = NEXT_STEP_PROMPT
+    system_prompt: str | None = SYSTEM_PROMPT.format(directory=config.workspace_root)
+    next_step_prompt: str | None = NEXT_STEP_PROMPT
 
-    max_observe: int = 10000
+    max_observe: int | None = 10000
     max_steps: int = 20
 
     # Add general-purpose tools to the tool collection

@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, DefaultDict, List, Literal, Optional, get_args
+from typing import Any, DefaultDict, Literal, get_args
 
 from app.config import config
 from app.exceptions import ToolError
@@ -48,9 +48,7 @@ Notes for using the `str_replace` command:
 """
 
 
-def maybe_truncate(
-    content: str, truncate_after: Optional[int] = MAX_RESPONSE_LEN
-) -> str:
+def maybe_truncate(content: str, truncate_after: int | None = MAX_RESPONSE_LEN) -> str:
     """Truncate content and append a notice if content exceeds the specified length."""
     if not truncate_after or len(content) <= truncate_after:
         return content
@@ -98,7 +96,7 @@ class StrReplaceEditor(BaseTool):
         },
         "required": ["command", "path"],
     }
-    _file_history: DefaultDict[PathLike, List[str]] = defaultdict(list)
+    _file_history: DefaultDict[PathLike, list[str]] = defaultdict(list)
     _local_operator: LocalFileOperator = LocalFileOperator()
     _sandbox_operator: SandboxFileOperator = SandboxFileOperator()
 
@@ -107,7 +105,7 @@ class StrReplaceEditor(BaseTool):
         """Get the appropriate file operator based on execution mode."""
         return (
             self._sandbox_operator
-            if config.sandbox.use_sandbox
+            if config.sandbox and config.sandbox.use_sandbox
             else self._local_operator
         )
 
@@ -196,10 +194,13 @@ class StrReplaceEditor(BaseTool):
     async def view(
         self,
         path: PathLike,
-        view_range: Optional[List[int]] = None,
-        operator: FileOperator = None,
+        view_range: list[int] | None = None,
+        operator: FileOperator | None = None,
     ) -> CLIResult:
         """Display file or directory content."""
+        if operator is None:
+            operator = self._get_operator()
+
         # Determine if path is a directory
         is_dir = await operator.is_directory(path)
 
@@ -235,7 +236,7 @@ class StrReplaceEditor(BaseTool):
         self,
         path: PathLike,
         operator: FileOperator,
-        view_range: Optional[List[int]] = None,
+        view_range: list[int] | None = None,
     ) -> CLIResult:
         """Display file content, optionally within a specified line range."""
         # Read file content
@@ -285,10 +286,13 @@ class StrReplaceEditor(BaseTool):
         self,
         path: PathLike,
         old_str: str,
-        new_str: Optional[str] = None,
-        operator: FileOperator = None,
+        new_str: str | None = None,
+        operator: FileOperator | None = None,
     ) -> CLIResult:
         """Replace a unique string in a file with a new string."""
+        if operator is None:
+            operator = self._get_operator()
+
         # Read file content and expand tabs
         file_content = (await operator.read_file(path)).expandtabs()
         old_str = old_str.expandtabs()
@@ -342,9 +346,12 @@ class StrReplaceEditor(BaseTool):
         path: PathLike,
         insert_line: int,
         new_str: str,
-        operator: FileOperator = None,
+        operator: FileOperator | None = None,
     ) -> CLIResult:
         """Insert text at a specific line in a file."""
+        if operator is None:
+            operator = self._get_operator()
+
         # Read and prepare content
         file_text = (await operator.read_file(path)).expandtabs()
         new_str = new_str.expandtabs()
@@ -392,9 +399,14 @@ class StrReplaceEditor(BaseTool):
         return CLIResult(output=success_msg)
 
     async def undo_edit(
-        self, path: PathLike, operator: FileOperator = None
+        self,
+        path: PathLike,
+        operator: FileOperator | None = None,
     ) -> CLIResult:
         """Revert the last edit made to a file."""
+        if operator is None:
+            operator = self._get_operator()
+
         if not self._file_history[path]:
             raise ToolError(f"No edit history found for {path}.")
 
