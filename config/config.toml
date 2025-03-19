@@ -2,15 +2,15 @@
 [llm]
 model = "claude-3-7-sonnet-20250219"        # The LLM model to use
 base_url = "https://api.anthropic.com/v1/"  # API endpoint URL
-api_key = "YOUR_API_KEY"                    # Your API key
+api_key = "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"                    # Your API key
 max_tokens = 8192                           # Maximum number of tokens in the response
 temperature = 0.0                           # Controls randomness
 
 # [llm] #AZURE OPENAI:
 # api_type= 'azure'
-# model = "YOUR_MODEL_NAME" #"gpt-4o-mini"
+# model = "gpt-4o' 
 # base_url = "{YOUR_AZURE_ENDPOINT.rstrip('/')}/openai/deployments/{AZURE_DEPOLYMENT_ID}"
-# api_key = "AZURE API KEY"
+# api_key = "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"
 # max_tokens = 8096
 # temperature = 0.0
 # api_version="AZURE API VERSION" #"2024-08-01-preview"
