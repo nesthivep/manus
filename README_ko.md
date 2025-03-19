@@ -53,6 +53,8 @@ pip install -r requirements.txt
 
 ### 방법 2: uv 사용 (권장)
 
+#### Linux/macOS
+
 1. uv를 설치합니다. (빠른 Python 패키지 설치 및 종속성 관리 도구):
 
 ```bash
@@ -71,8 +73,6 @@ cd OpenManus
 ```bash
 uv venv --python 3.12
 source .venv/bin/activate  # Unix/macOS의 경우
-# Windows의 경우:
-# .venv\Scripts\activate
 ```
 
 4. 종속성을 설치합니다:
@@ -80,6 +80,50 @@ source .venv/bin/activate  # Unix/macOS의 경우
 ```bash
 uv pip install -r requirements.txt
 ```
+
+#### Windows
+
+1. uv를 설치합니다. (빠른 Python 패키지 설치 및 종속성 관리 도구):
+
+   **방법 1: PowerShell 사용**
+
+   PowerShell을 열고(가능하면 관리자 권한으로) 다음을 실행합니다:
+
+   ```powershell
+   iwr -useb https://astral.sh/uv/install.ps1 | iex
+   ```
+
+   **방법 2: pip 사용**
+
+   이미 Python과 pip가 설치되어 있다면 다음을 실행할 수 있습니다:
+
+   ```
+   pip install uv
+   ```
+
+   **방법 3: GitHub에서 다운로드**
+
+   [uv 릴리스 페이지](https://github.com/astral-sh/uv/releases)를 방문하여 최신 Windows 설치 프로그램을 다운로드하고 실행합니다.
+
+2. 저장소를 클론합니다:
+
+   ```
+   git clone https://github.com/mannaandpoem/OpenManus.git
+   cd OpenManus
+   ```
+
+3. 새로운 가상 환경을 생성하고 활성화합니다:
+
+   ```
+   uv venv --python 3.12
+   .venv\Scripts\activate
+   ```
+
+4. 종속성을 설치합니다:
+
+   ```
+   uv pip install -r requirements.txt
+   ```
 
 ## 설정 방법
 
