@@ -208,16 +208,8 @@ class LLM:
 
             # Add token counting related attributes
             self.total_input_tokens = 0
-<<<<<<< HEAD
             self.max_input_tokens = getattr(llm_config, "max_input_tokens", None)
-=======
             self.total_completion_tokens = 0
-            self.max_input_tokens = (
-                llm_config.max_input_tokens
-                if hasattr(llm_config, "max_input_tokens")
-                else None
-            )
->>>>>>> 65a488478429c8511a0f2cbbe1825f41d3ea96a0
 
             # Add rate limiting attributes
             self.rpm_limit = getattr(llm_config, "rpm_limit", None)
@@ -228,9 +220,15 @@ class LLM:
             self.last_request_time: Optional[float] = None
 
             # Trackers for token-based rate limits.
-            self.token_tracker: Deque[Tuple[float, int]] = deque()  # (timestamp, total_tokens)
-            self.input_token_tracker: Deque[Tuple[float, int]] = deque()  # (timestamp, input_tokens)
-            self.output_token_tracker: Deque[Tuple[float, int]] = deque()  # (timestamp, output_tokens)
+            self.token_tracker: Deque[
+                Tuple[float, int]
+            ] = deque()  # (timestamp, total_tokens)
+            self.input_token_tracker: Deque[
+                Tuple[float, int]
+            ] = deque()  # (timestamp, input_tokens)
+            self.output_token_tracker: Deque[
+                Tuple[float, int]
+            ] = deque()  # (timestamp, output_tokens)
 
             # Single lock for enforcing and updating rate limits.
             self.rate_limit_lock = asyncio.Lock()
@@ -295,7 +293,7 @@ class LLM:
         tracker: Deque[Tuple[float, int]],
         token_limit: int,
         new_tokens: int,
-        limit_name: str
+        limit_name: str,
     ) -> None:
         """
         Wait until there's enough capacity in the provided token tracker.
@@ -311,11 +309,15 @@ class LLM:
             oldest_time = tracker[0][0] if tracker else current_time
             wait_time = (oldest_time + 60) - current_time
             if wait_time > 0:
-                logger.info(f"Waiting {wait_time:.2f}s for {limit_name} rate limit to clear.")
+                logger.info(
+                    f"Waiting {wait_time:.2f}s for {limit_name} rate limit to clear."
+                )
                 await asyncio.sleep(wait_time)
             current_time = time.time()
 
-    async def enforce_rate_limits(self, input_tokens: int, max_output_tokens: int) -> None:
+    async def enforce_rate_limits(
+        self, input_tokens: int, max_output_tokens: int
+    ) -> None:
         """
         Enforce RPM and token-based rate limits (TPM, ITPM, OTPM) before making an API call.
         """
@@ -331,13 +333,20 @@ class LLM:
 
             # Prepare limits: each element is (tracker, token_limit, tokens_needed, label).
             limits = [
-                (self.token_tracker, self.tpm_limit, input_tokens + max_output_tokens, "TPM"),
+                (
+                    self.token_tracker,
+                    self.tpm_limit,
+                    input_tokens + max_output_tokens,
+                    "TPM",
+                ),
                 (self.input_token_tracker, self.itpm_limit, input_tokens, "ITPM"),
                 (self.output_token_tracker, self.otpm_limit, max_output_tokens, "OTPM"),
             ]
             for tracker, limit, new_tokens, label in limits:
                 if limit is not None:
-                    await self._wait_for_token_capacity(tracker, limit, new_tokens, label)
+                    await self._wait_for_token_capacity(
+                        tracker, limit, new_tokens, label
+                    )
             self.last_request_time = time.time()
 
     async def update_rate_limit_trackers(
@@ -550,12 +559,10 @@ class LLM:
             full_response = "".join(collected_messages).strip()
             if not full_response:
                 raise ValueError("Empty response from streaming LLM")
-<<<<<<< HEAD
             total_estimated_tokens = input_tokens + estimated_output_tokens
             await self.update_rate_limit_trackers(
                 total_estimated_tokens, input_tokens, estimated_output_tokens
             )
-=======
 
             # estimate completion tokens for streaming response
             completion_tokens = self.count_tokens(completion_text)
@@ -564,7 +571,6 @@ class LLM:
             )
             self.total_completion_tokens += completion_tokens
 
->>>>>>> 65a488478429c8511a0f2cbbe1825f41d3ea96a0
             return full_response
 
         except TokenLimitExceeded:
