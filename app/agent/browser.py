@@ -18,14 +18,16 @@ class BrowserAgent(ToolCallAgent):
     extract content, and perform other browser-based actions to accomplish tasks.
     """
 
-    name = "browser"
-    description = "A browser agent that can control a browser to accomplish tasks"
+    name: str = "browser"
+    description: str | None = (
+        "A browser agent that can control a browser to accomplish tasks"
+    )
 
-    system_prompt = SYSTEM_PROMPT
-    next_step_prompt = NEXT_STEP_PROMPT
+    system_prompt: str | None = SYSTEM_PROMPT
+    next_step_prompt: str | None = NEXT_STEP_PROMPT
 
-    max_observe = 10000
-    max_steps = 20
+    max_observe: int | None = 10000
+    max_steps: int = 20
 
     # Configure the available tools
     available_tools: ToolCollection = Field(

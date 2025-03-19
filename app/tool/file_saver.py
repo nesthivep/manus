@@ -16,7 +16,7 @@ class FileSaver(BaseTool):
 Use this tool when you need to save text, code, or generated content to a file on the local filesystem.
 The tool accepts content and a file path, and saves the content to that location.
 """
-    parameters = {
+    parameters: dict = {
         "type": "object",
         "properties": {
             "content": {

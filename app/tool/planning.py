@@ -19,7 +19,7 @@ class PlanningTool(BaseTool):
 
     name: str = "planning"
     description: str = _PLANNING_TOOL_DESCRIPTION
-    parameters = {
+    parameters: dict = {
         "type": "object",
         "properties": {
             "command": {

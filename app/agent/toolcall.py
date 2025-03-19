@@ -22,11 +22,11 @@ TOOL_CALL_REQUIRED = "Tool calls required but none provided"
 class ToolCallAgent(ReActAgent):
     """Base agent class for handling tool/function calls with enhanced abstraction"""
 
-    name = "toolcall"
-    description = "an agent that can execute tool calls."
+    name: str = "toolcall"
+    description: str | None = "an agent that can execute tool calls."
 
-    system_prompt = SYSTEM_PROMPT
-    next_step_prompt = NEXT_STEP_PROMPT
+    system_prompt: str | None = SYSTEM_PROMPT
+    next_step_prompt: str | None = NEXT_STEP_PROMPT
 
     available_tools: ToolCollection = ToolCollection(
         CreateChatCompletion(), Terminate()

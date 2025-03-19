@@ -10,7 +10,7 @@ class PythonExecute(BaseTool):
 
     name: str = "python_execute"
     description: str = "Executes Python code string. Note: Only print outputs are visible, function return values are not captured. Use print statements to see results."
-    parameters = {
+    parameters: dict = {
         "type": "object",
         "properties": {
             "code": {

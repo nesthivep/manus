@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 class BaseTool(ABC, BaseModel):
     name: str
     description: str
-    parameters: dict | None = None
+    parameters: dict = Field(default_factory=dict)
 
     class Config:
         arbitrary_types_allowed = True

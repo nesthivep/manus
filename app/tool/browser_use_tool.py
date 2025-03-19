@@ -52,7 +52,7 @@ Context = TypeVar("Context")
 class BrowserUseTool(BaseTool, Generic[Context]):
     name: str = "browser_use"
     description: str = _BROWSER_DESCRIPTION
-    parameters = {
+    parameters: dict = {
         "type": "object",
         "properties": {
             "action": {

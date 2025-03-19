@@ -1,5 +1,5 @@
 from types import NoneType
-from typing import Any, Type, Union, get_args, get_origin
+from typing import Any, Type, Union, cast, get_args, get_origin
 
 from pydantic import BaseModel, Field
 
@@ -26,6 +26,7 @@ class CreateChatCompletion(BaseTool):
 
     def __init__(self, response_type: Type | None = str):
         """Initialize with a specific response type."""
+        cast(Any, super().__init__)()
         self.response_type = response_type
         self.parameters = self._build_parameters()
 

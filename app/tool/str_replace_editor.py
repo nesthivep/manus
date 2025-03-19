@@ -60,7 +60,7 @@ class StrReplaceEditor(BaseTool):
 
     name: str = "str_replace_editor"
     description: str = _STR_REPLACE_EDITOR_DESCRIPTION
-    parameters = {
+    parameters: dict = {
         "type": "object",
         "properties": {
             "command": {

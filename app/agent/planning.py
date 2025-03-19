@@ -19,10 +19,10 @@ class PlanningAgent(ToolCallAgent):
     """
 
     name: str = "planning"
-    description: str = "An agent that creates and manages plans to solve tasks"
+    description: str | None = "An agent that creates and manages plans to solve tasks"
 
-    system_prompt: str = PLANNING_SYSTEM_PROMPT
-    next_step_prompt: str = NEXT_STEP_PROMPT
+    system_prompt: str | None = PLANNING_SYSTEM_PROMPT
+    next_step_prompt: str | None = NEXT_STEP_PROMPT
 
     available_tools: ToolCollection = Field(
         default_factory=lambda: ToolCollection(PlanningTool(), Terminate())
@@ -58,6 +58,7 @@ class PlanningAgent(ToolCallAgent):
             if self.active_plan_id
             else self.next_step_prompt
         )
+        assert prompt is not None, "next_step_prompt is not set"
         self.messages.append(Message.user_message(prompt))
 
         # Get the current step index before thinking
@@ -210,6 +211,7 @@ class PlanningAgent(ToolCallAgent):
             )
         ]
         self.memory.add_messages(messages)
+        assert self.system_prompt is not None, "system_prompt is not set"
         response = await self.llm.ask_tool(
             messages=list(messages),
             system_msgs=[Message.system_message(self.system_prompt)],

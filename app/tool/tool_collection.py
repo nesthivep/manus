@@ -1,6 +1,6 @@
 """Collection classes for managing multiple tools."""
 
-from typing import Any, Type, TypeVar
+from typing import Any, Type, TypeVar, cast
 
 from app.exceptions import ToolError
 from app.tool.base import BaseTool, ToolFailure, ToolResult
@@ -45,10 +45,13 @@ class ToolCollection:
                 results.append(ToolFailure(error=e.message))
         return results
 
-    def get_tool(self, name: Type[T]) -> T:
-        res = self.tool_map.get(name.name)
-        assert res is not None, f"Tool {name.name} is not defined"
-        assert isinstance(res, name), f"Tool {name.name} is not an instance of {name}"
+    def get_tool(self, tool_type: Type[T]) -> T:
+        name: str = cast(Any, tool_type)().name
+        res = self.tool_map.get(name)
+        assert res is not None, f"Tool {name} is not defined"
+        assert isinstance(
+            res, tool_type
+        ), f"Tool {name} is not an instance of {tool_type.__name__}"
         return res
 
     def add_tool(self, tool: BaseTool):

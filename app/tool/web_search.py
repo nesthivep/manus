@@ -18,7 +18,7 @@ class WebSearch(BaseTool):
     description: str = """Perform a web search and return a list of relevant links.
     This function attempts to use the primary search engine API to get up-to-date results.
     If an error occurs, it falls back to an alternative search engine."""
-    parameters = {
+    parameters: dict = {
         "type": "object",
         "properties": {
             "query": {

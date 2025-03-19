@@ -14,7 +14,7 @@ Prefer to execute complex CLI commands over creating executable scripts, as they
 Commands will be executed in the current working directory.
 Note: You MUST append a `sleep 0.05` to the end of the command for commands that will complete in under 50ms, as this will circumvent a known issue with the terminal tool where it will sometimes not return the output when the command completes too quickly.
 """
-    parameters = {
+    parameters: dict = {
         "type": "object",
         "properties": {
             "command": {
