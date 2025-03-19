@@ -1,8 +1,8 @@
 import asyncio
-import time
 import math
+import time
 from collections import deque
-from typing import Dict, List, Optional, Union, Deque, Tuple
+from typing import Deque, Dict, List, Optional, Tuple, Union
 
 import tiktoken
 from openai import (
@@ -13,6 +13,7 @@ from openai import (
     OpenAIError,
     RateLimitError,
 )
+from openai.types.chat.chat_completion_message import ChatCompletionMessage
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -31,7 +32,16 @@ from app.schema import (
     ToolChoice,
 )
 
+
 REASONING_MODELS = ["o1", "o3-mini"]
+MULTIMODAL_MODELS = [
+    "gpt-4-vision-preview",
+    "gpt-4o",
+    "gpt-4o-mini",
+    "claude-3-opus-20240229",
+    "claude-3-sonnet-20240229",
+    "claude-3-haiku-20240307",
+]
 
 
 class TokenCounter:
@@ -198,7 +208,16 @@ class LLM:
 
             # Add token counting related attributes
             self.total_input_tokens = 0
+<<<<<<< HEAD
             self.max_input_tokens = getattr(llm_config, "max_input_tokens", None)
+=======
+            self.total_completion_tokens = 0
+            self.max_input_tokens = (
+                llm_config.max_input_tokens
+                if hasattr(llm_config, "max_input_tokens")
+                else None
+            )
+>>>>>>> 65a488478429c8511a0f2cbbe1825f41d3ea96a0
 
             # Add rate limiting attributes
             self.rpm_limit = getattr(llm_config, "rpm_limit", None)
@@ -243,12 +262,15 @@ class LLM:
     def count_message_tokens(self, messages: List[dict]) -> int:
         return self.token_counter.count_message_tokens(messages)
 
-    def update_token_count(self, input_tokens: int) -> None:
+    def update_token_count(self, input_tokens: int, completion_tokens: int = 0) -> None:
         """Update token counts"""
         # Only track tokens if max_input_tokens is set
         self.total_input_tokens += input_tokens
+        self.total_completion_tokens += completion_tokens
         logger.info(
-            f"Token usage: Input={input_tokens}, Cumulative Input={self.total_input_tokens}"
+            f"Token usage: Input={input_tokens}, Completion={completion_tokens}, "
+            f"Cumulative Input={self.total_input_tokens}, Cumulative Completion={self.total_completion_tokens}, "
+            f"Total={input_tokens + completion_tokens}, Cumulative Total={self.total_input_tokens + self.total_completion_tokens}"
         )
 
     def check_token_limit(self, input_tokens: int) -> bool:
@@ -335,12 +357,15 @@ class LLM:
                 self.output_token_tracker.append((now, output_tokens))
 
     @staticmethod
-    def format_messages(messages: List[Union[dict, Message]]) -> List[dict]:
+    def format_messages(
+        messages: List[Union[dict, Message]], supports_images: bool = False
+    ) -> List[dict]:
         """
         Format messages for LLM by converting them to OpenAI message format.
 
         Args:
             messages: List of messages that can be either dict or Message objects
+            supports_images: Flag indicating if the target model supports image inputs
 
         Returns:
             List[dict]: List of formatted messages in OpenAI format
@@ -364,54 +389,58 @@ class LLM:
             if isinstance(message, Message):
                 message = message.to_dict()
 
-            if not isinstance(message, dict):
+            if isinstance(message, dict):
+                # If message is a dict, ensure it has required fields
+                if "role" not in message:
+                    raise ValueError("Message dict must contain 'role' field")
+
+                # Process base64 images if present and model supports images
+                if supports_images and message.get("base64_image"):
+                    # Initialize or convert content to appropriate format
+                    if not message.get("content"):
+                        message["content"] = []
+                    elif isinstance(message["content"], str):
+                        message["content"] = [
+                            {"type": "text", "text": message["content"]}
+                        ]
+                    elif isinstance(message["content"], list):
+                        # Convert string items to proper text objects
+                        message["content"] = [
+                            (
+                                {"type": "text", "text": item}
+                                if isinstance(item, str)
+                                else item
+                            )
+                            for item in message["content"]
+                        ]
+
+                    # Add the image to content
+                    message["content"].append(
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{message['base64_image']}"
+                            },
+                        }
+                    )
+
+                    # Remove the base64_image field
+                    del message["base64_image"]
+                # If model doesn't support images but message has base64_image, handle gracefully
+                elif not supports_images and message.get("base64_image"):
+                    # Just remove the base64_image field and keep the text content
+                    del message["base64_image"]
+
+                if "content" in message or "tool_calls" in message:
+                    formatted_messages.append(message)
+                # else: do not include the message
+            else:
                 raise TypeError(f"Unsupported message type: {type(message)}")
 
-            # Validate required fields
-            if "role" not in message:
-                raise ValueError("Message dict must contain 'role' field")
-
-            # Process base64 images if present
-            if message.get("base64_image"):
-                # Initialize or convert content to appropriate format
-                if not message.get("content"):
-                    message["content"] = []
-                elif isinstance(message["content"], str):
-                    message["content"] = [{"type": "text", "text": message["content"]}]
-                elif isinstance(message["content"], list):
-                    # Convert string items to proper text objects
-                    message["content"] = [
-                        (
-                            {"type": "text", "text": item}
-                            if isinstance(item, str)
-                            else item
-                        )
-                        for item in message["content"]
-                    ]
-
-                # Add the image to content
-                message["content"].append(
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{message['base64_image']}"
-                        },
-                    }
-                )
-
-                # Remove the base64_image field
-                del message["base64_image"]
-
-            # Only include messages with content or tool_calls
-            if "content" in message or "tool_calls" in message:
-                formatted_messages.append(message)
-
-        # Validate all roles
-        invalid_roles = [
-            msg for msg in formatted_messages if msg["role"] not in ROLE_VALUES
-        ]
-        if invalid_roles:
-            raise ValueError(f"Invalid role: {invalid_roles[0]['role']}")
+        # Validate all messages have required fields
+        for msg in formatted_messages:
+            if msg["role"] not in ROLE_VALUES:
+                raise ValueError(f"Invalid role: {msg['role']}")
 
         return formatted_messages
 
@@ -448,12 +477,15 @@ class LLM:
             Exception: For unexpected errors
         """
         try:
-            # Format system and user messages
+            # Check if the model supports images
+            supports_images = self.model in MULTIMODAL_MODELS
+
+            # Format system and user messages with image support check
             if system_msgs:
-                system_msgs = self.format_messages(system_msgs)
-                messages = system_msgs + self.format_messages(messages)
+                system_msgs = self.format_messages(system_msgs, supports_images)
+                messages = system_msgs + self.format_messages(messages, supports_images)
             else:
-                messages = self.format_messages(messages)
+                messages = self.format_messages(messages, supports_images)
 
             # Calculate input token count
             input_tokens = self.count_message_tokens(messages)
@@ -482,9 +514,9 @@ class LLM:
 
             if not stream:
                 # Non-streaming request
-                params["stream"] = False
-
-                response = await self.client.chat.completions.create(**params)
+                response = await self.client.chat.completions.create(
+                    **params, stream=False
+                )
 
                 if not response.choices or not response.choices[0].message.content:
                     raise ValueError("Empty or invalid response from LLM")
@@ -502,8 +534,7 @@ class LLM:
             # Streaming request, For streaming, update estimated token count before making the request
             self.update_token_count(input_tokens)
 
-            params["stream"] = True
-            response = await self.client.chat.completions.create(**params)
+            response = await self.client.chat.completions.create(**params, stream=True)
 
             collected_messages = []
             estimated_output_tokens = 0
@@ -519,20 +550,31 @@ class LLM:
             full_response = "".join(collected_messages).strip()
             if not full_response:
                 raise ValueError("Empty response from streaming LLM")
+<<<<<<< HEAD
             total_estimated_tokens = input_tokens + estimated_output_tokens
             await self.update_rate_limit_trackers(
                 total_estimated_tokens, input_tokens, estimated_output_tokens
             )
+=======
+
+            # estimate completion tokens for streaming response
+            completion_tokens = self.count_tokens(completion_text)
+            logger.info(
+                f"Estimated completion tokens for streaming response: {completion_tokens}"
+            )
+            self.total_completion_tokens += completion_tokens
+
+>>>>>>> 65a488478429c8511a0f2cbbe1825f41d3ea96a0
             return full_response
 
         except TokenLimitExceeded:
             # Re-raise token limit errors without logging
             raise
-        except ValueError as ve:
-            logger.error(f"Validation error: {ve}")
+        except ValueError:
+            logger.exception(f"Validation error")
             raise
         except OpenAIError as oe:
-            logger.error(f"OpenAI API error: {oe}")
+            logger.exception(f"OpenAI API error")
             if isinstance(oe, AuthenticationError):
                 logger.error("Authentication failed. Check API key.")
             elif isinstance(oe, RateLimitError):
@@ -540,8 +582,8 @@ class LLM:
             elif isinstance(oe, APIError):
                 logger.error(f"API error: {oe}")
             raise
-        except Exception as e:
-            logger.error(f"Unexpected error in ask: {e}")
+        except Exception:
+            logger.exception(f"Unexpected error in ask")
             raise
 
     @retry(
@@ -579,8 +621,15 @@ class LLM:
             Exception: For unexpected errors
         """
         try:
-            # Format messages
-            formatted_messages = self.format_messages(messages)
+            # For ask_with_images, we always set supports_images to True because
+            # this method should only be called with models that support images
+            if self.model not in MULTIMODAL_MODELS:
+                raise ValueError(
+                    f"Model {self.model} does not support images. Use a model from {MULTIMODAL_MODELS}"
+                )
+
+            # Format messages with image support
+            formatted_messages = self.format_messages(messages, supports_images=True)
 
             # Ensure the last message is from the user to attach images
             if not formatted_messages or formatted_messages[-1]["role"] != "user":
@@ -619,7 +668,10 @@ class LLM:
 
             # Add system messages if provided
             if system_msgs:
-                all_messages = self.format_messages(system_msgs) + formatted_messages
+                all_messages = (
+                    self.format_messages(system_msgs, supports_images=True)
+                    + formatted_messages
+                )
             else:
                 all_messages = formatted_messages
 
@@ -706,7 +758,7 @@ class LLM:
         tool_choice: TOOL_CHOICE_TYPE = ToolChoice.AUTO,  # type: ignore
         temperature: Optional[float] = None,
         **kwargs,
-    ):
+    ) -> ChatCompletionMessage | None:
         """
         Ask LLM using functions/tools and return the response.
 
@@ -733,12 +785,15 @@ class LLM:
             if tool_choice not in TOOL_CHOICE_VALUES:
                 raise ValueError(f"Invalid tool_choice: {tool_choice}")
 
+            # Check if the model supports images
+            supports_images = self.model in MULTIMODAL_MODELS
+
             # Format messages
             if system_msgs:
-                system_msgs = self.format_messages(system_msgs)
-                messages = system_msgs + self.format_messages(messages)
+                system_msgs = self.format_messages(system_msgs, supports_images)
+                messages = system_msgs + self.format_messages(messages, supports_images)
             else:
-                messages = self.format_messages(messages)
+                messages = self.format_messages(messages, supports_images)
 
             # Calculate input token count
             input_tokens = self.count_message_tokens(messages)
@@ -787,14 +842,16 @@ class LLM:
 
             await self.enforce_rate_limits(input_tokens, max_output_tokens)
 
-            response = await self.client.chat.completions.create(**params)
+            response: ChatCompletion = await self.client.chat.completions.create(
+                **params, stream=False
+            )
 
             # Check if response is valid
             if not response.choices or not response.choices[0].message:
                 print(response)
-                raise ValueError("Invalid or empty response from LLM")
+                # raise ValueError("Invalid or empty response from LLM")
+                return None
 
-            # Update token counts and rate limit trackers
             self.update_token_count(response.usage.prompt_tokens)
             self.update_rate_limit_trackers(
                 response.usage.total_tokens,
