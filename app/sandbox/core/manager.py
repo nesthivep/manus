@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 from contextlib import asynccontextmanager
-from typing import Dict, Optional, Set
+from typing import Set
 
 import docker
 from docker.errors import APIError, ImageNotFound
@@ -47,16 +47,16 @@ class SandboxManager:
         self._client = docker.from_env()
 
         # Resource mappings
-        self._sandboxes: Dict[str, DockerSandbox] = {}
-        self._last_used: Dict[str, float] = {}
+        self._sandboxes: dict[str, DockerSandbox] = {}
+        self._last_used: dict[str, float] = {}
 
         # Concurrency control
-        self._locks: Dict[str, asyncio.Lock] = {}
+        self._locks: dict[str, asyncio.Lock] = {}
         self._global_lock = asyncio.Lock()
         self._active_operations: Set[str] = set()
 
         # Cleanup task
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
         self._is_shutting_down = False
 
         # Start automatic cleanup
@@ -113,8 +113,8 @@ class SandboxManager:
 
     async def create_sandbox(
         self,
-        config: Optional[SandboxSettings] = None,
-        volume_bindings: Optional[Dict[str, str]] = None,
+        config: SandboxSettings | None = None,
+        volume_bindings: dict[str, str] | None = None,
     ) -> str:
         """Creates a new sandbox instance.
 
@@ -134,7 +134,7 @@ class SandboxManager:
                     f"Maximum number of sandboxes ({self.max_sandboxes}) reached"
                 )
 
-            config = config or SandboxSettings()
+            config = config or SandboxSettings.model_construct()
             if not await self.ensure_image(config.image):
                 raise RuntimeError(f"Failed to ensure Docker image: {config.image}")
 
@@ -297,11 +297,11 @@ class SandboxManager:
         """Async context manager exit."""
         await self.cleanup()
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """Gets manager statistics.
 
         Returns:
-            Dict: Statistics information.
+            dict: Statistics information.
         """
         return {
             "total_sandboxes": len(self._sandboxes),

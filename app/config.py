@@ -1,8 +1,8 @@
 import threading
 import tomllib
 from pathlib import Path
-from typing import Dict, List, Optional
 
+from browser_use import BrowserContextConfig
 from pydantic import BaseModel, Field
 
 
@@ -20,7 +20,7 @@ class LLMSettings(BaseModel):
     base_url: str = Field(..., description="API base URL")
     api_key: str = Field(..., description="API key")
     max_tokens: int = Field(4096, description="Maximum number of tokens per request")
-    max_input_tokens: Optional[int] = Field(
+    max_input_tokens: int | None = Field(
         None,
         description="Maximum input tokens to use across all requests (None for unlimited)",
     )
@@ -30,9 +30,9 @@ class LLMSettings(BaseModel):
 
 
 class ProxySettings(BaseModel):
-    server: str = Field(None, description="Proxy server address")
-    username: Optional[str] = Field(None, description="Proxy username")
-    password: Optional[str] = Field(None, description="Proxy password")
+    server: str | None = Field(None, description="Proxy server address")
+    username: str | None = Field(None, description="Proxy username")
+    password: str | None = Field(None, description="Proxy password")
 
 
 class SearchSettings(BaseModel):
@@ -44,23 +44,26 @@ class BrowserSettings(BaseModel):
     disable_security: bool = Field(
         True, description="Disable browser security features"
     )
-    extra_chromium_args: List[str] = Field(
+    extra_chromium_args: list[str] = Field(
         default_factory=list, description="Extra arguments to pass to the browser"
     )
-    chrome_instance_path: Optional[str] = Field(
+    chrome_instance_path: str | None = Field(
         None, description="Path to a Chrome instance to use"
     )
-    wss_url: Optional[str] = Field(
+    wss_url: str | None = Field(
         None, description="Connect to a browser instance via WebSocket"
     )
-    cdp_url: Optional[str] = Field(
+    cdp_url: str | None = Field(
         None, description="Connect to a browser instance via CDP"
     )
-    proxy: Optional[ProxySettings] = Field(
+    proxy: ProxySettings | None = Field(
         None, description="Proxy settings for the browser"
     )
     max_content_length: int = Field(
         2000, description="Maximum length for content retrieval operations"
+    )
+    new_context_config: BrowserContextConfig | None = Field(
+        None, description="Browser context configuration"
     )
 
 
@@ -79,14 +82,12 @@ class SandboxSettings(BaseModel):
 
 
 class AppConfig(BaseModel):
-    llm: Dict[str, LLMSettings]
-    sandbox: Optional[SandboxSettings] = Field(
-        None, description="Sandbox configuration"
-    )
-    browser_config: Optional[BrowserSettings] = Field(
+    llm: dict[str, LLMSettings]
+    sandbox: SandboxSettings | None = Field(None, description="Sandbox configuration")
+    browser_config: BrowserSettings | None = Field(
         None, description="Browser configuration"
     )
-    search_config: Optional[SearchSettings] = Field(
+    search_config: SearchSettings | None = Field(
         None, description="Search configuration"
     )
 
@@ -189,7 +190,7 @@ class Config:
         if sandbox_config:
             sandbox_settings = SandboxSettings(**sandbox_config)
         else:
-            sandbox_settings = SandboxSettings()
+            sandbox_settings = SandboxSettings.model_construct()
 
         config_dict = {
             "llm": {
@@ -207,19 +208,23 @@ class Config:
         self._config = AppConfig(**config_dict)
 
     @property
-    def llm(self) -> Dict[str, LLMSettings]:
+    def llm(self) -> dict[str, LLMSettings]:
+        assert self._config is not None, "Config not initialized"
         return self._config.llm
 
     @property
-    def sandbox(self) -> SandboxSettings:
+    def sandbox(self) -> SandboxSettings | None:
+        assert self._config is not None, "Config not initialized"
         return self._config.sandbox
 
     @property
-    def browser_config(self) -> Optional[BrowserSettings]:
+    def browser_config(self) -> BrowserSettings | None:
+        assert self._config is not None, "Config not initialized"
         return self._config.browser_config
 
     @property
-    def search_config(self) -> Optional[SearchSettings]:
+    def search_config(self) -> SearchSettings | None:
+        assert self._config is not None, "Config not initialized"
         return self._config.search_config
 
     @property

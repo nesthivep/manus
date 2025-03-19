@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -14,15 +13,15 @@ class FlowType(str, Enum):
 class BaseFlow(BaseModel, ABC):
     """Base class for execution flows supporting multiple agents"""
 
-    agents: Dict[str, BaseAgent]
-    tools: Optional[List] = None
-    primary_agent_key: Optional[str] = None
+    agents: dict[str, BaseAgent]
+    tools: list | None = None
+    primary_agent_key: str | None = None
 
     class Config:
         arbitrary_types_allowed = True
 
     def __init__(
-        self, agents: Union[BaseAgent, List[BaseAgent], Dict[str, BaseAgent]], **data
+        self, agents: BaseAgent | list[BaseAgent] | dict[str, BaseAgent], **data
     ):
         # Handle different ways of providing agents
         if isinstance(agents, BaseAgent):
@@ -45,11 +44,13 @@ class BaseFlow(BaseModel, ABC):
         super().__init__(**data)
 
     @property
-    def primary_agent(self) -> Optional[BaseAgent]:
+    def primary_agent(self) -> BaseAgent | None:
         """Get the primary agent for the flow"""
+        if self.primary_agent_key is None:
+            return None
         return self.agents.get(self.primary_agent_key)
 
-    def get_agent(self, key: str) -> Optional[BaseAgent]:
+    def get_agent(self, key: str) -> BaseAgent | None:
         """Get a specific agent by key"""
         return self.agents.get(key)
 
@@ -81,7 +82,7 @@ class PlanStepStatus(str, Enum):
         return [cls.NOT_STARTED.value, cls.IN_PROGRESS.value]
 
     @classmethod
-    def get_status_marks(cls) -> Dict[str, str]:
+    def get_status_marks(cls) -> dict[str, str]:
         """Return a mapping of statuses to their marker symbols"""
         return {
             cls.COMPLETED.value: "[✓]",

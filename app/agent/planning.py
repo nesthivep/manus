@@ -1,9 +1,9 @@
 import time
-from typing import Dict, List, Optional
+from typing import Sequence
 
 from pydantic import Field, model_validator
 
-from app.agent.toolcall import ToolCallAgent
+from app.agent.toolcall import CompatibleToolCallObject, ToolCallAgent
 from app.logger import logger
 from app.prompt.planning import NEXT_STEP_PROMPT, PLANNING_SYSTEM_PROMPT
 from app.schema import TOOL_CHOICE_TYPE, Message, ToolCall, ToolChoice
@@ -28,14 +28,16 @@ class PlanningAgent(ToolCallAgent):
         default_factory=lambda: ToolCollection(PlanningTool(), Terminate())
     )
     tool_choices: TOOL_CHOICE_TYPE = ToolChoice.AUTO  # type: ignore
-    special_tool_names: List[str] = Field(default_factory=lambda: [Terminate().name])
+    special_tool_names: list[str] = Field(default_factory=lambda: [Terminate().name])
 
-    tool_calls: List[ToolCall] = Field(default_factory=list)
-    active_plan_id: Optional[str] = Field(default=None)
+    tool_calls: Sequence[ToolCall | CompatibleToolCallObject] = Field(
+        default_factory=list
+    )
+    active_plan_id: str | None = Field(default=None)
 
     # Add a dictionary to track the step status for each tool call
-    step_execution_tracker: Dict[str, Dict] = Field(default_factory=dict)
-    current_step_index: Optional[int] = None
+    step_execution_tracker: dict[str, dict] = Field(default_factory=dict)
+    current_step_index: int | None = None
 
     max_steps: int = 20
 
@@ -113,7 +115,7 @@ class PlanningAgent(ToolCallAgent):
         )
         return result.output if hasattr(result, "output") else str(result)
 
-    async def run(self, request: Optional[str] = None) -> str:
+    async def run(self, request: str | None = None) -> str:
         """Run the agent with an optional initial request."""
         if request:
             await self.create_initial_plan(request)
@@ -155,7 +157,7 @@ class PlanningAgent(ToolCallAgent):
         except Exception as e:
             logger.warning(f"Failed to update plan status: {e}")
 
-    async def _get_current_step_index(self) -> Optional[int]:
+    async def _get_current_step_index(self) -> int | None:
         """
         Parse the current plan to identify the first non-completed step's index.
         Returns None if no active step is found.
@@ -209,19 +211,22 @@ class PlanningAgent(ToolCallAgent):
         ]
         self.memory.add_messages(messages)
         response = await self.llm.ask_tool(
-            messages=messages,
+            messages=list(messages),
             system_msgs=[Message.system_message(self.system_prompt)],
             tools=self.available_tools.to_params(),
             tool_choice=ToolChoice.AUTO,
         )
+        if not response:
+            raise RuntimeError("Model refused to create plan")
+        tool_calls = response.tool_calls or []
         assistant_msg = Message.from_tool_calls(
-            content=response.content, tool_calls=response.tool_calls
+            content=response.content or "", tool_calls=tool_calls
         )
 
         self.memory.add_message(assistant_msg)
 
         plan_created = False
-        for tool_call in response.tool_calls:
+        for tool_call in tool_calls:
             if tool_call.function.name == "planning":
                 result = await self.execute_tool(tool_call)
                 logger.info(

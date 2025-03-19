@@ -1,6 +1,5 @@
 import json
 import time
-from typing import Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -17,12 +16,12 @@ class PlanningFlow(BaseFlow):
 
     llm: LLM = Field(default_factory=lambda: LLM())
     planning_tool: PlanningTool = Field(default_factory=PlanningTool)
-    executor_keys: List[str] = Field(default_factory=list)
+    executor_keys: list[str] = Field(default_factory=list)
     active_plan_id: str = Field(default_factory=lambda: f"plan_{int(time.time())}")
-    current_step_index: Optional[int] = None
+    current_step_index: int | None = None
 
     def __init__(
-        self, agents: Union[BaseAgent, List[BaseAgent], Dict[str, BaseAgent]], **data
+        self, agents: BaseAgent | list[BaseAgent] | dict[str, BaseAgent], **data
     ):
         # Set executor keys before super().__init__
         if "executors" in data:
@@ -44,7 +43,7 @@ class PlanningFlow(BaseFlow):
         if not self.executor_keys:
             self.executor_keys = list(self.agents.keys())
 
-    def get_executor(self, step_type: Optional[str] = None) -> BaseAgent:
+    def get_executor(self, step_type: str | None = None) -> BaseAgent:
         """
         Get an appropriate executor agent for the current step.
         Can be extended to select agents based on step type/requirements.
@@ -59,6 +58,8 @@ class PlanningFlow(BaseFlow):
                 return self.agents[key]
 
         # Fallback to primary agent
+        if self.primary_agent is None:
+            raise RuntimeError("No executor or primary agent available")
         return self.primary_agent
 
     async def execute(self, input_text: str) -> str:
@@ -91,7 +92,7 @@ class PlanningFlow(BaseFlow):
                 # Execute current step with appropriate agent
                 step_type = step_info.get("type") if step_info else None
                 executor = self.get_executor(step_type)
-                step_result = await self._execute_step(executor, step_info)
+                step_result = await self._execute_step(executor, step_info or {})
                 result += step_result + "\n"
 
                 # Check if agent wants to terminate
@@ -126,6 +127,8 @@ class PlanningFlow(BaseFlow):
             tools=[self.planning_tool.to_param()],
             tool_choice=ToolChoice.AUTO,
         )
+        if not response:
+            raise RuntimeError("LLM refused to create plan")
 
         # Process tool calls if present
         if response.tool_calls:
@@ -162,7 +165,7 @@ class PlanningFlow(BaseFlow):
             }
         )
 
-    async def _get_current_step_info(self) -> tuple[Optional[int], Optional[dict]]:
+    async def _get_current_step_info(self) -> tuple[int | None, dict | None]:
         """
         Parse the current plan to identify the first non-completed step's index and info.
         Returns (None, None) if no active step is found.
@@ -380,6 +383,8 @@ class PlanningFlow(BaseFlow):
             # Fallback to using an agent for the summary
             try:
                 agent = self.primary_agent
+                if agent is None:
+                    raise RuntimeError("No primary agent available")
                 summary_prompt = f"""
                 The plan has been completed. Here is the final plan status:
 

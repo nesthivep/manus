@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Optional
+from typing import Any, cast
 
 from app.exceptions import ToolError
 from app.tool.base import BaseTool, CLIResult, ToolResult
@@ -31,6 +31,9 @@ class _BashSession:
     async def start(self):
         if self._started:
             return
+
+        if os.name == "nt":
+            raise RuntimeError("BashSession is not supported on Windows.")
 
         self._process = await asyncio.create_subprocess_shell(
             self.command,
@@ -84,9 +87,7 @@ class _BashSession:
                     await asyncio.sleep(self._output_delay)
                     # if we read directly from stdout/stderr, it will wait forever for
                     # EOF. use the StreamReader buffer directly instead.
-                    output = (
-                        self._process.stdout._buffer.decode()
-                    )  # pyright: ignore[reportAttributeAccessIssue]
+                    output = cast(Any, self._process.stdout)._buffer.decode()
                     if self._sentinel in output:
                         # strip the sentinel and break
                         output = output[: output.index(self._sentinel)]
@@ -100,15 +101,13 @@ class _BashSession:
         if output.endswith("\n"):
             output = output[:-1]
 
-        error = (
-            self._process.stderr._buffer.decode()
-        )  # pyright: ignore[reportAttributeAccessIssue]
+        error = cast(Any, self._process.stderr)._buffer.decode()
         if error.endswith("\n"):
             error = error[:-1]
 
         # clear the buffers so that the next output can be read correctly
-        self._process.stdout._buffer.clear()  # pyright: ignore[reportAttributeAccessIssue]
-        self._process.stderr._buffer.clear()  # pyright: ignore[reportAttributeAccessIssue]
+        cast(Any, self._process.stdout)._buffer.clear()
+        cast(Any, self._process.stderr)._buffer.clear()
 
         return CLIResult(output=output, error=error)
 
@@ -118,7 +117,7 @@ class Bash(BaseTool):
 
     name: str = "bash"
     description: str = _BASH_DESCRIPTION
-    parameters: dict = {
+    parameters = {
         "type": "object",
         "properties": {
             "command": {
@@ -129,11 +128,11 @@ class Bash(BaseTool):
         "required": ["command"],
     }
 
-    _session: Optional[_BashSession] = None
+    _session: _BashSession | None = None
 
     async def execute(
         self, command: str | None = None, restart: bool = False, **kwargs
-    ) -> CLIResult:
+    ) -> CLIResult | ToolResult:
         if restart:
             if self._session:
                 self._session.stop()

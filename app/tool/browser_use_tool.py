@@ -1,7 +1,7 @@
 import asyncio
 import base64
 import json
-from typing import Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar, cast
 
 from browser_use import Browser as BrowserUseBrowser
 from browser_use import BrowserConfig
@@ -52,7 +52,7 @@ Context = TypeVar("Context")
 class BrowserUseTool(BaseTool, Generic[Context]):
     name: str = "browser_use"
     description: str = _BROWSER_DESCRIPTION
-    parameters: dict = {
+    parameters = {
         "type": "object",
         "properties": {
             "action": {
@@ -135,15 +135,15 @@ class BrowserUseTool(BaseTool, Generic[Context]):
     }
 
     lock: asyncio.Lock = Field(default_factory=asyncio.Lock)
-    browser: Optional[BrowserUseBrowser] = Field(default=None, exclude=True)
-    context: Optional[BrowserContext] = Field(default=None, exclude=True)
-    dom_service: Optional[DomService] = Field(default=None, exclude=True)
+    browser: BrowserUseBrowser | None = Field(default=None, exclude=True)
+    context: BrowserContext | None = Field(default=None, exclude=True)
+    dom_service: DomService | None = Field(default=None, exclude=True)
     web_search_tool: WebSearch = Field(default_factory=WebSearch, exclude=True)
 
     # Context for generic functionality
-    tool_context: Optional[Context] = Field(default=None, exclude=True)
+    tool_context: Context | None = Field(default=None, exclude=True)
 
-    llm: Optional[LLM] = Field(default_factory=LLM)
+    llm: LLM = Field(default_factory=LLM)
 
     @field_validator("parameters", mode="before")
     def validate_parameters(cls, v: dict, info: ValidationInfo) -> dict:
@@ -154,7 +154,10 @@ class BrowserUseTool(BaseTool, Generic[Context]):
     async def _ensure_browser_initialized(self) -> BrowserContext:
         """Ensure browser and context are initialized."""
         if self.browser is None:
-            browser_config_kwargs = {"headless": False, "disable_security": True}
+            browser_config_kwargs: dict[str, Any] = {
+                "headless": False,
+                "disable_security": True,
+            }
 
             if config.browser_config:
                 from browser_use.browser.browser import ProxySettings
@@ -203,16 +206,16 @@ class BrowserUseTool(BaseTool, Generic[Context]):
     async def execute(
         self,
         action: str,
-        url: Optional[str] = None,
-        index: Optional[int] = None,
-        text: Optional[str] = None,
-        scroll_amount: Optional[int] = None,
-        tab_id: Optional[int] = None,
-        query: Optional[str] = None,
-        goal: Optional[str] = None,
-        keys: Optional[str] = None,
-        seconds: Optional[int] = None,
-        **kwargs,
+        url: str | None = None,
+        index: int | None = None,
+        text: str | None = None,
+        scroll_amount: int | None = None,
+        tab_id: int | None = None,
+        query: str | None = None,
+        goal: str | None = None,
+        keys: str | None = None,
+        seconds: int | None = None,
+        **_,
     ) -> ToolResult:
         """
         Execute a specified browser action.
@@ -270,9 +273,11 @@ class BrowserUseTool(BaseTool, Generic[Context]):
 
                     if search_results:
                         # Navigate to the first search result
-                        first_result = search_results[0]
+                        first_result: str | dict[str, Any] = search_results[0]
+
+                        url_to_navigate: str
                         if isinstance(first_result, dict) and "url" in first_result:
-                            url_to_navigate = first_result["url"]
+                            url_to_navigate = first_result.get("url", "")
                         elif isinstance(first_result, str):
                             url_to_navigate = first_result
                         else:
@@ -399,6 +404,7 @@ class BrowserUseTool(BaseTool, Generic[Context]):
 
                 # Content extraction actions
                 elif action == "extract_content":
+                    content = None
                     if not goal:
                         return ToolResult(
                             error="Goal is required for 'extract_content' action"
@@ -457,7 +463,7 @@ Page content:
 
                         # Use LLM to extract content with required function calling
                         response = await self.llm.ask_tool(
-                            messages,
+                            list(messages),
                             tools=[extraction_function],
                             tool_choice="required",
                         )
@@ -491,7 +497,7 @@ Page content:
                         try:
                             # Try to return a portion of the page content as fallback
                             return ToolResult(
-                                output=f"{error_msg}\nHere's a portion of the page content:\n{content[:2000]}..."
+                                output=f"{error_msg}\nHere's a portion of the page content:\n{content[:2000] if content else 'N/A'}..."
                             )
                         except:
                             # If all else fails, just return the error
@@ -531,7 +537,7 @@ Page content:
                 return ToolResult(error=f"Browser action '{action}' failed: {str(e)}")
 
     async def get_current_state(
-        self, context: Optional[BrowserContext] = None
+        self, context: BrowserContext | None = None
     ) -> ToolResult:
         """
         Get the current browser state as a ToolResult.
@@ -547,9 +553,13 @@ Page content:
 
             # Create a viewport_info dictionary if it doesn't exist
             viewport_height = 0
-            if hasattr(state, "viewport_info") and state.viewport_info:
-                viewport_height = state.viewport_info.height
-            elif hasattr(ctx, "config") and hasattr(ctx.config, "browser_window_size"):
+            if hasattr(state, "viewport_info") and cast(Any, state).viewport_info:
+                viewport_height = cast(Any, state).viewport_info.height
+            elif (
+                hasattr(ctx, "config")
+                and hasattr(ctx.config, "browser_window_size")
+                and ctx.config.browser_window_size
+            ):
                 viewport_height = ctx.config.browser_window_size.get("height", 0)
 
             # Take a screenshot for the state

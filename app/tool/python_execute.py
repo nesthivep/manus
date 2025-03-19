@@ -1,7 +1,6 @@
 import multiprocessing
 import sys
 from io import StringIO
-from typing import Dict
 
 from app.tool.base import BaseTool
 
@@ -11,7 +10,7 @@ class PythonExecute(BaseTool):
 
     name: str = "python_execute"
     description: str = "Executes Python code string. Note: Only print outputs are visible, function return values are not captured. Use print statements to see results."
-    parameters: dict = {
+    parameters = {
         "type": "object",
         "properties": {
             "code": {
@@ -40,7 +39,7 @@ class PythonExecute(BaseTool):
         self,
         code: str,
         timeout: int = 5,
-    ) -> Dict:
+    ) -> dict:
         """
         Executes the provided Python code with a timeout.
 
@@ -49,7 +48,7 @@ class PythonExecute(BaseTool):
             timeout (int): Execution timeout in seconds.
 
         Returns:
-            Dict: Contains 'output' with execution output or error message and 'success' status.
+            dict: Contains 'output' with execution output or error message and 'success' status.
         """
 
         with multiprocessing.Manager() as manager:

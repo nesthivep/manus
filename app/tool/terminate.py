@@ -8,7 +8,7 @@ When you have finished all the tasks, call this tool to end the work."""
 class Terminate(BaseTool):
     name: str = "terminate"
     description: str = _TERMINATE_DESCRIPTION
-    parameters: dict = {
+    parameters = {
         "type": "object",
         "properties": {
             "status": {

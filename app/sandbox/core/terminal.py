@@ -8,7 +8,6 @@ allowing interactive command execution with timeout control.
 import asyncio
 import re
 import socket
-from typing import Dict, Optional, Tuple, Union
 
 import docker
 from docker import APIClient
@@ -26,9 +25,9 @@ class DockerSession:
         self.api = APIClient()
         self.container_id = container_id
         self.exec_id = None
-        self.socket = None
+        self.socket: socket.socket | None = None
 
-    async def create(self, working_dir: str, env_vars: Dict[str, str]) -> None:
+    async def create(self, working_dir: str, env_vars: dict[str, str]) -> None:
         """Creates an interactive session with the container.
 
         Args:
@@ -66,6 +65,7 @@ class DockerSession:
 
         if hasattr(socket_data, "_sock"):
             self.socket = socket_data._sock
+            assert self.socket is not None, "Socket not initialized"
             self.socket.setblocking(False)
         else:
             raise RuntimeError("Failed to get socket connection")
@@ -123,6 +123,7 @@ class DockerSession:
         Raises:
             socket.error: If socket communication fails.
         """
+        assert self.socket is not None, "Socket not initialized"
         buffer = b""
         while b"$ " not in buffer:
             try:
@@ -136,7 +137,7 @@ class DockerSession:
                 raise
         return buffer.decode("utf-8")
 
-    async def execute(self, command: str, timeout: Optional[int] = None) -> str:
+    async def execute(self, command: str, timeout: int | None = None) -> str:
         """Executes a command and returns cleaned output.
 
         Args:
@@ -163,6 +164,8 @@ class DockerSession:
                 buffer = b""
                 result_lines = []
                 command_sent = False
+
+                assert self.socket is not None, "Socket not initialized"
 
                 while True:
                     try:
@@ -251,9 +254,9 @@ class DockerSession:
 class AsyncDockerizedTerminal:
     def __init__(
         self,
-        container: Union[str, Container],
+        container: str | Container,
         working_dir: str = "/workspace",
-        env_vars: Optional[Dict[str, str]] = None,
+        env_vars: dict[str, str] | None = None,
         default_timeout: int = 60,
     ) -> None:
         """Initializes an asynchronous terminal for Docker containers.
@@ -285,7 +288,11 @@ class AsyncDockerizedTerminal:
         """
         await self._ensure_workdir()
 
-        self.session = DockerSession(self.container.id)
+        container_id = self.container.id
+        if container_id is None:
+            raise RuntimeError("Failed to get container ID")
+
+        self.session = DockerSession(container_id)
         await self.session.create(self.working_dir, self.env_vars)
 
     async def _ensure_workdir(self) -> None:
@@ -299,7 +306,7 @@ class AsyncDockerizedTerminal:
         except APIError as e:
             raise RuntimeError(f"Failed to create working directory: {e}")
 
-    async def _exec_simple(self, cmd: str) -> Tuple[int, str]:
+    async def _exec_simple(self, cmd: str) -> tuple[int, str]:
         """Executes a simple command using Docker's exec_run.
 
         Args:
@@ -313,7 +320,7 @@ class AsyncDockerizedTerminal:
         )
         return result.exit_code, result.output.decode("utf-8")
 
-    async def run_command(self, cmd: str, timeout: Optional[int] = None) -> str:
+    async def run_command(self, cmd: str, timeout: int | None = None) -> str:
         """Runs a command in the container with timeout.
 
         Args:

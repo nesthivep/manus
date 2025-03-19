@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import Field
 
 from app.agent.toolcall import ToolCallAgent
@@ -19,7 +17,7 @@ class SWEAgent(ToolCallAgent):
     available_tools: ToolCollection = ToolCollection(
         Bash(), StrReplaceEditor(), Terminate()
     )
-    special_tool_names: List[str] = Field(default_factory=lambda: [Terminate().name])
+    special_tool_names: list[str] = Field(default_factory=lambda: [Terminate().name])
 
     max_steps: int = 30
 
@@ -29,7 +27,7 @@ class SWEAgent(ToolCallAgent):
     async def think(self) -> bool:
         """Process current state and decide next action"""
         # Update working directory
-        self.working_dir = await self.bash.execute("pwd")
+        self.working_dir = (await self.bash.execute("pwd")).output.strip()
         self.next_step_prompt = self.next_step_prompt.format(
             current_dir=self.working_dir
         )

@@ -1,7 +1,7 @@
 class WebSearchEngine(object):
     def perform_search(
         self, query: str, num_results: int = 10, *args, **kwargs
-    ) -> list[dict]:
+    ) -> list[dict | str]:
         """
         Perform a web search and return a list of URLs.
 
@@ -12,6 +12,6 @@ class WebSearchEngine(object):
             kwargs: Additional keyword arguments.
 
         Returns:
-            List: A list of dict matching the search query.
+            list[dict | str]: A list of dict matching the search query.
         """
         raise NotImplementedError
