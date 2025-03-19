@@ -298,22 +298,46 @@ class LLM:
         """
         Wait until there's enough capacity in the provided token tracker.
         """
+        # First check if the new tokens exceed the limit completely
+        if new_tokens > token_limit:
+            logger.error(
+                f"Token request exceeds {limit_name} limit: requested {new_tokens}, limit is {token_limit}"
+            )
+            # Rather than waiting indefinitely, raise an exception
+            raise RateLimitError(
+                f"Token request for {new_tokens} exceeds the {limit_name} limit of {token_limit}. "
+                f"Consider reducing your request size or increasing your rate limits."
+            )
+
         current_time = time.time()
-        while True:
+        attempts = 0
+        max_attempts = 20  # Avoid infinite waiting
+
+        while attempts < max_attempts:
+            attempts += 1
             # Remove tracker entries older than 60 seconds.
             while tracker and tracker[0][0] < current_time - 60:
                 tracker.popleft()
             current_usage = sum(tokens for _, tokens in tracker)
             if current_usage + new_tokens <= token_limit:
                 break
+
+            # Calculate wait time based on the oldest entry
             oldest_time = tracker[0][0] if tracker else current_time
             wait_time = (oldest_time + 60) - current_time
+
             if wait_time > 0:
                 logger.info(
-                    f"Waiting {wait_time:.2f}s for {limit_name} rate limit to clear."
+                    f"Waiting {wait_time:.2f}s for {limit_name} rate limit to clear (attempt {attempts}/{max_attempts})."
                 )
                 await asyncio.sleep(wait_time)
             current_time = time.time()
+
+        if attempts >= max_attempts:
+            logger.error(f"Rate limit waiting exceeded max attempts for {limit_name}")
+            raise RateLimitError(
+                f"Failed to acquire capacity for {new_tokens} tokens within {limit_name} limit after {max_attempts} attempts."
+            )
 
     async def enforce_rate_limits(
         self, input_tokens: int, max_output_tokens: int
@@ -331,6 +355,33 @@ class LLM:
                     await asyncio.sleep(wait_time)
                     current_time = time.time()
 
+            # Check if any of the limits would be exceeded
+            if self.itpm_limit and input_tokens > self.itpm_limit:
+                logger.warning(
+                    f"Input tokens ({input_tokens}) exceed ITPM limit ({self.itpm_limit})"
+                )
+                raise RateLimitError(
+                    f"Input tokens ({input_tokens}) exceed ITPM limit ({self.itpm_limit}). "
+                    f"Consider reducing your request size or increasing the rate limit."
+                )
+
+            if self.otpm_limit and max_output_tokens > self.otpm_limit:
+                logger.warning(
+                    f"Output tokens ({max_output_tokens}) exceed OTPM limit ({self.otpm_limit})"
+                )
+                # For output tokens, we'll cap it rather than error
+                logger.info(f"Capping max_output_tokens to {self.otpm_limit}")
+                max_output_tokens = self.otpm_limit
+
+            if self.tpm_limit and (input_tokens + max_output_tokens) > self.tpm_limit:
+                logger.warning(
+                    f"Total tokens ({input_tokens + max_output_tokens}) exceed TPM limit ({self.tpm_limit})"
+                )
+                raise RateLimitError(
+                    f"Total tokens ({input_tokens + max_output_tokens}) exceed TPM limit ({self.tpm_limit}). "
+                    f"Consider reducing your request size or increasing the rate limit."
+                )
+
             # Prepare limits: each element is (tracker, token_limit, tokens_needed, label).
             limits = [
                 (
@@ -342,11 +393,21 @@ class LLM:
                 (self.input_token_tracker, self.itpm_limit, input_tokens, "ITPM"),
                 (self.output_token_tracker, self.otpm_limit, max_output_tokens, "OTPM"),
             ]
-            for tracker, limit, new_tokens, label in limits:
-                if limit is not None:
+
+            # Only process active limits (where the limit value is set)
+            active_limits = [
+                (t, l, n, label) for t, l, n, label in limits if l is not None
+            ]
+
+            for tracker, limit, new_tokens, label in active_limits:
+                try:
                     await self._wait_for_token_capacity(
                         tracker, limit, new_tokens, label
                     )
+                except RateLimitError as e:
+                    logger.error(f"Rate limit error for {label}: {e}")
+                    raise
+
             self.last_request_time = time.time()
 
     async def update_rate_limit_trackers(
@@ -358,12 +419,47 @@ class LLM:
         async with self.rate_limit_lock:
             now = time.time()
             self.last_request_time = now
+
+            # Clean up expired entries (older than 60 seconds) before adding new ones
+            current_time = time.time()
+            window_start = current_time - 60
+
+            # Only add tracker entries for active limits
             if self.tpm_limit is not None:
+                # Clean up expired entries
+                while self.token_tracker and self.token_tracker[0][0] < window_start:
+                    self.token_tracker.popleft()
                 self.token_tracker.append((now, tokens_used))
+                current_usage = sum(tokens for _, tokens in self.token_tracker)
+                logger.info(
+                    f"TPM tracker updated: {current_usage}/{self.tpm_limit} tokens used in the last minute"
+                )
+
             if self.itpm_limit is not None:
+                # Clean up expired entries
+                while (
+                    self.input_token_tracker
+                    and self.input_token_tracker[0][0] < window_start
+                ):
+                    self.input_token_tracker.popleft()
                 self.input_token_tracker.append((now, input_tokens))
+                current_usage = sum(tokens for _, tokens in self.input_token_tracker)
+                logger.info(
+                    f"ITPM tracker updated: {current_usage}/{self.itpm_limit} input tokens used in the last minute"
+                )
+
             if self.otpm_limit is not None:
+                # Clean up expired entries
+                while (
+                    self.output_token_tracker
+                    and self.output_token_tracker[0][0] < window_start
+                ):
+                    self.output_token_tracker.popleft()
                 self.output_token_tracker.append((now, output_tokens))
+                current_usage = sum(tokens for _, tokens in self.output_token_tracker)
+                logger.info(
+                    f"OTPM tracker updated: {current_usage}/{self.otpm_limit} output tokens used in the last minute"
+                )
 
     @staticmethod
     def format_messages(
@@ -565,7 +661,7 @@ class LLM:
             )
 
             # estimate completion tokens for streaming response
-            completion_tokens = self.count_tokens(completion_text)
+            completion_tokens = self.count_tokens(full_response)
             logger.info(
                 f"Estimated completion tokens for streaming response: {completion_tokens}"
             )
