@@ -340,15 +340,30 @@ function updateResultPanel(data, type) {
     // Clear previous content, add new content
     resultContainer.innerHTML = '';
 
-    // Create content area
+    // Create content area with proper styling for overflow control
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('content-box');
-    contentDiv.innerHTML = `<pre>${content}</pre>`;
+    contentDiv.style.width = '100%';
+    contentDiv.style.maxWidth = '100%';
+    contentDiv.style.boxSizing = 'border-box';
+    contentDiv.style.overflowWrap = 'break-word';
+    contentDiv.style.wordWrap = 'break-word';
+    contentDiv.style.wordBreak = 'break-word';
+
+    const preElement = document.createElement('pre');
+    preElement.style.whiteSpace = 'pre-wrap';
+    preElement.style.wordWrap = 'break-word';
+    preElement.style.wordBreak = 'break-word';
+    preElement.style.maxWidth = '100%';
+    preElement.style.boxSizing = 'border-box';
+    preElement.textContent = content;
+
+    contentDiv.appendChild(preElement);
     resultContainer.appendChild(contentDiv);
 
-    // Delay adding visible class to trigger fade-in animation
+    // Ensure proper scrolling
     setTimeout(() => {
-        contentDiv.classList.add('visible');
+        resultContainer.scrollTop = 0;
     }, 100);
 }
 
@@ -756,13 +771,22 @@ function showResultPanel() {
     if (!resultPanel) return;
 
     // 设置为可见
-    resultPanel.style.display = 'block';
+    resultPanel.style.display = 'flex';
+    resultPanel.style.flexDirection = 'column';
 
-    // 确保结果容器可滚动
+    // 确保结果容器可滚动且内容不溢出
     if (resultContainer) {
         resultContainer.style.overflowY = 'auto';
         resultContainer.style.overflowX = 'hidden';
         resultContainer.style.maxHeight = 'calc(100vh - 200px)';
+        resultContainer.style.width = '100%';
+        resultContainer.style.wordWrap = 'break-word';
+        resultContainer.style.wordBreak = 'break-word';
+        resultContainer.style.boxSizing = 'border-box';
+        resultContainer.style.padding = '5px 10px 15px 5px';
+
+        // 应用内容溢出处理
+        ensureContentFitsContainer(resultContainer);
     }
 
     // 使用setTimeout确保DOM更新
@@ -779,6 +803,11 @@ function showResultPanel() {
 
         // 触发布局调整
         handleResponsiveLayout();
+
+        // 再次应用内容溢出处理，确保所有内容都适应容器
+        if (resultContainer) {
+            ensureContentFitsContainer(resultContainer);
+        }
     }, 50);
 }
 
@@ -806,7 +835,12 @@ function handleResponsiveLayout() {
     if (resultContainer) {
         resultContainer.style.overflowY = 'auto';
         resultContainer.style.overflowX = 'hidden';
-        resultContainer.style.maxHeight = 'calc(100vh - 200px)';
+        resultContainer.style.maxHeight = isMobile ? 'calc(50vh - 150px)' : 'calc(100vh - 200px)';
+        resultContainer.style.width = '100%';
+        resultContainer.style.boxSizing = 'border-box';
+
+        // 确保内容不会溢出
+        ensureContentFitsContainer(resultContainer);
     }
 
     // 调整步骤项布局
@@ -835,6 +869,28 @@ function handleResponsiveLayout() {
             container.classList.remove('with-history');
         }
     }
+}
+
+// 确保内容适合容器
+function ensureContentFitsContainer(container) {
+    if (!container) return;
+
+    // 查找容器内的所有内容元素
+    const contentElements = container.querySelectorAll('p, div, pre, span, code, table');
+
+    contentElements.forEach(element => {
+        // 设置必要的样式以防止溢出
+        element.style.maxWidth = '100%';
+        element.style.wordWrap = 'break-word';
+        element.style.wordBreak = 'break-word';
+        element.style.overflowWrap = 'break-word';
+        element.style.boxSizing = 'border-box';
+
+        // 处理长字符串或代码
+        if (element.scrollWidth > element.clientWidth) {
+            element.style.whiteSpace = 'pre-wrap';
+        }
+    });
 }
 
 // 调整步骤项布局
