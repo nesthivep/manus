@@ -1,6 +1,5 @@
-import json
-from typing import Any, List, Optional
- 
+from typing import List
+
 from pydantic import Field
 
 from app.agent.browser import BrowserAgent
@@ -42,38 +41,6 @@ class Manus(BrowserAgent):
 
     # Add special_tool_names for this agent
     special_tool_names: List[str] = [Terminate().name]
-
-    async def _handle_special_tool(self, name: str, result: Any, **kwargs):
-        if not self._is_special_tool(name):
-            return
-        else:
-            await self.available_tools.get_tool(BrowserUseTool().name).cleanup()
-            await super()._handle_special_tool(name, result, **kwargs)
-
-    async def get_browser_state(self) -> Optional[dict]:
-        """Get the current browser state for context in next steps."""
-        browser_tool = self.available_tools.get_tool(BrowserUseTool().name)
-        if not browser_tool:
-            return None
-
-        try:
-            # Get browser state directly from the tool with no context parameter
-            result = await browser_tool.get_current_state()
-
-            if result.error:
-                logger.debug(f"Browser state error: {result.error}")
-                return None
-
-            # Store screenshot if available
-            if hasattr(result, "base64_image") and result.base64_image:
-                self._current_base64_image = result.base64_image
-
-            # Parse the state info
-            return json.loads(result.output)
-
-        except Exception as e:
-            logger.debug(f"Failed to get browser state: {str(e)}")
-            return None
 
     async def think(self) -> bool:
         """Process current state and decide next actions with appropriate context."""
