@@ -82,6 +82,13 @@ source .venv/bin/activate  # Unix/macOS 系统
 uv pip install -r requirements.txt
 ```
 
+
+### 浏览器调用工具（可选）
+```bash
+playwright install
+```
+
+
 ## 配置说明
 
 OpenManus 需要配置使用的 LLM API，请按以下步骤设置：
