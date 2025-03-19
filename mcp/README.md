@@ -43,7 +43,7 @@ uv pip install -r requirements.txt
 
 ```bash
 uv pip install -r mcp/mcp_requirements.txt
-playright install
+playwright install
 ```
 
 ## Demo display
