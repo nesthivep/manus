@@ -3,7 +3,6 @@ import base64
 import json
 from typing import Generic, Optional, TypeVar
 
-import markdownify
 from browser_use import Browser as BrowserUseBrowser
 from browser_use import BrowserConfig
 from browser_use.browser.context import BrowserContext, BrowserContextConfig
