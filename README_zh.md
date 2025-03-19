@@ -67,19 +67,10 @@ git clone https://github.com/mannaandpoem/OpenManus.git
 cd OpenManus
 ```
 
-3. 创建并激活虚拟环境：
+3. 安装依赖：
 
 ```bash
-uv venv --python 3.12
-source .venv/bin/activate  # Unix/macOS 系统
-# Windows 系统使用：
-# .venv\Scripts\activate
-```
-
-4. 安装依赖：
-
-```bash
-uv pip install -r requirements.txt
+uv add -r requirements.txt
 ```
 
 ## 配置说明
@@ -112,18 +103,30 @@ api_key = "sk-..."  # 替换为真实 API 密钥
 
 ## 快速启动
 
-一行命令运行 OpenManus：
+若要在 Conda 中使用 OpenManus，請執行下列指令：
 
+conda:
 ```bash
 python main.py
+```
+
+若要在 UV 中使用 OpenManus，請執行下列指令：
+```bash
+uv run python main.py
 ```
 
 然后通过终端输入你的创意！
 
 如需体验不稳定的开发版本，可运行：
 
+若要在 Conda 中使用 OpenManus，請執行下列指令：
 ```bash
 python run_flow.py
+```
+
+若要在 UV 中使用 OpenManus，請執行下列指令：
+```bash
+uv run python run_flow.py
 ```
 
 ## 贡献指南
