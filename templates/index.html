@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>OpenManus - Autonomous AI Agent</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,7 +30,7 @@
                 <div class="particle"></div>
                 <div class="particle"></div>
             </div>
-            
+
             <div class="tech-circuit">
                 <div class="circuit-line"></div>
                 <div class="circuit-line"></div>
@@ -52,11 +55,11 @@
                 <div class="circuit-diagonal circuit-diagonal-reverse"></div>
                 <div class="circuit-diagonal circuit-diagonal-reverse"></div>
             </div>
-            
+
             <h1 class="title">OPENMANUS</h1>
             <p class="subtitle">Your Autonomous AI Agent</p>
             <p class="description"><span class="powered-text">Powered by</span> <span>LLMs</span> and <span>diverse tools</span>.<br>OpenManus solves tasks through <span>AI reasoning</span>.</p>
-            
+
             <div class="theme-selector">
                 <p class="theme-label">选择主题</p>
                 <div class="theme-options">
@@ -76,10 +79,22 @@
                     {% endfor %}
                 </div>
             </div>
-            
+
             <a href="/chat?theme=Normal" class="cta-button">START <span class="arrow-icon">→</span></a>
         </div>
     </div>
+    <script>
+        // 防止iOS上的回弹效果
+        document.addEventListener('touchmove', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+    </script>
     <script src="/static/main.js"></script>
 </body>
 </html>

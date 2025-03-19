@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import threading
 import tomllib
@@ -8,7 +9,6 @@ from datetime import datetime
 from functools import partial
 from json import dumps
 from pathlib import Path
-import json
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -109,32 +109,30 @@ def get_available_themes():
             templates_dir = os.path.join(theme_path, "templates")
             static_dir = os.path.join(theme_path, "static")
             config_file = os.path.join(theme_path, "theme.json")
-            
+
             if os.path.exists(templates_dir) and os.path.exists(static_dir):
                 if os.path.exists(os.path.join(templates_dir, "chat.html")):
-                    theme_info = {
-                        "id": item,
-                        "name": item,
-                        "description": ""
-                    }
-                    
+                    theme_info = {"id": item, "name": item, "description": ""}
+
                     # 如果有配置文件，读取主题名称和描述
                     if os.path.exists(config_file):
                         try:
-                            with open(config_file, 'r', encoding='utf-8') as f:
+                            with open(config_file, "r", encoding="utf-8") as f:
                                 config = json.load(f)
                                 theme_info["name"] = config.get("name", item)
-                                theme_info["description"] = config.get("description", "")
+                                theme_info["description"] = config.get(
+                                    "description", ""
+                                )
                         except Exception as e:
                             print(f"读取主题配置文件出错: {str(e)}")
-                    
+
                     themes.append(theme_info)
-    
+
     # 确保Normal主题始终存在
     normal_exists = any(theme["id"] == "Normal" for theme in themes)
     if not normal_exists:
         themes.append({"id": "Normal", "name": "普通主题", "description": "默认主题"})
-    
+
     return themes
 
 
@@ -142,13 +140,13 @@ def get_available_themes():
 async def index(request: Request):
     # 获取可用主题列表
     themes = get_available_themes()
-    
+
     # 对主题进行排序：Normal在前，cyberpunk在后，其他主题按原顺序
     sorted_themes = []
     normal_theme = None
     cyberpunk_theme = None
     other_themes = []
-    
+
     for theme in themes:
         if theme["id"] == "Normal":
             normal_theme = theme
@@ -156,15 +154,17 @@ async def index(request: Request):
             cyberpunk_theme = theme
         else:
             other_themes.append(theme)
-    
+
     # 按照指定顺序组合主题
     if normal_theme:
         sorted_themes.append(normal_theme)
     if cyberpunk_theme:
         sorted_themes.append(cyberpunk_theme)
     sorted_themes.extend(other_themes)
-    
-    return templates.TemplateResponse("index.html", {"request": request, "themes": sorted_themes})
+
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "themes": sorted_themes}
+    )
 
 
 @app.get("/chat", response_class=HTMLResponse)
@@ -175,20 +175,22 @@ async def chat(request: Request):
     if os.path.exists(theme_chat_path):
         with open(theme_chat_path, "r", encoding="utf-8") as f:
             content = f.read()
-            
+
         # 读取主题配置文件
         theme_config_path = f"static/themes/{theme}/theme.json"
         theme_name = theme
         if os.path.exists(theme_config_path):
             try:
-                with open(theme_config_path, 'r', encoding='utf-8') as f:
+                with open(theme_config_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
                     theme_name = config.get("name", theme)
             except Exception:
                 pass
-                
+
         # 将主题名称添加到HTML标题中
-        content = content.replace("<title>OpenManus</title>", f"<title>OpenManus - {theme_name}</title>")
+        content = content.replace(
+            "<title>OpenManus</title>", f"<title>OpenManus - {theme_name}</title>"
+        )
         return HTMLResponse(content=content)
     else:
         # 默认使用templates中的chat.html

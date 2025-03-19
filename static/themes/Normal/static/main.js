@@ -19,16 +19,16 @@ function createTask() {
     const taskContainer = document.getElementById('task-container');
     const stepsContainer = document.getElementById('steps-container');
     const resultContainer = document.getElementById('result-container');
-    
+
     // Hide result panel
     hideResultPanel();
-    
+
     // Hide welcome message, show step loading status
     const welcomeMessage = taskContainer.querySelector('.welcome-message');
     if (welcomeMessage) {
         welcomeMessage.style.display = 'none';
     }
-    
+
     stepsContainer.innerHTML = '<div class="loading">Initializing task...</div>';
     resultContainer.innerHTML = '';
 
@@ -73,7 +73,7 @@ function setupSSE(taskId) {
 
     const stepsContainer = document.getElementById('steps-container');
     const resultContainer = document.getElementById('result-container');
-    
+
     // Hide result panel by default
     hideResultPanel();
 
@@ -106,7 +106,7 @@ function setupSSE(taskId) {
                 if (loadingDiv) loadingDiv.remove();
 
                 const { formattedContent, timestamp, isoTimestamp } = formatStepContent(data, type);
-                
+
                 stepsData.push({
                     type: type,
                     content: formattedContent,
@@ -114,27 +114,27 @@ function setupSSE(taskId) {
                     isoTimestamp: isoTimestamp,
                     element: createStepElement(type, formattedContent, timestamp)
                 });
-                
+
                 stepsData.sort((a, b) => {
                     return new Date(a.isoTimestamp) - new Date(b.isoTimestamp);
                 });
-                
+
                 stepsContainer.innerHTML = '';
                 stepsData.forEach(step => {
                     stepsContainer.appendChild(step.element);
                 });
-                
+
                 document.querySelectorAll('.step-item').forEach(item => {
                     item.classList.remove('active');
                 });
-                
+
                 const latestStep = stepsData[stepsData.length - 1];
                 if (latestStep && latestStep.element) {
                     latestStep.element.classList.add('active');
                 }
-                
+
                 autoScroll(stepsContainer);
-                
+
                 if (type === 'tool' || type === 'act' || type === 'result') {
                     updateResultPanel(data, type);
                     showResultPanel();
@@ -168,7 +168,7 @@ function setupSSE(taskId) {
                 completeDiv.className = 'complete';
                 completeDiv.innerHTML = '<div>✅ Task completed</div>';
                 stepsContainer.appendChild(completeDiv);
-                
+
                 updateResultPanel({result: lastResultContent}, 'complete');
                 showResultPanel();
 
@@ -196,10 +196,10 @@ function setupSSE(taskId) {
                 errorDiv.className = 'error';
                 errorDiv.innerHTML = `<div>❌ Error: ${data.message}</div>`;
                 stepsContainer.appendChild(errorDiv);
-                
+
                 updateResultPanel({result: data.message}, 'error');
                 showResultPanel();
-                
+
                 eventSource.close();
                 currentEventSource = null;
             } catch (e) {
@@ -224,7 +224,7 @@ function setupSSE(taskId) {
                             completeDiv.className = 'complete';
                             completeDiv.innerHTML = '<div>✅ Task completed</div>';
                             stepsContainer.appendChild(completeDiv);
-                            
+
                             if (task.steps && task.steps.length > 0) {
                                 const lastStep = task.steps[task.steps.length - 1];
                                 updateResultPanel({result: lastStep.result}, 'complete');
@@ -235,7 +235,7 @@ function setupSSE(taskId) {
                             errorDiv.className = 'error';
                             errorDiv.innerHTML = `<div>❌ Error: ${task.error || 'Task failed'}</div>`;
                             stepsContainer.appendChild(errorDiv);
-                            
+
                             updateResultPanel({result: task.error || 'Task failed'}, 'error');
                             showResultPanel();
                         }
@@ -251,7 +251,7 @@ function setupSSE(taskId) {
                         errorDiv.className = 'error';
                         errorDiv.innerHTML = '<div>⚠ Connection lost, please refresh the page</div>';
                         stepsContainer.appendChild(errorDiv);
-                        
+
                         updateResultPanel({result: 'Connection lost, please refresh the page'}, 'error');
                         showResultPanel();
                     }
@@ -272,27 +272,27 @@ function setupSSE(taskId) {
 function updateResultPanel(data, type) {
     const resultContainer = document.getElementById('result-container');
     const currentStep = document.getElementById('current-step');
-    
+
     if (!resultContainer || !currentStep) return;
-    
+
     // Update top step information
     const typeLabel = getEventLabel(type);
     const icon = getEventIcon(type);
-    
+
     // Clear and build new UI
     currentStep.innerHTML = '';
-    
+
     // Add icon
     const iconSpan = document.createElement('span');
     iconSpan.className = 'emoji-icon';
     iconSpan.textContent = icon;
     currentStep.appendChild(iconSpan);
-    
+
     // Create status text element, add typewriter effect
     const statusText = document.createElement('span');
     statusText.className = 'status-text';
     currentStep.appendChild(statusText);
-    
+
     // Typewriter effect displaying status text
     let i = 0;
     let typingEffect = setInterval(() => {
@@ -303,10 +303,10 @@ function updateResultPanel(data, type) {
             clearInterval(typingEffect);
         }
     }, 50);
-    
+
     // Update content area
     let content = '';
-    
+
     if (data.result) {
         content = data.result;
     } else if (data.message) {
@@ -314,16 +314,16 @@ function updateResultPanel(data, type) {
     } else {
         content = JSON.stringify(data, null, 2);
     }
-    
+
     // Clear previous content, add new content
     resultContainer.innerHTML = '';
-    
+
     // Create content area
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('content-box');
     contentDiv.innerHTML = `<pre>${content}</pre>`;
     resultContainer.appendChild(contentDiv);
-    
+
     // Delay adding visible class to trigger fade-in animation
     setTimeout(() => {
         contentDiv.classList.add('visible');
@@ -346,13 +346,13 @@ function loadHistory() {
             listContainer.innerHTML = '<div class="info">No history tasks</div>';
             return;
         }
-        
+
         // Update history count
         const historyCount = document.querySelector('.history-count');
         if (historyCount) {
             historyCount.textContent = tasks.length;
         }
-        
+
         listContainer.innerHTML = tasks.map(task => `
             <div class="task-card" data-task-id="${task.id}" onclick="loadTask('${task.id}')">
                 <div class="task-title">${task.prompt}</div>
@@ -377,26 +377,26 @@ function loadTask(taskId) {
         currentEventSource.close();
         currentEventSource = null;
     }
-    
+
     const taskContainer = document.getElementById('task-container');
     const stepsContainer = document.getElementById('steps-container');
     const resultContainer = document.getElementById('result-container');
-    
+
     // Hide welcome message
     const welcomeMessage = taskContainer.querySelector('.welcome-message');
     if (welcomeMessage) {
         welcomeMessage.style.display = 'none';
     }
-    
+
     // Hide result panel by default
     hideResultPanel();
-    
+
     stepsContainer.innerHTML = '<div class="loading">Loading task...</div>';
     resultContainer.innerHTML = '';
-    
+
     // Close history panel on mobile devices
     closeHistoryOnMobile();
-    
+
     fetch(`/tasks/${taskId}`)
         .then(response => response.json())
         .then(task => {
@@ -407,20 +407,20 @@ function loadTask(taskId) {
                     card.classList.add('active');
                 }
             });
-            
+
             stepsContainer.innerHTML = '';
             if (task.steps && task.steps.length > 0) {
                 // 存储步骤集合
                 let taskSteps = [];
-                
+
                 task.steps.forEach((step, index) => {
                     const stepTimestamp = new Date(step.created_at || task.created_at).toLocaleTimeString();
                     const stepElement = createStepElement(
-                        step.type, 
-                        step.result, 
+                        step.type,
+                        step.result,
                         stepTimestamp
                     );
-                    
+
                     // 将步骤添加到集合而非直接添加到DOM
                     taskSteps.push({
                         index: index,
@@ -429,7 +429,7 @@ function loadTask(taskId) {
                         step: step
                     });
                 });
-                
+
                 // 根据时间戳和索引排序步骤
                 taskSteps.sort((a, b) => {
                     // 尝试使用ISO时间戳进行比较
@@ -441,13 +441,13 @@ function loadTask(taskId) {
                     } catch (e) {
                         console.error('Error sorting by ISO timestamp:', e);
                     }
-                    
+
                     // 首先按时间戳排序
                     const timeCompare = new Date(a.timestamp) - new Date(b.timestamp);
                     // 如果时间相同，按索引排序
                     return timeCompare !== 0 ? timeCompare : a.index - b.index;
                 });
-                
+
                 // 将排序后的步骤添加到容器
                 taskSteps.forEach((stepData, index) => {
                     // 只将最后一个步骤设为展开状态
@@ -455,9 +455,9 @@ function loadTask(taskId) {
                         stepData.element.classList.add('expanded');
                         stepData.element.classList.add('active');
                     }
-                    
+
                     stepsContainer.appendChild(stepData.element);
-                    
+
                     // 显示最后一个步骤的结果
                     if (index === taskSteps.length - 1) {
                         updateResultPanel({result: stepData.step.result}, stepData.step.type);
@@ -467,7 +467,7 @@ function loadTask(taskId) {
             } else {
                 stepsContainer.innerHTML = '<div class="info">No steps recorded for this task</div>';
             }
-            
+
             updateTaskStatus(task);
         })
         .catch(error => {
@@ -481,7 +481,7 @@ function formatStepContent(data, eventType) {
     const now = new Date();
     const isoTimestamp = now.toISOString();
     const localTime = now.toLocaleTimeString();
-    
+
     return {
         formattedContent: data.result || (data.message || JSON.stringify(data)),
         timestamp: localTime,
@@ -525,10 +525,10 @@ function createStepElement(type, content, timestamp) {
         step.className = `step-item ${type}`;
         step.dataset.type = type;
         step.dataset.timestamp = timestamp; // 存储时间戳为数据属性
-        
+
         // 增强时间戳显示格式
         const formattedTimestamp = `<time>${timestamp}</time>`;
-        
+
         // Use modified layout, remove arrow indicator
         step.innerHTML = `
             <div class="log-header" onclick="toggleStepContent(this)">
@@ -548,17 +548,17 @@ function createStepElement(type, content, timestamp) {
             </div>
         `;
     }
-    
+
     // Apply fade-in animation
     step.style.opacity = '0';
     step.style.transform = 'translateY(10px)';
-    
+
     setTimeout(() => {
         step.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
         step.style.opacity = '1';
         step.style.transform = 'translateY(0)';
     }, 10);
-    
+
     return step;
 }
 
@@ -566,15 +566,15 @@ function createStepElement(type, content, timestamp) {
 function toggleStepContent(header) {
     const stepItem = header.closest('.step-item');
     if (!stepItem) return;
-    
+
     const logBody = stepItem.querySelector('.log-body');
     if (!logBody) return;
-    
+
     stepItem.classList.toggle('expanded');
-    
+
     // Highlight current step
     highlightStep(stepItem);
-    
+
     // If expanded, update result panel and show
     if (stepItem.classList.contains('expanded')) {
         const type = stepItem.dataset.type;
@@ -587,10 +587,10 @@ function toggleStepContent(header) {
 // Minimize step
 function minimizeStep(event, btn) {
     event.stopPropagation(); // Prevent event bubbling
-    
+
     const stepItem = btn.closest('.step-item');
     if (!stepItem) return;
-    
+
     stepItem.classList.toggle('expanded');
 }
 
@@ -599,7 +599,7 @@ function toggleResultPanel() {
     const resultPanel = document.getElementById('result-panel');
     const container = document.querySelector('.container');
     if (!resultPanel) return;
-    
+
     // If panel is already minimized, fully display
     if (resultPanel.classList.contains('minimized')) {
         resultPanel.classList.remove('minimized');
@@ -721,7 +721,7 @@ function showFullImage(imageSrc) {
     } else {
         document.getElementById('full-image').src = imageSrc;
     }
-    
+
     modal.classList.add('active');
 }
 
@@ -791,7 +791,7 @@ function highlightStep(stepElement) {
     document.querySelectorAll('.step-item').forEach(item => {
         item.classList.remove('active');
     });
-    
+
     // Add highlight to current step
     stepElement.classList.add('active');
 }
@@ -802,7 +802,7 @@ function toggleHistory() {
     const overlay = document.querySelector('.overlay');
     const historyToggle = document.querySelector('.history-toggle');
     const container = document.querySelector('.container');
-    
+
     if (historyVisible) {
         // Hide history
         historyPanel.classList.remove('show');
@@ -819,7 +819,7 @@ function toggleHistory() {
             container.classList.add('with-history');
         }
     }
-    
+
     historyVisible = !historyVisible;
 }
 
@@ -848,16 +848,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (historyToggle) {
         historyToggle.addEventListener('click', toggleHistory);
     }
-    
+
     // Add overlay click to close history
     const overlay = document.querySelector('.overlay');
     if (overlay) {
         overlay.addEventListener('click', toggleHistory);
     }
-    
+
     // Load history
     loadHistory();
-    
+
     // Bind input field events
     document.getElementById('prompt-input').addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -865,11 +865,11 @@ document.addEventListener('DOMContentLoaded', () => {
             createTask();
         }
     });
-    
+
     // Listen for window size changes
     window.addEventListener('resize', () => {
         const container = document.querySelector('.container');
-        
+
         // Maintain history sidebar effect on large screens, remove on small screens
         if (window.innerWidth > 768 && historyVisible) {
             container.classList.add('with-history');
@@ -877,7 +877,7 @@ document.addEventListener('DOMContentLoaded', () => {
             container.classList.remove('with-history');
         }
     });
-    
+
     // Add keyboard event listener to close modal
     document.addEventListener('keydown', (e) => {
         // ESC key closes history panel
@@ -885,7 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (historyVisible) {
                 toggleHistory();
             }
-            
+
             const imageModal = document.getElementById('image-modal');
             if (imageModal && imageModal.classList.contains('active')) {
                 imageModal.classList.remove('active');

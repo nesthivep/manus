@@ -162,11 +162,11 @@ body {
     left: 0;
     width: 100%;
     height: 1px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(0, 180, 255, 0.4), 
-        rgba(120, 0, 255, 0.6), 
-        rgba(0, 180, 255, 0.4), 
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 180, 255, 0.4),
+        rgba(120, 0, 255, 0.6),
+        rgba(0, 180, 255, 0.4),
         transparent
     );
 }
@@ -408,11 +408,11 @@ body {
     left: 0;
     width: 100%;
     height: 1px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(0, 180, 255, 0.4), 
-        rgba(120, 0, 255, 0.6), 
-        rgba(0, 180, 255, 0.4), 
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 180, 255, 0.4),
+        rgba(120, 0, 255, 0.6),
+        rgba(0, 180, 255, 0.4),
         transparent
     );
     animation: shimmer 3s infinite;
@@ -1028,7 +1028,7 @@ body {
     .title {
         font-size: 6rem;
     }
-    
+
     .hero-section {
         padding: 2rem 1.5rem;
         max-width: 800px;
@@ -1040,23 +1040,23 @@ body {
         font-size: 4.5rem;
         letter-spacing: -1px;
     }
-    
+
     .subtitle {
         font-size: 1.5rem;
         margin-bottom: 1.2rem;
     }
-    
+
     .description {
         font-size: 1rem;
         margin-bottom: 2.5rem;
         padding: 0 1rem;
     }
-    
+
     .cta-button {
         padding: 0.8rem 2.2rem;
         font-size: 0.95rem;
     }
-    
+
     .emoji {
         font-size: 2rem;
     }
@@ -1067,28 +1067,28 @@ body {
         font-size: 3.5rem;
         margin-bottom: 0.8rem;
     }
-    
+
     .subtitle {
         font-size: 1.3rem;
         margin-bottom: 1rem;
     }
-    
+
     .description {
         font-size: 0.9rem;
         line-height: 1.6;
         margin-bottom: 2rem;
     }
-    
+
     .cta-button {
         padding: 0.7rem 2rem;
         font-size: 0.9rem;
         border-radius: 20px;
     }
-    
+
     .emoji {
         font-size: 1.5rem;
     }
-    
+
     .hero-section {
         padding: 1.5rem 1rem;
     }
@@ -1098,15 +1098,15 @@ body {
     .title {
         font-size: 3rem;
     }
-    
+
     .subtitle {
         font-size: 1.1rem;
     }
-    
+
     .description {
         font-size: 0.85rem;
     }
-    
+
     .cta-button {
         padding: 0.6rem 1.8rem;
         font-size: 0.85rem;
@@ -1118,7 +1118,7 @@ body {
     .hero-section {
         padding: 1rem;
     }
-    
+
     .description {
         margin-bottom: 2rem;
     }
@@ -1129,26 +1129,26 @@ body {
     .hero-section {
         padding: 1rem;
     }
-    
+
     .title {
         font-size: 3.5rem;
         margin-bottom: 0.5rem;
     }
-    
+
     .subtitle {
         font-size: 1.2rem;
         margin-bottom: 0.8rem;
     }
-    
+
     .description {
         font-size: 0.9rem;
         margin-bottom: 1.5rem;
     }
-    
+
     .cta-button {
         padding: 0.8rem 2.5rem;
     }
-    
+
     .emoji {
         display: none;
     }
@@ -1240,9 +1240,9 @@ body {
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, 
+    background: linear-gradient(90deg,
         rgba(60, 80, 220, 0.1),
-        rgba(60, 80, 220, 0.3), 
+        rgba(60, 80, 220, 0.3),
         rgba(120, 120, 220, 0.6),
         rgba(60, 80, 220, 0.3),
         rgba(60, 80, 220, 0.1)

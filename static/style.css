@@ -74,6 +74,7 @@ body::before {
     overflow: hidden;
     position: relative;
     z-index: 1;
+    max-height: 100vh;
 }
 
 .home-container::before {
@@ -292,9 +293,9 @@ body::before {
 
 /* 主题选择器 */
 .theme-selector {
-    margin: 2rem 0;
     width: 100%;
-    max-width: 500px;
+    max-width: 680px;
+    margin: 2rem auto;
 }
 
 .theme-label {
@@ -312,9 +313,10 @@ body::before {
 .theme-options {
     display: flex;
     justify-content: center;
-    gap: 2rem;
     flex-wrap: wrap;
+    gap: 1.5rem;
     margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
 .theme-options .theme-option {
@@ -326,8 +328,8 @@ body::before {
     justify-content: center;
     background: linear-gradient(180deg, rgba(10, 30, 50, 0.9), rgba(5, 15, 35, 0.8));
     border-radius: 12px;
-    border: 1px solid rgba(0, 238, 255, 0.15);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 238, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 5px rgba(0, 238, 255, 0.2);
     padding: 0.5rem;
     position: relative;
     cursor: pointer;
@@ -372,8 +374,11 @@ body::before {
     text-overflow: ellipsis;
 }
 
-.theme-options .theme-option:hover {
+.theme-options .theme-option:hover,
+.theme-options .theme-option:active {
     transform: translateY(-4px) scale(1.05);
+    border-color: rgba(0, 255, 204, 0.5);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 255, 204, 0.3);
     z-index: 5;
 }
 
@@ -612,19 +617,77 @@ body::before {
 /* 响应式设计 - 调整缩小后的尺寸 */
 @media screen and (max-width: 1200px) {
     .title {
-        font-size: 4rem;
+        font-size: 5rem;
     }
     .hero-section {
-        min-height: 70vh;
+        min-height: 100vh;
         padding: 2rem 1rem;
     }
 }
 
 @media screen and (max-width: 768px) {
     .title {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        letter-spacing: 2px;
+    }
+    .subtitle {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .description {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+        padding: 0 1rem;
+    }
+    .cta-button {
+        padding: 10px 24px;
+        font-size: 0.9rem;
+    }
+    .theme-selector {
+        margin: 1.5rem auto;
+        max-width: 90%;
+    }
+    .theme-options {
+        gap: 1rem;
+        justify-content: center;
+    }
+    .hero-section {
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+    }
+    .theme-options .theme-option {
+        width: 70px !important;
+        height: 70px !important;
+        margin: 0 5px;
+        border: 1px solid rgba(0, 238, 255, 0.4);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 6px rgba(0, 238, 255, 0.3);
+    }
+
+    .theme-options .theme-option .theme-icon-container {
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    .theme-options .theme-option .theme-name {
+        font-size: 0.75rem !important;
+    }
+
+    .hero-section .cta-button {
+        padding: 10px 24px !important;
+        font-size: 1rem !important;
+        margin-top: 1.5rem !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .title {
         font-size: 3.2rem;
         margin-bottom: 0.8rem;
-        letter-spacing: 2px;
+        letter-spacing: 1.5px;
     }
     .subtitle {
         font-size: 1.2rem;
@@ -632,120 +695,171 @@ body::before {
     }
     .description {
         font-size: 0.9rem;
-        margin-bottom: 1.8rem;
-        line-height: 1.6;
-    }
-    .cta-button {
-        padding: 7px 20px;
-        font-size: 0.85rem;
-    }
-    .theme-options .theme-option {
-        width: 48px !important;
-        height: 48px !important;
-    }
-    
-    .theme-options .theme-option .theme-icon-container {
-        width: 22px !important;
-        height: 22px !important;
-    }
-    
-    .theme-options .theme-option .theme-name {
-        font-size: 0.55rem !important;
-    }
-    
-    .hero-section .cta-button {
-        padding: 5px 18px !important;
-        font-size: 0.8rem !important;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .title {
-        font-size: 2.6rem;
-        margin-bottom: 0.6rem;
-        letter-spacing: 1.5px;
-    }
-    .subtitle {
-        font-size: 1rem;
-        margin-bottom: 0.8rem;
-    }
-    .description {
-        font-size: 0.85rem;
         margin-bottom: 1.5rem;
+        padding: 0 0.5rem;
     }
     .cta-button {
-        padding: 6px 18px;
-        font-size: 0.8rem;
+        padding: 8px 20px;
+        font-size: 0.85rem;
     }
     .hero-section {
-        min-height: 60vh;
+        min-height: 100vh;
         padding: 1.5rem 0.5rem;
+        justify-content: center;
+        display: flex;
+        flex-direction: column;
+    }
+    .theme-selector {
+        margin: 1rem auto;
+        padding: 0.5rem;
+        border-radius: 12px;
+        background: rgba(5, 15, 25, 0.3);
+        border: 1px solid rgba(0, 238, 255, 0.15);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+    .theme-options {
+        gap: 1rem;
+        padding: 0.5rem;
     }
     .theme-options .theme-option {
-        width: 45px !important;
-        height: 45px !important;
+        width: 65px !important;
+        height: 65px !important;
+        margin: 0 4px 8px;
+        border: 1px solid rgba(0, 238, 255, 0.5);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3), 0 0 8px rgba(0, 238, 255, 0.3);
+        background: linear-gradient(180deg, rgba(15, 35, 55, 0.95), rgba(8, 20, 40, 0.9));
     }
-    
+
     .theme-options .theme-option .theme-icon-container {
-        width: 20px !important;
-        height: 20px !important;
+        width: 28px !important;
+        height: 28px !important;
+        margin-bottom: 0.4rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3),
+                    inset 0 0 4px rgba(0, 238, 255, 0.3);
     }
-    
+
     .theme-options .theme-option .theme-name {
-        font-size: 0.5rem !important;
+        font-size: 0.7rem !important;
+        margin-top: 0.3rem;
+        text-shadow: 0 0 4px rgba(0, 255, 204, 0.4);
     }
-    
+
+    .theme-label {
+        margin-bottom: 0.6rem;
+        font-size: 1.1rem;
+        text-shadow: 0 0 6px rgba(0, 238, 255, 0.5);
+    }
+
+    .tech-circuit, .particle-container {
+        opacity: 0.6;
+    }
+
     .hero-section .cta-button {
-        padding: 5px 16px !important;
-        font-size: 0.75rem !important;
+        padding: 8px 18px !important;
+        font-size: 0.9rem !important;
+        min-width: 160px;
+        margin-top: 1rem !important;
     }
 }
 
 @media screen and (max-width: 360px) {
     .title {
-        font-size: 1.8rem;
+        font-size: 2.8rem;
+        margin-bottom: 0.7rem;
     }
     .subtitle {
-        font-size: 0.85rem;
+        font-size: 1rem;
+        margin-bottom: 0.7rem;
     }
     .description {
         font-size: 0.8rem;
+        margin-bottom: 1.2rem;
     }
     .cta-button {
-        padding: 8px 16px;
+        padding: 7px 16px;
         font-size: 0.8rem;
+    }
+    .theme-options {
+        gap: 0.5rem;
+    }
+    .theme-options .theme-option {
+        width: 56px !important;
+        height: 56px !important;
+        margin: 0 3px 6px;
+    }
+
+    .theme-options .theme-option .theme-icon-container {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    .theme-options .theme-option .theme-name {
+        font-size: 0.65rem !important;
+    }
+
+    .hero-section .cta-button {
+        padding: 7px 16px !important;
+        font-size: 0.85rem !important;
+        min-width: 140px;
     }
 }
 
 @media screen and (max-height: 700px) {
     .hero-section {
         min-height: auto;
-        padding: 1.5rem 1rem;
+        padding: 1rem 1rem;
     }
     .description {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         max-width: 600px;
+    }
+    .title {
+        margin-bottom: 0.5rem;
+    }
+    .subtitle {
+        margin-bottom: 0.5rem;
     }
 }
 
 @media screen and (max-height: 500px) and (orientation: landscape) {
     .hero-section {
-        padding: 1rem;
+        padding: 0.5rem;
     }
     .title {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
+        font-size: 2.5rem;
+        margin-bottom: 0.3rem;
     }
     .subtitle {
-        font-size: 0.95rem;
-        margin-bottom: 0.5rem;
+        font-size: 1rem;
+        margin-bottom: 0.3rem;
     }
     .description {
         font-size: 0.8rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
     }
     .cta-button {
-        padding: 8px 16px;
+        padding: 6px 15px;
+        font-size: 0.8rem;
+    }
+    .theme-selector {
+        margin: 0.5rem 0;
+    }
+    .theme-label {
+        margin-bottom: 0.3rem;
+    }
+    .theme-options .theme-option {
+        width: 45px !important;
+        height: 45px !important;
+        margin: 0 2px 5px;
+    }
+
+    .theme-options .theme-option .theme-icon-container {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .theme-options .theme-option .theme-name {
+        font-size: 0.55rem !important;
     }
 }
 
@@ -777,4 +891,22 @@ body::before {
     opacity: 0.4;
     pointer-events: none;
     mix-blend-mode: screen;
+}
+
+/* 隐藏所有滚动条 */
+::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    background: transparent;
+}
+
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+/* 修复某些设备上的overflow问题 */
+html, body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
