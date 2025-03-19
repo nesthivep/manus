@@ -1350,21 +1350,59 @@ body {
     gap: 10px;
 }
 
-.logo-img {
-    height: 44px;
-    width: auto;
-    transition: transform 0.3s ease;
+/* 移除链接下划线的高优先级规则 */
+.header a.logo,
+.header-left a.logo,
+.header a,
+a.logo {
+    text-decoration: none !important;
+    border-bottom: none !important;
 }
 
-.logo-img:hover {
-    transform: scale(1.05);
+.header a.logo:hover,
+.header-left a.logo:hover,
+.header a:hover,
+a.logo:hover,
+.header a.logo:focus,
+.header-left a.logo:focus,
+.header a:focus,
+a.logo:focus,
+.header a.logo:active,
+.header-left a.logo:active,
+.header a:active,
+a.logo:active {
+    text-decoration: none !important;
+    border-bottom: none !important;
 }
 
+/* 优化OpenManus文字渐变效果 */
+.header .logo-text,
+.header-left .logo-text,
+span.logo-text,
 .logo-text {
-    font-weight: 600;
-    font-size: 18px;
-    color: #333;
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #0575E6 0%, #0096FF 35%, #00B4FF 65%, #00D2FF 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-decoration: none !important;
+    border-bottom: none !important;
+    display: inline-block;
+    letter-spacing: -0.5px;
+    text-shadow: 0 0 8px rgba(5, 117, 230, 0.2);
+    transition: all 0.3s ease;
     white-space: nowrap;
+}
+
+.header .logo-text:hover,
+.header-left .logo-text:hover,
+span.logo-text:hover,
+.logo-text:hover {
+    transform: scale(1.05);
+    text-shadow: 0 0 15px rgba(5, 117, 230, 0.4);
+    text-decoration: none !important;
+    border-bottom: none !important;
 }
 
 /* History button style reset - no visual effects */

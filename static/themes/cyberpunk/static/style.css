@@ -21,12 +21,47 @@
     --secondary-glow: 0 0 12px rgba(255, 42, 109, 0.6), 0 0 20px rgba(255, 42, 109, 0.3);
     --card-bg: rgba(22, 24, 36, 0.7);
     --grid-color: rgba(0, 238, 255, 0.15);
+
+
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+
+    --font-size-xs: clamp(0.7rem, 2vw, 0.8rem);
+    --font-size-sm: clamp(0.8rem, 2vw, 0.9rem);
+    --font-size-base: clamp(0.9rem, 2.5vw, 1rem);
+    --font-size-md: clamp(1rem, 3vw, 1.1rem);
+    --font-size-lg: clamp(1.1rem, 3.5vw, 1.3rem);
+    --font-size-xl: clamp(1.3rem, 4vw, 1.5rem);
+    --font-size-2xl: clamp(1.5rem, 5vw, 1.8rem);
+    --font-size-3xl: clamp(1.8rem, 6vw, 2.2rem);
+    --font-size-4xl: clamp(2.2rem, 7vw, 2.8rem);
+
+
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+
+
+    --shadow-sm: 0 0 0.5rem rgba(0, 238, 255, 0.2);
+    --shadow-md: 0 0 1rem rgba(0, 238, 255, 0.3);
+    --shadow-lg: 0 0 1.5rem rgba(0, 238, 255, 0.4);
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* 防止整个页面滚动 */
 }
 
 body {
@@ -37,6 +72,8 @@ body {
     color: var(--text-color);
     position: relative;
     overflow-x: hidden;
+    font-size: var(--font-size-base);
+    line-height: 1.5;
 }
 
 body::before {
@@ -47,10 +84,11 @@ body::before {
     display: flex;
     min-height: 100vh;
     min-width: 0;
-    width: 98%;
+    width: 100%;
+    max-width: 2560px;
     margin: 0 auto;
-    padding: 10px;
-    gap: 10px;
+    padding: var(--spacing-md);
+    gap: var(--spacing-md);
     position: relative;
     transition: all 0.3s ease;
     margin-top: 60px;
@@ -60,8 +98,8 @@ body::before {
 }
 
 .container.with-result {
-    /* Reserve space for result panel, use calc to calculate width, reduce gap */
-    width: calc(68% - 10px); /* Increase main panel width, reduce right margin */
+
+    width: calc(68% - 10px);
     margin-right: auto;
     margin-left: 0;
 }
@@ -130,7 +168,7 @@ body::before {
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 0 20px rgba(0, 238, 255, 0.2);
-    overflow: auto; /* 确保可以滚动 */
+    overflow: auto;
     transition: width 0.3s ease;
     border: 2px solid transparent !important;
     box-shadow: 0 0 20px rgba(0, 238, 255, 0.3) !important;
@@ -165,8 +203,9 @@ body::before {
 
 .result-panel {
     width: 31%;
-    min-width: 380px;
-    height: calc(100vh - 85px); /* 进一步减小高度 */
+    min-width: 310px;
+    max-width: calc(100vw - 20px);
+    height: calc(100vh - 85px);
     position: fixed;
     right: 10px;
     top: 70px;
@@ -175,7 +214,7 @@ body::before {
     box-shadow: 0 0 20px rgba(0, 238, 255, 0.3) !important;
     border-radius: 8px;
     padding: 12px;
-    overflow: hidden; /* 外层保持hidden，防止边界溢出 */
+    overflow: hidden;
     transition: transform 0.3s ease, opacity 0.3s ease;
     z-index: 10;
     display: flex;
@@ -201,7 +240,7 @@ body::before {
 }
 
 .result-panel.hidden {
-    transform: translateX(calc(100% + 10px)); /* Restore slide-out effect to the right */
+    transform: translateX(calc(100% + 10px));
     opacity: 0;
     pointer-events: none;
 }
@@ -291,7 +330,7 @@ body::before {
     box-shadow: 0 0 10px rgba(0, 140, 255, 0.4);
 }
 
-/* 替换箭头为全屏图标 */
+
 .minimize-result::before,
 .minimize-result::after {
     content: "";
@@ -300,7 +339,7 @@ body::before {
     transition: all 0.2s;
 }
 
-/* 创建全屏图标的外框 */
+
 .minimize-result::before {
     width: 12px;
     height: 12px;
@@ -308,7 +347,7 @@ body::before {
     background: transparent;
 }
 
-/* 创建全屏图标的右下角小方块 */
+
 .minimize-result::after {
     width: 5px;
     height: 5px;
@@ -327,7 +366,7 @@ body::before {
     font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
     background-color: transparent;
     color: rgba(255, 255, 255, 0.85);
-    max-height: calc(100vh - 200px); /* 确保有最大高度限制 */
+    max-height: calc(100vh - 200px);
 }
 
 .result-container p,
@@ -341,7 +380,7 @@ body::before {
     line-height: 1.4;
 }
 
-/* Modified search result styles */
+
 .search-result-item {
     padding: 10px;
     border-bottom: 1px solid #eee;
@@ -369,7 +408,7 @@ body::before {
     font-size: 0.9rem;
 }
 
-/* Add search box styles */
+
 .search-box {
     display: flex;
     align-items: center;
@@ -415,6 +454,7 @@ body::before {
     overflow-x: hidden;
 }
 
+
 .welcome-message {
     display: flex;
     flex-direction: column;
@@ -436,11 +476,103 @@ body::before {
     position: relative;
     overflow: hidden;
     z-index: 1;
+    max-width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+    .welcome-message {
+        min-height: 350px; padding: 30px 15px;
+    }
+    .title {
+        font-size: 2.5rem; letter-spacing: 2px;
+    }
+    .subtitle {
+        font-size: 1.2rem; margin-bottom: 20px;
+    }
+    .description {
+        font-size: 1rem; line-height: 1.5; margin-bottom: 30px;
+    }
+    .cta-button {
+        font-size: 0.9rem; padding: 10px 20px;
+    }
+    .emoji {
+        font-size: 2rem;
+    }
+    .step-item .log-header {
+        flex-wrap: wrap; padding: 4px 8px;
+    }
+    .log-prefix {
+        width: 100%; margin-bottom: 5px;
+    }
+    .content-preview {
+        width: calc(100% - 40px); max-width: none; margin-left: 34px; margin-bottom: 5px;
+    }
+    .step-controls {
+        position: absolute; top: 10px; right: 10px;
+    }
+    .log-prefix time {
+        font-size: 10px; padding: 1px 4px;
+    }
+    .log-prefix-icon {
+        width: 22px; height: 22px; font-size: 12px;
+    }
+    .title-text {
+        font-size: clamp(1.5rem, 6vw, 2.5rem); letter-spacing: 0.03em; margin: 0.3em 0; transform: scale(0.9);
+    }
+    .subtitle-text {
+        font-size: 1.2rem; letter-spacing: 3px; margin: 10px 0;
+    }
+    .command-text {
+        font-size: 0.7rem; letter-spacing: 1px; padding: 10px 0;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .welcome-message {
+        min-height: 300px; padding: 30px 15px;
+    }
+    .title {
+        font-size: 3.5rem; margin-bottom: 0.8rem;
+    }
+    .subtitle {
+        font-size: 1.3rem; margin-bottom: 1rem;
+    }
+    .description {
+        font-size: 0.9rem; line-height: 1.6; margin-bottom: 2rem;
+    }
+    .cta-button {
+        padding: 0.7rem 2rem; font-size: 0.9rem; border-radius: 20px;
+    }
+    .emoji {
+        font-size: 1.5rem;
+    }
+    .hero-section {
+        padding: 1.5rem 1rem;
+    }
+    .result-panel {
+        width: 90%; min-width: auto; right: 5%; left: 5%;
+    }
+    .step-item .log-header {
+        padding: 8px;
+    }
+    .log-prefix time {
+        font-size: 0.8em; padding: 2px 4px;
+    }
+    .log-prefix-icon {
+        width: 22px; height: 22px; font-size: 0.8em;
+    }
+    .title-text {
+        font-size: clamp(1.2rem, 5.5vw, 2rem); letter-spacing: 0.02em; transform: scale(0.85);
+    }
+    .subtitle-text {
+        font-size: 1rem; letter-spacing: 2px;
+    }
 }
 
 .welcome-message::before {
     filter: blur(1px);
     animation: borderFlow 12s linear infinite;
+    display: none;
 }
 
 .welcome-message::after {
@@ -448,6 +580,7 @@ body::before {
     box-shadow: inset 0 0 30px rgba(0, 238, 255, 0.3),
                 inset 0 0 15px rgba(255, 42, 109, 0.2);
     animation: innerGlow 5s ease-in-out infinite alternate;
+    display: none;
 }
 
 .welcome-message h1 {
@@ -464,12 +597,12 @@ body::before {
 }
 
 .welcome-logo {
-    width: 320px;
+    width: min(320px, 90vw);
     height: auto;
-    filter: drop-shadow(0 0 15px rgba(0, 238, 255, 0.7));
+    filter: drop-shadow(0 0 0.8em rgba(0, 238, 255, 0.7));
     transition: all 0.3s ease;
     margin-bottom: 5px;
-    animation: none; /* 移除动画效果 */
+    animation: none;
 }
 
 .welcome-logo:hover {
@@ -525,7 +658,7 @@ body::before {
     }
     50% {
         transform: scale(1.05);
-        filter: drop-shadow(0 0 30px rgba(0, 238, 255, 0.8));
+        filter: drop-shadow(0 0 1.5rem rgba(0, 238, 255, 0.8));
     }
     100% {
         transform: scale(1);
@@ -535,7 +668,7 @@ body::before {
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(15px);
+        transform: translateY(0.8em);
     }
     to {
         opacity: 1;
@@ -543,7 +676,16 @@ body::before {
     }
 }
 
-/* 高亮文本 - 霓虹蓝色渐变 */
+@keyframes titleShadow {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(0, 238, 255, 0.3));
+    }
+    50% {
+        filter: drop-shadow(0 0 12px rgba(255, 42, 109, 0.4));
+    }
+}
+
+
 .highlight-text {
     background: linear-gradient(135deg, #00eeff 0%, #01beff 50%, #0047e1 100%);
     -webkit-background-clip: text;
@@ -554,7 +696,7 @@ body::before {
     text-shadow: 0 0 8px rgba(0, 238, 255, 0.6), 0 0 15px rgba(0, 71, 225, 0.4);
 }
 
-/* Login button - 霓虹蓝色按钮 */
+
 .login-btn {
     background: linear-gradient(135deg, rgba(0, 238, 255, 0.8), rgba(0, 71, 225, 0.8));
     color: white;
@@ -583,7 +725,7 @@ body::before {
     box-shadow: 0 2px 10px rgba(5, 117, 230, 0.15);
 }
 
-/* Send button styles - blue border color scheme */
+
 .send-btn {
     padding: 12px 30px;
     background: linear-gradient(135deg, rgba(0, 238, 255, 0.8), rgba(0, 71, 225, 0.8));
@@ -724,7 +866,7 @@ body::before {
     border-radius: 4px;
     width: 100%;
     box-shadow: 0 0 10px rgba(0, 238, 255, 0.1);
-    margin-bottom: 2px; /* 进一步减小步骤间距 */
+    margin-bottom: 2px;
     opacity: 1;
     transform: none;
     overflow: hidden;
@@ -750,12 +892,12 @@ body::before {
     z-index: 1;
 }
 
-/* 移除流动边框效果 */
+
 .step-item .log-header::before {
     display: none;
 }
 
-/* 恢复原来各类型步骤的背景色 */
+
 .step-item.think .log-header {
     background-color: rgba(5, 217, 232, 0.15);
     border-left: 3px solid var(--info-color);
@@ -780,7 +922,7 @@ body::before {
     color: #ffffff !important;
 }
 
-/* 移除内部背景层 */
+
 .step-item .log-header::after {
     display: none;
 }
@@ -795,13 +937,13 @@ body::before {
     position: relative;
 }
 
-/* 步骤类型文字(Thinking, Using Tool等)渐变效果 */
+
 .step-item .log-header .log-prefix {
     position: relative;
     z-index: 2;
 }
 
-/* 只对步骤类型标签应用渐变，不包括时间戳和图标 */
+
 .step-item.think .log-header .log-prefix span:not(.log-prefix-icon):not(time),
 .step-item.tool .log-header .log-prefix span:not(.log-prefix-icon):not(time),
 .step-item.act .log-header .log-prefix span:not(.log-prefix-icon):not(time),
@@ -816,7 +958,7 @@ body::before {
     padding: 0 3px;
 }
 
-/* 文字渐变动画 */
+
 @keyframes textGradient {
     0% {
         background-position: 0% 50%;
@@ -829,7 +971,7 @@ body::before {
     }
 }
 
-/* 确保时间戳不受渐变效果影响 */
+
 .log-prefix time {
     font-weight: 500;
     color: var(--primary-color);
@@ -917,10 +1059,10 @@ body::before {
 }
 
 .step-item .log-body {
-    display: none; /* 默认隐藏详细内容 */
+    display: none;
     padding: 10px;
     background-color: rgba(15, 15, 30, 0.6);
-    color: #ffffff !important; /* 确保文字为白色并提高优先级 */
+    color: #ffffff !important;
     border-top: 1px solid var(--border-color);
 }
 
@@ -958,7 +1100,7 @@ body::before {
     border-top: 1px solid var(--border-color);
 }
 
-/* 向 pre 元素添加终端风格 */
+
 .step-item pre {
     margin: 0;
     white-space: pre-wrap;
@@ -979,10 +1121,10 @@ body::before {
 .step-item pre.act,
 .step-item pre.result,
 .step-item pre.error {
-    color: #ffffff !important; /* 确保所有预格式化文本都是白色 */
+    color: #ffffff !important;
 }
 
-/* 步骤圆圈样式 */
+
 .step-circle {
     width: 30px;
     height: 30px;
@@ -1037,7 +1179,7 @@ body::before {
 }
 
 .step-item.expanded .log-body {
-    display: block; /* 展开时才显示详细内容 */
+    display: block;
 }
 
 .step-item pre.think {
@@ -1108,7 +1250,7 @@ body::before {
     margin: 10px 0;
 }
 
-/* Step division line style */
+
 .step-divider {
     display: flex;
     align-items: center;
@@ -1133,7 +1275,7 @@ body::before {
     flex-shrink: 0;
 }
 
-/* File interaction style */
+
 .file-interaction {
     margin-top: 15px;
     padding: 15px;
@@ -1348,7 +1490,7 @@ body::before {
     }
 }
 
-/* Full screen image modal box */
+
 .image-modal {
     display: none;
     position: fixed;
@@ -1380,7 +1522,7 @@ body::before {
     cursor: pointer;
 }
 
-/* Python runs simulation modal boxes */
+
 .python-modal {
     display: none;
     position: fixed;
@@ -1508,7 +1650,7 @@ body::before {
     box-shadow: 0 6px 15px rgba(0, 220, 130, 0.4);
 }
 
-/* 响应式设计 */
+
 @media screen and (max-width: 1200px) {
     .title {
         font-size: 6rem;
@@ -1520,99 +1662,9 @@ body::before {
     }
 }
 
-@media screen and (max-width: 768px) {
-    .title {
-        font-size: 2.5rem;
-        letter-spacing: 2px;
-    }
 
-    .subtitle {
-        font-size: 1.2rem;
-        margin-bottom: 20px;
-    }
 
-    .description {
-        font-size: 1rem;
-        line-height: 1.5;
-        margin-bottom: 30px;
-    }
 
-    .cta-button {
-        font-size: 0.9rem;
-        padding: 10px 20px;
-    }
-
-    .emoji {
-        font-size: 2rem;
-    }
-
-    /* 添加步骤项的响应式布局 */
-    .step-item .log-header {
-        flex-wrap: wrap;
-        padding: 4px 8px;
-    }
-
-    .log-prefix {
-        width: 100%;
-        margin-bottom: 5px;
-    }
-
-    .content-preview {
-        width: calc(100% - 40px);
-        max-width: none;
-        margin-left: 34px;
-        margin-bottom: 5px;
-    }
-
-    .step-controls {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-    }
-
-    .log-prefix time {
-        font-size: 10px;
-        padding: 1px 4px;
-    }
-
-    .log-prefix-icon {
-        width: 22px;
-        height: 22px;
-        font-size: 12px;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .title {
-        font-size: 3.5rem;
-        margin-bottom: 0.8rem;
-    }
-
-    .subtitle {
-        font-size: 1.3rem;
-        margin-bottom: 1rem;
-    }
-
-    .description {
-        font-size: 0.9rem;
-        line-height: 1.6;
-        margin-bottom: 2rem;
-    }
-
-    .cta-button {
-        padding: 0.7rem 2rem;
-        font-size: 0.9rem;
-        border-radius: 20px;
-    }
-
-    .emoji {
-        font-size: 1.5rem;
-    }
-
-    .hero-section {
-        padding: 1.5rem 1rem;
-    }
-}
 
 @media screen and (max-width: 360px) {
     .title {
@@ -1633,7 +1685,7 @@ body::before {
     }
 }
 
-/* 适配高度 */
+
 @media screen and (max-height: 700px) {
     .hero-section {
         padding: 1rem;
@@ -1644,7 +1696,7 @@ body::before {
     }
 }
 
-/* 适配横屏模式 */
+
 @media screen and (max-height: 500px) and (orientation: landscape) {
     .hero-section {
         padding: 1rem;
@@ -1674,7 +1726,7 @@ body::before {
     }
 }
 
-/* Homepage styles */
+
 .home-container {
     min-height: 100vh;
     display: flex;
@@ -1815,7 +1867,7 @@ body::before {
 }
 
 .step-highlight {
-    background-color: #ffefef;  /* 红色背景 */
+    background-color: #ffefef;
     border: 1px solid #ffcdd2;
     border-left: 3px solid #f44336;
     padding: 8px 12px;
@@ -1826,7 +1878,7 @@ body::before {
 }
 
 .content-highlight {
-    background-color: #e3f2fd;  /* 蓝色背景 */
+    background-color: #e3f2fd;
     border: 1px solid #bbdefb;
     border-left: 3px solid #2196f3;
     padding: 10px;
@@ -1844,7 +1896,7 @@ body::before {
     line-height: 1.5;
 }
 
-/* 修复顶部导航栏样式 */
+
 .header {
     position: fixed;
     top: 0;
@@ -1894,10 +1946,10 @@ body::before {
     letter-spacing: 1px;
     text-shadow: none;
     text-transform: uppercase;
-    text-decoration: none; /* 移除下划线 */
+    text-decoration: none;
 }
 
-/* 修复历史按钮样式 */
+
 .history-toggle {
     all: unset;
     cursor: pointer;
@@ -1915,7 +1967,7 @@ body::before {
     text-shadow: 0 0 5px rgba(0, 238, 255, 0.5);
 }
 
-/* History count indicator - essential styles */
+
 .history-count {
     position: absolute;
     top: -5px;
@@ -1932,7 +1984,7 @@ body::before {
     padding: 0 3px;
 }
 
-/* Side history panel */
+
 .history-panel {
     position: fixed;
     left: 0;
@@ -2035,7 +2087,7 @@ body::before {
     color: #888;
 }
 
-/* Overlay */
+
 .overlay {
     position: fixed;
     top: 0;
@@ -2054,13 +2106,13 @@ body::before {
     pointer-events: all;
 }
 
-/* Container adjustment, reserve space for history panel */
+
 .container.with-history {
     padding-left: 280px;
     transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Welcome title style optimization */
+
 .welcome-title {
     font-size: 3.8rem;
     margin-bottom: 18px;
@@ -2070,7 +2122,7 @@ body::before {
     letter-spacing: -0.5px;
 }
 
-/* Welcome page subtitle style optimization */
+
 .welcome-message p {
     font-size: 1.1rem;
     color: #555;
@@ -2085,19 +2137,19 @@ body::before {
     animation-fill-mode: both;
 }
 
-/* Restore login icon style */
+
 .login-btn i {
     font-size: 14px;
 }
 
-/* Remove any possible overrides for new styles */
+
 button {
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-/* 修复输入容器样式 */
+
 .input-container {
     width: 100%;
     background-color: #000000;
@@ -2114,7 +2166,7 @@ button {
     overflow: hidden;
 }
 
-/* 修复输入框样式 */
+
 #prompt-input {
     flex: 1;
     padding: 14px 20px;
@@ -2138,38 +2190,34 @@ button {
     color: rgba(255, 255, 255, 0.4);
 }
 
-/* 添加赛博朋克风格的标题文本样式 */
+
 .title-text {
     position: relative;
-    font-size: 4rem;
-    margin: 10px 0;
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    margin: 0.5em 0;
     color: transparent;
-    letter-spacing: 2px;
+    letter-spacing: 0.1em;
     font-weight: 700;
     line-height: 1;
     text-transform: uppercase;
+    white-space: nowrap;
     background: linear-gradient(90deg, #fff, #fff 50%, #ff2a6d 50%, #ff2a6d);
     -webkit-background-clip: text;
     background-clip: text;
-    filter: drop-shadow(0 0 8px rgba(0, 238, 255, 0.3));
+    filter: drop-shadow(0 0 0.4em rgba(0, 238, 255, 0.3));
     animation: titleShadow 3s infinite;
+    width: 100%;
+    display: inline-block;
 }
 
-/* 标题阴影闪烁而不是整体闪烁 */
-@keyframes titleShadow {
-    0%, 100% {
-        filter: drop-shadow(0 0 8px rgba(0, 238, 255, 0.3));
-    }
-    50% {
-        filter: drop-shadow(0 0 12px rgba(255, 42, 109, 0.4));
-    }
-}
 
-.title-text::before, .title-text::after {
+
+
+.title-text::before {
     content: attr(data-text);
     position: absolute;
     top: 0;
-    left: 0;
+    left: -2px;
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, #fff, #fff 50%, #ff2a6d 50%, #ff2a6d);
@@ -2177,54 +2225,44 @@ button {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     mix-blend-mode: overlay;
-}
-
-.title-text::before {
-    left: -2px;
-    top: 0;
     opacity: 0.3;
-    animation: glitchMove 3s infinite;
     z-index: -1;
+    animation: glitchMove 3s infinite;
 }
 
 .title-text::after {
-    left: 2px;
+    content: attr(data-text);
+    position: absolute;
     top: 0;
+    left: 2px;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #fff, #fff 50%, #ff2a6d 50%, #ff2a6d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    mix-blend-mode: overlay;
     opacity: 0.3;
-    animation: glitchMove 2s infinite reverse;
     z-index: -2;
+    animation: glitchMove 2s infinite reverse;
 }
 
-/* 新的故障移动动画，不使用clip-path */
+
 @keyframes glitchMove {
     0%, 100% {
         transform: translate(0);
     }
     25% {
-        transform: translate(-2px, 1px);
+        transform: translate(-0.1em, 0.05em);
     }
     50% {
-        transform: translate(1px, -1px);
+        transform: translate(0.05em, -0.05em);
     }
     75% {
-        transform: translate(1px, 1px);
+        transform: translate(0.05em, 0.05em);
     }
 }
 
-/* 闪烁装饰器，作为额外的元素添加闪烁效果 */
-.title-text::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: transparent;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 1;
-    animation: textBlink 3s infinite;
-}
 
 @keyframes textBlink {
     0%, 100% {
@@ -2236,7 +2274,7 @@ button {
     }
 }
 
-/* 添加箭头图标样式 */
+
 .arrow-icon {
     display: inline-block;
     margin-left: 8px;
@@ -2249,14 +2287,14 @@ button {
         transform: translateX(0);
     }
     50% {
-        transform: translateX(5px);
+        transform: translateX(0.3em);
     }
     100% {
         transform: translateX(0);
     }
 }
 
-/* 添加赛博面板样式 */
+
 .cyber-panel {
     position: relative;
     border: 1px solid rgba(0, 238, 255, 0.2) !important;
@@ -2269,7 +2307,7 @@ button {
     content: none;
 }
 
-/* 修改历史面板标题 */
+
 .history-title {
     font-size: 16px;
     font-weight: 600;
@@ -2279,7 +2317,7 @@ button {
     text-shadow: 0 0 5px rgba(0, 238, 255, 0.3);
 }
 
-/* 添加脉动边框效果 */
+
 @keyframes borderPulse {
     0% {
         border-color: rgba(0, 238, 255, 0.3);
@@ -2295,12 +2333,12 @@ button {
     }
 }
 
-/* 应用脉动边框效果到主要元素 */
+
 .cyber-panel, .result-panel, .input-container {
     animation: borderPulse 4s infinite ease-in-out;
 }
 
-/* 改进logo样式 */
+
 .logo {
     position: relative;
     overflow: hidden;
@@ -2336,7 +2374,7 @@ button {
 
 }
 
-/* 改进输入框样式 */
+
 #prompt-input {
     position: relative;
     background-color: rgba(10, 10, 26, 0.8);
@@ -2348,7 +2386,7 @@ button {
     animation: borderPulse 4s infinite ease-in-out;
 }
 
-/* 改进按钮悬停效果 */
+
 .send-btn:hover, .login-btn:hover, .cta-button:hover {
     background: linear-gradient(135deg, rgba(0, 238, 255, 1), rgba(0, 71, 225, 1));
     transform: translateY(-2px) scale(1.03);
@@ -2356,7 +2394,7 @@ button {
     letter-spacing: 1.5px;
 }
 
-/* 改进欢迎消息样式 */
+
 .welcome-message {
     position: relative;
 }
@@ -2369,12 +2407,12 @@ button {
     display: none;
 }
 
-/* 改进步骤项悬停效果 */
+
 .step-item:hover .log-header {
     background-color: rgba(0, 238, 255, 0.05);
 }
 
-/* 添加终端风格的状态文本 */
+
 .status-text {
     font-family: 'Courier New', monospace;
     color: var(--primary-color) !important;
@@ -2385,13 +2423,13 @@ button {
     color: var(--primary-color);
 }
 
-/* 全局文本选择样式 */
+
 ::selection {
     background: rgba(0, 238, 255, 0.2);
     color: var(--primary-color);
 }
 
-/* 改进历史面板 */
+
 .history-panel {
     background: linear-gradient(180deg,
         rgba(22, 24, 36, 0.95),
@@ -2399,24 +2437,24 @@ button {
     );
 }
 
-/* 自动完成脉冲光点 */
+
 @keyframes pulse-light {
     0% {
         opacity: 0.5;
-        box-shadow: 0 0 5px var(--primary-color);
+        box-shadow: 0 0 0.3em var(--primary-color);
     }
     50% {
         opacity: 1;
-        box-shadow: 0 0 15px var(--primary-color), 0 0 5px var(--error-color);
+        box-shadow: 0 0 0.8em var(--primary-color), 0 0 0.3em var(--error-color);
     }
     100% {
         opacity: 0.5;
-        box-shadow: 0 0 5px var(--primary-color);
+        box-shadow: 0 0 0.3em var(--primary-color);
     }
 
 }
 
-/* 添加MANUS INTERFACE页面的样式 */
+
 .logo-text-large {
     font-size: 2.8rem;
     color: #fff;
@@ -2490,7 +2528,7 @@ button {
     50% { opacity: 0.3; }
 }
 
-/* 流动边框动画 */
+
 @keyframes borderFlow {
     0% {
         background-position: 0% 0;
@@ -2500,7 +2538,7 @@ button {
     }
 }
 
-/* 内部发光动画 */
+
 @keyframes innerGlow {
     0% {
         box-shadow: inset 0 0 30px rgba(0, 238, 255, 0.3),
@@ -2512,7 +2550,7 @@ button {
     }
 }
 
-/* 输入框效果增强 */
+
 #prompt-input {
     border: 2px solid var(--border-color);
     background-color: rgba(10, 10, 26, 0.7);
@@ -2529,28 +2567,28 @@ button {
 @keyframes inputGlow {
     0% {
         border-color: var(--primary-color);
-        box-shadow: 0 0 15px rgba(0, 238, 255, 0.4);
+        box-shadow: 0 0 0.8em rgba(0, 238, 255, 0.4);
     }
     100% {
         border-color: var(--error-color);
-        box-shadow: 0 0 20px rgba(255, 42, 109, 0.5);
+        box-shadow: 0 0 1em rgba(255, 42, 109, 0.5);
     }
 }
 
-/* 添加Logo浮动效果 */
+
 @keyframes logoFloat {
     0%, 100% {
         transform: translateY(0);
-        filter: drop-shadow(0 0 15px rgba(0, 238, 255, 0.7));
+        filter: drop-shadow(0 0 0.8em rgba(0, 238, 255, 0.7));
     }
     50% {
-        transform: translateY(-10px);
-        filter: drop-shadow(0 0 25px rgba(0, 238, 255, 0.9))
-                drop-shadow(0 0 10px rgba(255, 42, 109, 0.5));
+        transform: translateY(-0.6em);
+        filter: drop-shadow(0 0 1.3em rgba(0, 238, 255, 0.9))
+                drop-shadow(0 0 0.6em rgba(255, 42, 109, 0.5));
     }
 }
 
-/* 增强副标题效果 */
+
 .subtitle-text {
     text-shadow: 0 0 15px rgba(0, 238, 255, 0.8);
     animation: subtitlePulse 3s infinite;
@@ -2570,7 +2608,7 @@ button {
     }
 }
 
-/* 修复发送按钮悬停效果 */
+
 .send-btn:hover {
     background: linear-gradient(135deg, rgba(0, 238, 255, 1), rgba(0, 71, 225, 1));
     transform: translateY(-2px) scale(1.03);
@@ -2583,7 +2621,7 @@ button {
     box-shadow: 0 2px 10px rgba(5, 117, 230, 0.15);
 }
 
-/* 修复输入容器的before/after效果 */
+
 .input-container::before {
     content: '';
     position: absolute;
@@ -2617,7 +2655,7 @@ button {
     pointer-events: none;
 }
 
-/* 修复结果面板的after效果 */
+
 .result-panel::after {
     content: '';
     position: absolute;
@@ -2633,19 +2671,19 @@ button {
     pointer-events: none;
 }
 
-/* 隐藏所有滚动条 */
+
 ::-webkit-scrollbar {
     width: 0;
     height: 0;
     background: transparent;
 }
 
-/* 兼容Firefox */
+
 * {
     scrollbar-width: none;
 }
 
-/* 兼容IE */
+
 * {
     -ms-overflow-style: none;
 }
@@ -2670,36 +2708,13 @@ button {
 
     .result-panel.hidden {
         transform: translateY(calc(100% + 20px));
-        display: none !important; /* 确保在移动设备上也隐藏 */
+        display: none !important;
     }
 }
 
-@media screen and (max-width: 480px) {
-    .result-panel {
-        width: 90%;
-        min-width: auto;
-        right: 5%;
-        left: 5%;
-    }
 
-    /* 调整步骤项在小屏幕上的布局 */
-    .step-item .log-header {
-        padding: 8px;
-    }
 
-    .log-prefix time {
-        font-size: 0.8em;
-        padding: 2px 4px;
-    }
 
-    .log-prefix-icon {
-        width: 22px;
-        height: 22px;
-        font-size: 0.8em;
-    }
-}
-
-/* 增强时间戳显示 */
 .log-prefix time {
     font-weight: 500;
     color: var(--primary-color);
@@ -2710,7 +2725,7 @@ button {
     display: inline-block;
 }
 
-/* 步骤图标 */
+
 .log-prefix-icon {
     display: inline-flex;
     width: 26px;
@@ -2719,14 +2734,14 @@ button {
     align-items: center;
     background: rgba(0, 238, 255, 0.1);
     border-radius: 50%;
-    margin-right: 6px; /* 减小右侧间距 */
+    margin-right: 6px;
     box-shadow: 0 0 10px rgba(0, 238, 255, 0.2);
     border: 1px solid var(--border-color);
     color: var(--primary-color);
     flex-shrink: 0;
 }
 
-/* 自定义滚动条样式 */
+
 .steps-container::-webkit-scrollbar,
 .result-container::-webkit-scrollbar {
     width: 6px;
@@ -2755,4 +2770,40 @@ button {
     max-height: 500px;
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 5px;
+}
+
+
+
+
+
+
+.title-container {
+    width: 100%;
+    overflow: visible;
+    text-align: center;
+    margin: 0.5em auto;
+    padding: 0;
+    max-width: 100%;
+    transform-origin: center;
+}
+.title-text {
+    position: relative;
+    font-size: clamp(1.8rem, 6vw, 3.2rem);
+    margin: 0.5em auto;
+    color: transparent;
+    letter-spacing: 0em;
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: linear-gradient(90deg, #fff, #fff 50%, #ff2a6d 50%, #ff2a6d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    filter: drop-shadow(0 0 0.4em rgba(0, 238, 255, 0.3));
+    animation: titleShadow 3s infinite;
+    width: auto;
+    display: inline-block;
+    padding: 0;
+    transform: scale(0.9);
+    max-width: 100%;
 }

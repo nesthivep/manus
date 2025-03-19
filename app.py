@@ -99,7 +99,7 @@ def get_available_themes():
     """扫描themes目录获取所有可用主题"""
     themes_dir = "static/themes"
     if not os.path.exists(themes_dir):
-        return [{"id": "Normal", "name": "普通主题", "description": "默认主题"}]
+        return [{"id": "openmanus", "name": "Manus", "description": "默认主题"}]
 
     themes = []
     for item in os.listdir(themes_dir):
@@ -129,9 +129,9 @@ def get_available_themes():
                     themes.append(theme_info)
 
     # 确保Normal主题始终存在
-    normal_exists = any(theme["id"] == "Normal" for theme in themes)
+    normal_exists = any(theme["id"] == "openmanus" for theme in themes)
     if not normal_exists:
-        themes.append({"id": "Normal", "name": "普通主题", "description": "默认主题"})
+        themes.append({"id": "openmanus", "name": "Manus", "description": "默认主题"})
 
     return themes
 
@@ -148,7 +148,7 @@ async def index(request: Request):
     other_themes = []
 
     for theme in themes:
-        if theme["id"] == "Normal":
+        if theme["id"] == "openmanus":
             normal_theme = theme
         elif theme["id"] == "cyberpunk":
             cyberpunk_theme = theme
@@ -169,7 +169,7 @@ async def index(request: Request):
 
 @app.get("/chat", response_class=HTMLResponse)
 async def chat(request: Request):
-    theme = request.query_params.get("theme", "Normal")
+    theme = request.query_params.get("theme", "openmanus")
     # 尝试从主题文件夹加载chat.html
     theme_chat_path = f"static/themes/{theme}/templates/chat.html"
     if os.path.exists(theme_chat_path):
@@ -189,7 +189,7 @@ async def chat(request: Request):
 
         # 将主题名称添加到HTML标题中
         content = content.replace(
-            "<title>OpenManus</title>", f"<title>OpenManus - {theme_name}</title>"
+            "<title>Manus</title>", f"<title>Manus - {theme_name}</title>"
         )
         return HTMLResponse(content=content)
     else:

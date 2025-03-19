@@ -195,7 +195,7 @@ body::before {
 
 /* Powered by 文本专用样式 */
 .powered-text {
-    font-size: 0.85rem;
+    font-size: 1.5rem;
     color: #8c9cb0;
     letter-spacing: 0.3px;
     font-weight: 400;
