@@ -55,6 +55,10 @@ class BingSearchEngine(WebSearchEngine):
         Returns:
             List[str]: A list of unique URLs from the search results, capped at `num_results`.
                        Returns an empty list if the query is empty or no results are found.
+
+        Notes:
+            - Pagination is handled by incrementing the `first` parameter and following `next_url` links.
+            - If fewer results than `num_results` are available, all found URLs are returned.
         """
         if not query:
             return []
