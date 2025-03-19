@@ -20,8 +20,12 @@ class LLMSettings(BaseModel):
     base_url: str = Field(..., description="API base URL")
     api_key: str = Field(..., description="API key")
     max_tokens: int = Field(4096, description="Maximum number of tokens per request")
+    max_input_tokens: Optional[int] = Field(
+        None,
+        description="Maximum input tokens to use across all requests (None for unlimited)",
+    )
     temperature: float = Field(1.0, description="Sampling temperature")
-    api_type: str = Field(..., description="AzureOpenai or Openai")
+    api_type: str = Field(..., description="Azure, Openai, or Ollama")
     api_version: str = Field(..., description="Azure Openai version if AzureOpenai")
 
 
@@ -55,10 +59,30 @@ class BrowserSettings(BaseModel):
     proxy: Optional[ProxySettings] = Field(
         None, description="Proxy settings for the browser"
     )
+    max_content_length: int = Field(
+        2000, description="Maximum length for content retrieval operations"
+    )
+
+
+class SandboxSettings(BaseModel):
+    """Configuration for the execution sandbox"""
+
+    use_sandbox: bool = Field(False, description="Whether to use the sandbox")
+    image: str = Field("python:3.12-slim", description="Base image")
+    work_dir: str = Field("/workspace", description="Container working directory")
+    memory_limit: str = Field("512m", description="Memory limit")
+    cpu_limit: float = Field(1.0, description="CPU limit")
+    timeout: int = Field(300, description="Default command timeout (seconds)")
+    network_enabled: bool = Field(
+        False, description="Whether network access is allowed"
+    )
 
 
 class AppConfig(BaseModel):
     llm: Dict[str, LLMSettings]
+    sandbox: Optional[SandboxSettings] = Field(
+        None, description="Sandbox configuration"
+    )
     browser_config: Optional[BrowserSettings] = Field(
         None, description="Browser configuration"
     )
@@ -118,6 +142,7 @@ class Config:
             "base_url": base_llm.get("base_url"),
             "api_key": base_llm.get("api_key"),
             "max_tokens": base_llm.get("max_tokens", 4096),
+            "max_input_tokens": base_llm.get("max_input_tokens"),
             "temperature": base_llm.get("temperature", 1.0),
             "api_type": base_llm.get("api_type", ""),
             "api_version": base_llm.get("api_version", ""),
@@ -160,6 +185,11 @@ class Config:
         search_settings = None
         if search_config:
             search_settings = SearchSettings(**search_config)
+        sandbox_config = raw_config.get("sandbox", {})
+        if sandbox_config:
+            sandbox_settings = SandboxSettings(**sandbox_config)
+        else:
+            sandbox_settings = SandboxSettings()
 
         config_dict = {
             "llm": {
@@ -169,6 +199,7 @@ class Config:
                     for name, override_config in llm_overrides.items()
                 },
             },
+            "sandbox": sandbox_settings,
             "browser_config": browser_settings,
             "search_config": search_settings,
         }
@@ -180,12 +211,21 @@ class Config:
         return self._config.llm
 
     @property
+    def sandbox(self) -> SandboxSettings:
+        return self._config.sandbox
+
+    @property
     def browser_config(self) -> Optional[BrowserSettings]:
         return self._config.browser_config
 
     @property
     def search_config(self) -> Optional[SearchSettings]:
         return self._config.search_config
+
+    @property
+    def workspace_root(self) -> Path:
+        """Get the workspace root directory"""
+        return WORKSPACE_ROOT
 
 
 config = Config()
